@@ -1,0 +1,314 @@
+// CivicFix — Prisma schema
+// Source of truth: community_problem_reporting_platform_srs_v1.1.md (§8 Data Requirements, §26 State Machine)
+//
+// Notes:
+// - Postgres + PostGIS. The `location` geography column on Report is managed
+//   outside Prisma (Prisma has no native geography type). It is created and
+//   indexed via the migration in prisma/migrations and kept in sync with
+//   latitude/longitude on write (see backend/src/modules/reports). The
+//   `Unsupported("geography(Point, 4326)")` mapping lets Prisma round-trip the
+//   column without trying to manage its type.
+// - All status-transition rules live in code (backend/src/modules/reports/status-machine.ts),
+//   not in the DB, so they can return INVALID_STATUS_TRANSITION with context.
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [postgis]
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum UserRole {
+  citizen
+  department_worker
+  admin
+  super_admin
+}
+
+enum ReportStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  VERIFIED
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
+  DUPLICATE
+  NEEDS_MORE_INFO
+  ARCHIVED
+}
+
+enum Severity {
+  low
+  medium
+  high
+  urgent
+}
+
+enum ImageType {
+  before
+  after
+  evidence
+}
+
+enum VoteType {
+  upvote
+  confirm
+  false_report
+}
+
+enum NotificationType {
+  status_change
+  comment
+  assignment
+  system
+}
+
+enum SubscriptionSource {
+  explicit
+  owner
+  confirm
+}
+
+// ---------------------------------------------------------------------------
+// Models
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String   @id @default(uuid()) @db.Uuid
+  name          String   @db.VarChar(120)
+  email         String   @unique @db.VarChar(255)
+  passwordHash  String   @map("password_hash")
+  phone         String?  @db.VarChar(30)
+  phoneIsPublic Boolean  @default(false) @map("phone_is_public")
+  role          UserRole @default(citizen)
+  departmentId  String?  @map("department_id") @db.Uuid
+  trustScore    Int      @default(0) @map("trust_score")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  department        Department?        @relation(fields: [departmentId], references: [id])
+  reports           Report[]           @relation("ReportReporter")
+  comments          Comment[]
+  votes             Vote[]
+  uploadedImages    ReportImage[]      @relation("ImageUploader")
+  statusChanges     StatusHistory[]    @relation("StatusChanger")
+  assignmentsMade   ReportAssignment[] @relation("AssignmentAuthor")
+  subscriptions     ReportSubscription[]
+  notifications     Notification[]
+  refreshTokens     RefreshToken[]
+
+  @@index([role])
+  @@index([departmentId])
+  @@map("users")
+}
+
+model Category {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique @db.VarChar(100)
+  description String?
+  icon        String?  @db.VarChar(100)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  reports Report[]
+
+  @@map("categories")
+}
+
+model Department {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @unique @db.VarChar(120)
+  description  String?
+  contactEmail String?  @map("contact_email") @db.VarChar(255)
+  phone        String?  @db.VarChar(30)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  members           User[]
+  assignedReports   Report[]           @relation("ReportAssignedDept")
+  assignments       ReportAssignment[]
+
+  @@map("departments")
+}
+
+model Report {
+  id                      String       @id @default(uuid()) @db.Uuid
+  userId                  String       @map("user_id") @db.Uuid
+  title                   String       @db.VarChar(180)
+  description             String
+  categoryId              String       @map("category_id") @db.Uuid
+  status                  ReportStatus @default(SUBMITTED)
+  severity                Severity
+  latitude                Decimal      @db.Decimal(9, 6)
+  longitude               Decimal      @db.Decimal(9, 6)
+  // Managed via raw SQL/migration; derived from latitude/longitude on write.
+  location                Unsupported("geography(Point, 4326)")?
+  address                 String?
+  landmark                String?
+  assignedDepartmentId    String?      @map("assigned_department_id") @db.Uuid
+  priorityScore           Int          @default(0) @map("priority_score")
+  priorityScoreUpdatedAt  DateTime?    @map("priority_score_updated_at")
+  duplicateOfReportId     String?      @map("duplicate_of_report_id") @db.Uuid
+  internalNote            String?      @map("internal_note")
+  createdAt               DateTime     @default(now()) @map("created_at")
+  updatedAt               DateTime     @updatedAt @map("updated_at")
+  resolvedAt              DateTime?    @map("resolved_at")
+
+  reporter           User                 @relation("ReportReporter", fields: [userId], references: [id])
+  category           Category             @relation(fields: [categoryId], references: [id])
+  assignedDepartment Department?          @relation("ReportAssignedDept", fields: [assignedDepartmentId], references: [id])
+  duplicateOf        Report?              @relation("ReportDuplicates", fields: [duplicateOfReportId], references: [id])
+  duplicates         Report[]             @relation("ReportDuplicates")
+
+  images         ReportImage[]
+  comments       Comment[]
+  votes          Vote[]
+  statusHistory  StatusHistory[]
+  assignments    ReportAssignment[]
+  subscriptions  ReportSubscription[]
+  notifications  Notification[]
+
+  @@index([status])
+  @@index([categoryId])
+  @@index([createdAt])
+  @@index([assignedDepartmentId])
+  @@map("reports")
+}
+
+model ReportImage {
+  id         String    @id @default(uuid()) @db.Uuid
+  reportId   String    @map("report_id") @db.Uuid
+  imageUrl   String    @map("image_url")
+  storageKey String?   @map("storage_key")
+  imageType  ImageType @map("image_type")
+  uploadedBy String    @map("uploaded_by") @db.Uuid
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  report   Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  uploader User   @relation("ImageUploader", fields: [uploadedBy], references: [id])
+
+  @@index([reportId])
+  @@map("report_images")
+}
+
+model Comment {
+  id        String   @id @default(uuid()) @db.Uuid
+  reportId  String   @map("report_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  content   String
+  isDeleted Boolean  @default(false) @map("is_deleted")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([reportId])
+  @@map("comments")
+}
+
+model Vote {
+  id        String   @id @default(uuid()) @db.Uuid
+  reportId  String   @map("report_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  voteType  VoteType @map("vote_type")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
+
+  // Enforces VOTE-003/004, ABUSE-001: one vote of each type per user per report.
+  @@unique([reportId, userId, voteType])
+  @@index([reportId])
+  @@map("votes")
+}
+
+model StatusHistory {
+  id        String        @id @default(uuid()) @db.Uuid
+  reportId  String        @map("report_id") @db.Uuid
+  oldStatus ReportStatus? @map("old_status")
+  newStatus ReportStatus  @map("new_status")
+  changedBy String        @map("changed_by") @db.Uuid
+  note      String?
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  report  Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  changer User   @relation("StatusChanger", fields: [changedBy], references: [id])
+
+  @@index([reportId])
+  @@map("status_history")
+}
+
+model ReportAssignment {
+  id           String   @id @default(uuid()) @db.Uuid
+  reportId     String   @map("report_id") @db.Uuid
+  departmentId String   @map("department_id") @db.Uuid
+  assignedBy   String   @map("assigned_by") @db.Uuid
+  note         String?
+  isCurrent    Boolean  @default(true) @map("is_current")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  report     Report     @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  department Department @relation(fields: [departmentId], references: [id])
+  author     User       @relation("AssignmentAuthor", fields: [assignedBy], references: [id])
+
+  @@index([reportId])
+  @@index([departmentId])
+  @@map("report_assignments")
+}
+
+model ReportSubscription {
+  id        String             @id @default(uuid()) @db.Uuid
+  reportId  String             @map("report_id") @db.Uuid
+  userId    String             @map("user_id") @db.Uuid
+  source    SubscriptionSource
+  createdAt DateTime           @default(now()) @map("created_at")
+
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([reportId, userId])
+  @@index([reportId])
+  @@map("report_subscriptions")
+}
+
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @map("user_id") @db.Uuid
+  reportId  String?          @map("report_id") @db.Uuid
+  title     String           @db.VarChar(180)
+  message   String
+  type      NotificationType
+  isRead    Boolean          @default(false) @map("is_read")
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  user   User    @relation(fields: [userId], references: [id])
+  report Report? @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
