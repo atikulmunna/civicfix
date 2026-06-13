@@ -1,0 +1,23 @@
+# Render Blueprint for the CivicFix backend API.
+# In Render: New + → Blueprint → pick this repo. It pre-fills everything below;
+# you only paste DATABASE_URL (and CORS_ORIGIN once you have the Vercel URL).
+services:
+  - type: web
+    name: civicfix-api
+    runtime: node
+    rootDir: backend
+    plan: free
+    # --include=dev so the build tools (typescript, prisma) are available even
+    # though NODE_ENV=production.
+    buildCommand: npm install --include=dev && npx prisma generate && npm run build
+    startCommand: npm run start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false # paste your Supabase connection string
+      - key: JWT_ACCESS_SECRET
+        generateValue: true # Render generates a strong random secret
+      - key: CORS_ORIGIN
+        sync: false # your Vercel URL, e.g. https://civicfix.vercel.app
