@@ -6,8 +6,6 @@ map location; the community confirms and discusses them; admins verify and
 assign them to departments; departments resolve them — with status tracked end
 to end through an explicit state machine and in-app notifications.
 
-Built to the spec in [`community_problem_reporting_platform_srs_v1.1.md`](./community_problem_reporting_platform_srs_v1.1.md).
-
 ## Stack
 
 - **Backend:** Node + Express + TypeScript, Prisma ORM, PostgreSQL 16 + PostGIS,
