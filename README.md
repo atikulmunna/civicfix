@@ -1,5 +1,4 @@
-# CivicFix — Community Problem Reporting Platform
-
+# CivicFix 
 A full-stack web app for reporting and resolving local civic issues. Citizens
 report problems (potholes, broken lights, garbage, flooding) with a photo and
 map location; the community confirms and discusses them; admins verify and
