@@ -1,0 +1,9 @@
+node_modules
+dist
+.env
+.env.*
+uploads
+*.test.ts
+src/**/*.test.ts
+.git
+.gitignore
