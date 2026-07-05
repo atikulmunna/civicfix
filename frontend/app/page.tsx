@@ -10,7 +10,7 @@ const STEPS = [
 const FEATURES: { icon: ReactNode; title: string; body: string }[] = [
   {
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-9 w-9">
         <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
         <circle cx="12" cy="10" r="3" />
       </svg>
@@ -20,7 +20,7 @@ const FEATURES: { icon: ReactNode; title: string; body: string }[] = [
   },
   {
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-9 w-9">
         <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z" />
         <circle cx="12" cy="13" r="3" />
       </svg>
@@ -30,7 +30,7 @@ const FEATURES: { icon: ReactNode; title: string; body: string }[] = [
   },
   {
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-9 w-9">
         <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
         <circle cx="9" cy="7" r="4" />
         <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
@@ -42,7 +42,7 @@ const FEATURES: { icon: ReactNode; title: string; body: string }[] = [
   },
   {
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-9 w-9">
         <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
       </svg>
     ),
@@ -51,7 +51,7 @@ const FEATURES: { icon: ReactNode; title: string; body: string }[] = [
   },
   {
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-9 w-9">
         <rect x="4" y="2" width="16" height="20" rx="2" />
         <path d="M9 22v-4h6v4" />
         <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01" />
@@ -62,7 +62,7 @@ const FEATURES: { icon: ReactNode; title: string; body: string }[] = [
   },
   {
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-9 w-9">
         <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
         <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
       </svg>
@@ -101,53 +101,126 @@ function Check() {
   );
 }
 
+function HeroArt() {
+  return (
+    <div className="hidden justify-center lg:flex">
+      <svg
+        viewBox="0 0 400 380"
+        className="w-full max-w-md"
+        role="img"
+        aria-label="Animated map with a pulsing location pin"
+      >
+        <defs>
+          <radialGradient id="civic-glow" cx="50%" cy="45%" r="55%">
+            <stop offset="0%" stopColor="#2dd4bf" stopOpacity="0.28" />
+            <stop offset="70%" stopColor="#2dd4bf" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+
+        <circle cx="200" cy="170" r="185" fill="url(#civic-glow)" />
+        <circle cx="200" cy="170" r="150" fill="none" stroke="#e2e8f0" />
+        <circle cx="200" cy="170" r="100" fill="none" stroke="#e2e8f0" />
+
+        {/* animated route */}
+        <path
+          d="M84 108 Q170 92 200 170 T 300 244"
+          fill="none"
+          stroke="#5eead4"
+          strokeWidth={2}
+          strokeDasharray="2 8"
+          strokeLinecap="round"
+        >
+          <animate attributeName="stroke-dashoffset" values="40;0" dur="2.4s" repeatCount="indefinite" />
+        </path>
+
+        {/* pulse rings radiating from the main pin */}
+        {[0, 1, 2].map((i) => (
+          <circle key={i} cx="200" cy="170" r="20" fill="none" stroke="#14b8a6" strokeWidth={2}>
+            <animate attributeName="r" values="20;150" dur="3s" begin={`${i}s`} repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.5;0" dur="3s" begin={`${i}s`} repeatCount="indefinite" />
+          </circle>
+        ))}
+
+        {/* secondary pins */}
+        <g transform="translate(60,74) scale(1.1)" opacity="0.7">
+          <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" fill="#0f766e" />
+          <circle cx="12" cy="10" r="3" fill="#ffffff" />
+        </g>
+        <g transform="translate(268,208) scale(1.1)" opacity="0.7">
+          <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" fill="#0f766e" />
+          <circle cx="12" cy="10" r="3" fill="#ffffff" />
+        </g>
+
+        {/* blinking report dots */}
+        <circle cx="118" cy="248" r="4" fill="#14b8a6">
+          <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite" />
+        </circle>
+        <circle cx="300" cy="112" r="4" fill="#14b8a6">
+          <animate attributeName="opacity" values="1;0.3;1" dur="2.6s" repeatCount="indefinite" />
+        </circle>
+
+        {/* main pin */}
+        <g transform="translate(176,150) scale(2)">
+          <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" fill="#0d9488" />
+          <circle cx="12" cy="10" r="3" fill="#ffffff" />
+        </g>
+      </svg>
+    </div>
+  );
+}
+
 export default function HomePage() {
   return (
     <div className="flex flex-col gap-16 sm:gap-24">
       {/* Hero */}
       <section className="rounded-3xl border border-slate-200 bg-white px-6 py-16 sm:px-12">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">
-          Community-powered civic reporting
-        </p>
-        <h1 className="mt-3 max-w-3xl text-4xl font-extrabold tracking-tight text-slate-900 sm:text-6xl">
-          Report civic issues. <span className="text-teal-600">Track the fix.</span>
-        </h1>
-        <p className="mt-4 max-w-2xl text-lg text-slate-600">
-          Residents report local problems — potholes, broken lights, garbage, flooding — with a
-          photo and map location, then follow them from submission to resolution.
-        </p>
-        <div className="mt-7 flex flex-wrap gap-3">
-          <Link
-            href="/reports/new"
-            className="rounded-lg bg-teal-600 px-5 py-2.5 font-medium text-white transition hover:bg-teal-700"
-          >
-            Report an issue
-          </Link>
-          <Link
-            href="/map"
-            className="rounded-lg bg-slate-900 px-5 py-2.5 font-medium text-white transition hover:bg-slate-800"
-          >
-            Explore the map
-          </Link>
-          <Link
-            href="/reports"
-            className="rounded-lg border border-slate-300 px-5 py-2.5 font-medium text-slate-700 transition hover:bg-slate-50"
-          >
-            Browse reports →
-          </Link>
-        </div>
-        <dl className="mt-12 grid max-w-lg grid-cols-3 gap-6 border-t border-slate-200 pt-6">
-          {[
-            { k: '7', v: 'Issue categories' },
-            { k: '6', v: 'Status stages' },
-            { k: 'Free', v: 'No paid services' },
-          ].map((f) => (
-            <div key={f.v}>
-              <dt className="text-3xl font-extrabold tracking-tight text-slate-900">{f.k}</dt>
-              <dd className="mt-1 text-sm text-slate-500">{f.v}</dd>
+        <div className="grid items-center gap-12 lg:grid-cols-2">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">
+              Community-powered civic reporting
+            </p>
+            <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-6xl">
+              Report civic issues. <span className="text-teal-600">Track the fix.</span>
+            </h1>
+            <p className="mt-4 max-w-xl text-lg text-slate-600">
+              Residents report local problems — potholes, broken lights, garbage, flooding — with a
+              photo and map location, then follow them from submission to resolution.
+            </p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Link
+                href="/reports/new"
+                className="rounded-lg bg-teal-600 px-5 py-2.5 font-medium text-white transition hover:bg-teal-700"
+              >
+                Report an issue
+              </Link>
+              <Link
+                href="/map"
+                className="rounded-lg bg-slate-900 px-5 py-2.5 font-medium text-white transition hover:bg-slate-800"
+              >
+                Explore the map
+              </Link>
+              <Link
+                href="/reports"
+                className="rounded-lg border border-slate-300 px-5 py-2.5 font-medium text-slate-700 transition hover:bg-slate-50"
+              >
+                Browse reports →
+              </Link>
             </div>
-          ))}
-        </dl>
+            <dl className="mt-12 grid max-w-lg grid-cols-3 gap-6 border-t border-slate-200 pt-6">
+              {[
+                { k: '7', v: 'Issue categories' },
+                { k: '6', v: 'Status stages' },
+                { k: 'Free', v: 'No paid services' },
+              ].map((f) => (
+                <div key={f.v}>
+                  <dt className="text-3xl font-extrabold tracking-tight text-slate-900">{f.k}</dt>
+                  <dd className="mt-1 text-sm text-slate-500">{f.v}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+          <HeroArt />
+        </div>
       </section>
 
       {/* How it works */}
@@ -178,7 +251,7 @@ export default function HomePage() {
         <div className="mt-10 grid gap-x-10 gap-y-9 sm:grid-cols-2">
           {FEATURES.map((f) => (
             <div key={f.title} className="flex gap-4">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-slate-900 text-teal-400">
+              <span className="shrink-0 text-teal-600 drop-shadow-[0_6px_14px_rgba(13,148,136,0.45)]">
                 {f.icon}
               </span>
               <div>
