@@ -6,7 +6,7 @@ import type { ReportStatus, Severity } from '@/lib/types';
 import { severityLabel, statusLabel } from '@/lib/format';
 import { RequireAuth } from '@/components/require-auth';
 import { BarChart } from '@/components/bar-chart';
-import { Card, Spinner } from '@/components/ui';
+import { Card, PageHeader, Spinner, StatTile } from '@/components/ui';
 
 interface Summary {
   totalReports: number;
@@ -48,14 +48,11 @@ function Analytics() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold text-slate-900">Analytics</h1>
+      <PageHeader eyebrow="Admin" title="Analytics" subtitle="Reporting trends across the platform." />
 
-      <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid gap-x-8 gap-y-6 sm:grid-cols-3 lg:grid-cols-5">
         {tiles.map((t) => (
-          <Card key={t.label}>
-            <p className="text-sm text-slate-500">{t.label}</p>
-            <p className="mt-1 text-2xl font-bold text-slate-900">{t.value}</p>
-          </Card>
+          <StatTile key={t.label} label={t.label} value={t.value} />
         ))}
       </div>
 

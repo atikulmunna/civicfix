@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { RequireAuth } from '@/components/require-auth';
-import { Card } from '@/components/ui';
+import { Card, PageHeader } from '@/components/ui';
 import { UsersAdmin } from '@/components/admin/users-admin';
 import { CatalogAdmin } from '@/components/admin/catalog-admin';
 
@@ -14,7 +14,7 @@ function Manage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold text-slate-900">Manage</h1>
+      <PageHeader eyebrow="Admin" title="Manage" subtitle="Users, categories, and departments." />
 
       <div className="flex gap-2 border-b border-slate-200">
         {TABS.map((t) => (

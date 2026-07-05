@@ -7,7 +7,7 @@ import type { User } from '@/lib/types';
 import { RequireAuth } from '@/components/require-auth';
 import { useAuth } from '@/components/auth-context';
 import { useToast } from '@/components/toast';
-import { Button, Card, FieldError, Input, Label } from '@/components/ui';
+import { Button, Card, FieldError, Input, Label, PageHeader } from '@/components/ui';
 
 function ProfileForm() {
   const { user, refreshUser } = useAuth();
@@ -35,12 +35,16 @@ function ProfileForm() {
 
   return (
     <div className="mx-auto max-w-lg">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">My profile</h1>
-        <Link href="/me/reports" className="text-sm font-medium text-teal-700 hover:underline">
-          My reports →
-        </Link>
-      </div>
+      <PageHeader
+        eyebrow="Account"
+        title="My profile"
+        className="mb-6"
+        actions={
+          <Link href="/me/reports" className="font-medium text-teal-700 hover:underline">
+            My reports →
+          </Link>
+        }
+      />
 
       <Card>
         <dl className="mb-4 grid grid-cols-3 gap-2 text-sm">

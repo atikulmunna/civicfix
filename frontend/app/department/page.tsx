@@ -8,7 +8,7 @@ import { formatDate } from '@/lib/format';
 import { RequireAuth } from '@/components/require-auth';
 import { SeverityBadge, StatusBadge } from '@/components/badges';
 import { useToast } from '@/components/toast';
-import { Button, Spinner } from '@/components/ui';
+import { Button, PageHeader, Spinner } from '@/components/ui';
 
 function Queue() {
   const { toast } = useToast();
@@ -38,7 +38,7 @@ function Queue() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold text-slate-900">My department queue</h1>
+      <PageHeader eyebrow="Department" title="My department queue" subtitle="Reports assigned to your department." />
       {data && data.items.length > 0 ? (
         <ul className="flex flex-col gap-3">
           {data.items.map((r) => (

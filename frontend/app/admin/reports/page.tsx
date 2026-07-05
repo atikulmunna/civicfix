@@ -7,7 +7,7 @@ import type { Category, Paginated, Report } from '@/lib/types';
 import { SEVERITY_OPTIONS, STATUS_OPTIONS, severityLabel, statusLabel } from '@/lib/format';
 import { RequireAuth } from '@/components/require-auth';
 import { ReportCard } from '@/components/report-card';
-import { Button, Card, Select, Spinner } from '@/components/ui';
+import { Button, Card, PageHeader, Select, Spinner } from '@/components/ui';
 
 function AdminReportsList() {
   const params = useSearchParams();
@@ -45,7 +45,7 @@ function AdminReportsList() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-3xl font-bold tracking-tight text-slate-900">Moderate reports</h1>
+      <PageHeader eyebrow="Admin" title="Moderate reports" subtitle="Review, verify, and route incoming issues." />
 
       <Card className="grid gap-3 sm:grid-cols-3">
         <Select value={filters.status} onChange={(e) => setFilter('status', e.target.value)} aria-label="Status">

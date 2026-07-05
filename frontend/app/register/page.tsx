@@ -43,7 +43,8 @@ export default function RegisterPage() {
 
   return (
     <div className="mx-auto max-w-sm py-10">
-      <h1 className="mb-6 text-2xl font-bold text-slate-900">Create your account</h1>
+      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">Get started</p>
+      <h1 className="mb-6 mt-2 text-3xl font-bold tracking-tight text-slate-900">Create your account</h1>
       <Card>
         <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
           <div>

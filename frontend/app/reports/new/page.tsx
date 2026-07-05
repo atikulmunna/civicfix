@@ -8,7 +8,7 @@ import type { Category, Report } from '@/lib/types';
 import { SEVERITY_OPTIONS, severityLabel } from '@/lib/format';
 import { RequireAuth } from '@/components/require-auth';
 import { useToast } from '@/components/toast';
-import { Button, Card, FieldError, Input, Label, Select, Spinner, Textarea } from '@/components/ui';
+import { Button, Card, FieldError, Input, Label, PageHeader, Select, Spinner, Textarea } from '@/components/ui';
 import type { LatLng } from '@/components/location-picker';
 import Link from 'next/link';
 
@@ -98,7 +98,12 @@ function NewReportForm() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="mb-6 text-2xl font-bold text-slate-900">Report an issue</h1>
+      <PageHeader
+        eyebrow="New report"
+        title="Report an issue"
+        subtitle="Add a photo and drop a pin so it can be found and fixed."
+        className="mb-6"
+      />
       <Card>
         <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
           <div>

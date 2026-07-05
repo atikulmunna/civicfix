@@ -8,6 +8,44 @@ export function Card({ children, className = '' }: { children: ReactNode; classN
   );
 }
 
+/** Editorial page header: teal eyebrow + bold title, with optional subtitle and right-aligned actions. */
+export function PageHeader({
+  eyebrow,
+  title,
+  subtitle,
+  actions,
+  className = '',
+}: {
+  eyebrow?: string;
+  title: ReactNode;
+  subtitle?: ReactNode;
+  actions?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={`flex flex-wrap items-end justify-between gap-4 ${className}`}>
+      <div>
+        {eyebrow && (
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">{eyebrow}</p>
+        )}
+        <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">{title}</h1>
+        {subtitle && <p className="mt-2 text-slate-600">{subtitle}</p>}
+      </div>
+      {actions && <div className="flex flex-wrap items-center gap-3 text-sm">{actions}</div>}
+    </div>
+  );
+}
+
+/** Editorial stat: big numeral under a hairline rule (matches the landing page). */
+export function StatTile({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <div className="border-t-2 border-slate-900 pt-4">
+      <p className="text-3xl font-extrabold tracking-tight tabular-nums text-slate-900 sm:text-4xl">{value}</p>
+      <p className="mt-1 text-sm text-slate-500">{label}</p>
+    </div>
+  );
+}
+
 export function Button({
   variant = 'primary',
   className = '',

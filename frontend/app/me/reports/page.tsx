@@ -6,7 +6,7 @@ import { api } from '@/lib/api';
 import type { Paginated, Report } from '@/lib/types';
 import { RequireAuth } from '@/components/require-auth';
 import { ReportCard } from '@/components/report-card';
-import { Button, Spinner } from '@/components/ui';
+import { Button, PageHeader, Spinner } from '@/components/ui';
 
 function MyReports() {
   const [data, setData] = useState<Paginated<Report> | null>(null);
@@ -23,12 +23,15 @@ function MyReports() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">My reports</h1>
-        <Link href="/reports/new" className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700">
-          Report an issue
-        </Link>
-      </div>
+      <PageHeader
+        eyebrow="Account"
+        title="My reports"
+        actions={
+          <Link href="/reports/new" className="rounded-lg bg-teal-600 px-4 py-2 font-medium text-white transition hover:bg-teal-700">
+            Report an issue
+          </Link>
+        }
+      />
 
       {loading && !data ? (
         <Spinner />

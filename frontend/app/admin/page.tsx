@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import type { ReportStatus, Severity } from '@/lib/types';
 import { RequireAuth } from '@/components/require-auth';
-import { Card, Spinner } from '@/components/ui';
+import { Card, PageHeader, Spinner, StatTile } from '@/components/ui';
 
 interface Summary {
   totalReports: number;
@@ -38,24 +38,24 @@ function Dashboard() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Admin dashboard</h1>
-        <div className="flex gap-3 text-sm">
-          <Link href="/admin/reports" className="font-medium text-teal-700 hover:underline">Reports</Link>
-          <Link href="/admin/analytics" className="font-medium text-teal-700 hover:underline">Analytics</Link>
-          <Link href="/admin/manage" className="font-medium text-teal-700 hover:underline">Manage</Link>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Admin"
+        title="Dashboard"
+        actions={
+          <>
+            <Link href="/admin/reports" className="font-medium text-teal-700 hover:underline">Reports</Link>
+            <Link href="/admin/analytics" className="font-medium text-teal-700 hover:underline">Analytics</Link>
+            <Link href="/admin/manage" className="font-medium text-teal-700 hover:underline">Manage</Link>
+          </>
+        }
+      />
 
       {loading ? (
         <Spinner />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
           {tiles.map((t) => (
-            <Card key={t.label}>
-              <p className="text-sm text-slate-500">{t.label}</p>
-              <p className="mt-1 text-3xl font-bold text-slate-900">{t.value}</p>
-            </Card>
+            <StatTile key={t.label} label={t.label} value={t.value} />
           ))}
         </div>
       )}

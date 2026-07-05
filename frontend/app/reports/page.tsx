@@ -5,7 +5,7 @@ import { api, ApiError } from '@/lib/api';
 import type { Category, Paginated, Report } from '@/lib/types';
 import { SEVERITY_OPTIONS, STATUS_OPTIONS, severityLabel, statusLabel } from '@/lib/format';
 import { ReportCard } from '@/components/report-card';
-import { Button, Card, Input, Select, Spinner } from '@/components/ui';
+import { Button, Card, Input, PageHeader, Select, Spinner } from '@/components/ui';
 
 const SORTS = [
   { value: 'newest', label: 'Newest' },
@@ -84,10 +84,11 @@ export default function ReportsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Reports</h1>
-        <p className="mt-1 text-sm text-slate-500">Browse and track issues reported across the city.</p>
-      </div>
+      <PageHeader
+        eyebrow="Community reports"
+        title="Reports"
+        subtitle="Browse and track issues reported across the city."
+      />
 
       <Card className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <Input

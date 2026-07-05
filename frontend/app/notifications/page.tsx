@@ -6,7 +6,7 @@ import { api } from '@/lib/api';
 import type { Notification, Paginated } from '@/lib/types';
 import { formatDateTime } from '@/lib/format';
 import { RequireAuth } from '@/components/require-auth';
-import { Button, Spinner } from '@/components/ui';
+import { Button, PageHeader, Spinner } from '@/components/ui';
 
 interface NotificationsData extends Paginated<Notification> {
   unreadCount: number;
@@ -46,16 +46,24 @@ function NotificationsList() {
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">
-          Notifications {data && data.unreadCount > 0 && (
-            <span className="ml-1 rounded-full bg-teal-600 px-2 py-0.5 text-sm text-white">{data.unreadCount}</span>
-          )}
-        </h1>
-        {data && data.unreadCount > 0 && (
-          <Button variant="secondary" onClick={markAll}>Mark all read</Button>
-        )}
-      </div>
+      <PageHeader
+        eyebrow="Account"
+        title={
+          <>
+            Notifications
+            {data && data.unreadCount > 0 && (
+              <span className="ml-2 align-middle rounded-full bg-teal-600 px-2 py-0.5 text-base font-semibold text-white">
+                {data.unreadCount}
+              </span>
+            )}
+          </>
+        }
+        actions={
+          data && data.unreadCount > 0 ? (
+            <Button variant="secondary" onClick={markAll}>Mark all read</Button>
+          ) : undefined
+        }
+      />
 
       {data && data.items.length > 0 ? (
         <ul className="flex flex-col gap-2">
