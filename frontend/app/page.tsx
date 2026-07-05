@@ -36,20 +36,26 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="grid gap-5 sm:grid-cols-3">
-        {[
-          { n: '1', title: 'Report', body: 'Describe the issue, add a photo, and drop a pin on the map.' },
-          { n: '2', title: 'Verify', body: 'Neighbours confirm it and admins review and assign it to a department.' },
-          { n: '3', title: 'Resolve', body: 'Track status changes and get notified when it’s fixed.' },
-        ].map((s) => (
-          <div key={s.title} className="rounded-2xl border border-slate-200 bg-white p-6">
-            <div className="grid h-10 w-10 place-items-center rounded-xl bg-slate-900 font-semibold text-teal-400">
-              {s.n}
-            </div>
-            <h3 className="mt-4 font-semibold text-slate-900">{s.title}</h3>
-            <p className="mt-1 text-sm text-slate-600">{s.body}</p>
-          </div>
-        ))}
+      <section>
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">How it works</p>
+        <h2 className="mt-2 max-w-2xl text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+          From report to resolution in three steps
+        </h2>
+        <ol className="mt-10 grid gap-x-10 gap-y-10 sm:grid-cols-3">
+          {[
+            { n: '01', title: 'Report', body: 'Describe the issue, add a photo, and drop a pin on the map.' },
+            { n: '02', title: 'Verify', body: 'Neighbours confirm it and admins review and assign it to a department.' },
+            { n: '03', title: 'Resolve', body: 'Track status changes and get notified when it’s fixed.' },
+          ].map((s) => (
+            <li key={s.title} className="border-t-2 border-slate-900 pt-5">
+              <div className="flex items-baseline gap-3">
+                <span className="text-4xl font-extrabold tabular-nums text-teal-600">{s.n}</span>
+                <h3 className="text-lg font-bold text-slate-900">{s.title}</h3>
+              </div>
+              <p className="mt-3 text-[15px] leading-relaxed text-slate-600">{s.body}</p>
+            </li>
+          ))}
+        </ol>
       </section>
     </div>
   );
