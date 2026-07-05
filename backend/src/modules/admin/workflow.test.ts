@@ -1,5 +1,5 @@
 /**
- * Admin/department workflow integration tests — real app + Postgres.
+ * Admin/department workflow integration tests: real app + Postgres.
  * Covers the §26 lifecycle (status/assign/resolve), side-effect validation
  * (reject note, duplicate target), invalid-transition rejection (STAT-007),
  * BR-005 department scoping, RBAC, the admin list, department queue, and the

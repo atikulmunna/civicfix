@@ -1,4 +1,4 @@
-# CivicFix backend — container image for Fly.io.
+# CivicFix backend: container image for Fly.io.
 # Two stages: build (compiles TS + generates the Prisma client), then a slim
 # runtime that carries only production deps + the compiled dist.
 

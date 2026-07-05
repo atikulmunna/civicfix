@@ -1,4 +1,4 @@
-// CivicFix — Prisma schema
+// CivicFix Prisma schema
 // Source of truth: community_problem_reporting_platform_srs_v1.1.md (§8 Data Requirements, §26 State Machine)
 //
 // Notes:

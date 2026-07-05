@@ -42,7 +42,7 @@ function Analytics() {
     { label: 'Total reports', value: summary.totalReports },
     { label: 'Resolved', value: summary.resolvedCount },
     { label: 'Resolution rate', value: `${Math.round(summary.resolutionRate * 100)}%` },
-    { label: 'Avg resolution (h)', value: summary.avgResolutionHours ?? '—' },
+    { label: 'Avg resolution (h)', value: summary.avgResolutionHours ?? '-' },
     { label: 'Open high-priority', value: summary.unresolvedHighPriority },
   ];
 

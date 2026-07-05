@@ -2,7 +2,7 @@
 A full-stack web app for reporting and resolving local civic issues. Citizens
 report problems (potholes, broken lights, garbage, flooding) with a photo and
 map location; the community confirms and discusses them; admins verify and
-assign them to departments; departments resolve them — with status tracked end
+assign them to departments; departments resolve them, with status tracked end
 to end through an explicit state machine and in-app notifications.
 
 ## Stack
@@ -12,7 +12,7 @@ to end through an explicit state machine and in-app notifications.
   hashing, Multer + magic-byte upload validation, Zod, Vitest.
 - **Frontend:** Next.js 16 (App Router) + React 19 + TypeScript + Tailwind v4,
   React-Leaflet + OpenStreetMap, Vitest + React Testing Library.
-- **Free-tier only** — no paid APIs. Local file storage for uploads; OSM tiles.
+- **Free-tier only.** No paid APIs. Local file storage for uploads; OSM tiles.
 
 ## Prerequisites
 
@@ -56,19 +56,19 @@ All seeded accounts use the password **`Password123!`**:
 
 ## Environment variables
 
-**Backend (`backend/.env`)** — see `backend/.env.example`:
+**Backend (`backend/.env`)**, see `backend/.env.example`:
 
-- `DATABASE_URL` — Postgres connection (matches docker-compose, port 5433)
-- `JWT_ACCESS_SECRET` — long random string (required)
+- `DATABASE_URL`: Postgres connection (matches docker-compose, port 5433)
+- `JWT_ACCESS_SECRET`: long random string (required)
 - `JWT_ACCESS_EXPIRES_IN` (default `15m`), `REFRESH_TOKEN_TTL_DAYS` (default `7`)
 - `CORS_ORIGIN` (default `http://localhost:3000`)
 - `MAX_UPLOAD_BYTES` (default 5 MB), `LOCAL_UPLOAD_DIR` (default `uploads`)
 - Rate limits: `RATE_LIMIT_REPORTS_PER_HOUR`, `RATE_LIMIT_COMMENTS_PER_HOUR`,
   `RATE_LIMIT_AUTH_PER_15MIN`
 
-**Frontend (`frontend/.env.local`)** — see `frontend/.env.example`:
+**Frontend (`frontend/.env.local`)**, see `frontend/.env.example`:
 
-- `NEXT_PUBLIC_API_URL` — backend base URL (default `http://localhost:5000/api/v1`)
+- `NEXT_PUBLIC_API_URL`: backend base URL (default `http://localhost:5000/api/v1`)
 
 ## Testing
 
@@ -119,9 +119,9 @@ frontend/
 Three services: a managed Postgres+PostGIS database, the API, and the web app.
 Recommended free hosts: **Supabase** (DB), **Fly.io** (API), **Vercel** (web).
 Fly keeps one machine always on, so there are no cold starts. The repo is
-pre-configured — you only enter the env values below.
+pre-configured, and you only enter the env values below.
 
-### 1. Database — Supabase
+### 1. Database: Supabase
 1. Create a project, then in the SQL editor run: `create extension if not exists postgis;`
 2. Settings → Database → copy the connection string (**URI**) → this is `DATABASE_URL`.
 3. From your machine, apply the schema once:
@@ -131,7 +131,7 @@ pre-configured — you only enter the env values below.
    DATABASE_URL="<supabase-uri>" npm run seed   # optional demo data
    ```
 
-### 2. API — Fly.io
+### 2. API: Fly.io
 Install [`flyctl`](https://fly.io/docs/flyctl/install/) and `fly auth login`, then:
 ```bash
 cd backend
@@ -148,7 +148,7 @@ fly deploy
 - Redeploy after any backend change with `fly deploy` (or wire up the Fly
   GitHub Action for auto-deploy on push).
 
-### 3. Web — Vercel
+### 3. Web: Vercel
 - Add New → Project → import this repo, **Root Directory: `frontend`**.
 - Environment variables:
   - `BACKEND_URL` = your Fly URL (e.g. `https://civicfix-api.fly.dev`)
@@ -172,5 +172,5 @@ Vercel redeploys automatically on every push to `main`; redeploy the API with
 > machine effectively free; `min_machines_running = 1` avoids cold starts.
 > Supabase free projects pause after ~7 days idle (resume from the dashboard).
 > Uploaded images live on the machine's ephemeral disk, so they are cleared on
-> redeploy — attach a Fly volume, or wire up Supabase Storage / Cloudinary in
+> redeploy. Attach a Fly volume, or wire up Supabase Storage / Cloudinary in
 > `backend/src/lib/uploads.ts`, if you need them to persist.

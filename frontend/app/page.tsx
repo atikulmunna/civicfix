@@ -16,7 +16,7 @@ const FEATURES: { icon: ReactNode; title: string; body: string }[] = [
       </svg>
     ),
     title: 'Pin the exact spot',
-    body: 'Drop a marker on the map — every report carries precise GPS coordinates.',
+    body: 'Drop a marker on the map, and every report carries precise GPS coordinates.',
   },
   {
     icon: (
@@ -26,7 +26,7 @@ const FEATURES: { icon: ReactNode; title: string; body: string }[] = [
       </svg>
     ),
     title: 'Photo evidence',
-    body: 'Attach a picture so the problem is unmistakable — image type is verified on the server.',
+    body: 'Attach a picture so the problem is unmistakable. Image type is verified on the server.',
   },
   {
     icon: (
@@ -183,7 +183,7 @@ export default function HomePage() {
               Report civic issues. <span className="text-teal-600">Track the fix.</span>
             </h1>
             <p className="mt-4 max-w-xl text-lg text-slate-600">
-              Residents report local problems — potholes, broken lights, garbage, flooding — with a
+              Residents report local problems (potholes, broken lights, garbage, flooding) with a
               photo and map location, then follow them from submission to resolution.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
@@ -311,7 +311,7 @@ export default function HomePage() {
       <section>
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">Built for both sides</p>
         <h2 className="mt-2 max-w-2xl text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-          For the people who report — and the people who fix
+          For the people who report, and the people who fix
         </h2>
         <div className="mt-10 grid gap-10 sm:grid-cols-2">
           <div className="border-t-2 border-slate-900 pt-5">

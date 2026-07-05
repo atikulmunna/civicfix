@@ -32,7 +32,7 @@ function Dashboard() {
         { label: 'Resolution rate', value: `${Math.round(summary.resolutionRate * 100)}%` },
         { label: 'Open high-priority', value: summary.unresolvedHighPriority },
         { label: 'Awaiting review', value: summary.byStatus.SUBMITTED + summary.byStatus.UNDER_REVIEW },
-        { label: 'Avg resolution (h)', value: summary.avgResolutionHours ?? '—' },
+        { label: 'Avg resolution (h)', value: summary.avgResolutionHours ?? '-' },
       ]
     : [];
 

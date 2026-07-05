@@ -33,7 +33,7 @@ const actorOf = (req: { user?: Actor }): Actor | null => req.user ?? null;
 
 export const reportsRouter = Router();
 
-// Create — multipart with at least one image (REP-001/003/004).
+// Create: multipart with at least one image (REP-001/003/004).
 reportsRouter.post(
   '/',
   requireAuth,

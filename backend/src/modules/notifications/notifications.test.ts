@@ -1,5 +1,5 @@
 /**
- * Notifications integration tests — real app + Postgres.
+ * Notifications integration tests: real app + Postgres.
  * Covers status-change emission to subscribers excluding the actor
  * (NOTIF-001/002/003, §13.5), list + unread count, mark one / mark all read
  * (NOTIF-004), and ownership enforcement.

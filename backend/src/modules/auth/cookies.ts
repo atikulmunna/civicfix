@@ -10,7 +10,7 @@ import { ACCESS_COOKIE } from '../../middleware/require-auth.js';
 export const REFRESH_COOKIE = 'refresh_token';
 const REFRESH_PATH = '/api/v1/auth';
 
-// Access cookie lifetime is a fallback only — the JWT's own exp is
+// Access cookie lifetime is a fallback only. The JWT's own exp is
 // authoritative. ~15 minutes mirrors JWT_ACCESS_EXPIRES_IN's default.
 const ACCESS_MAX_AGE_MS = 15 * 60 * 1000;
 

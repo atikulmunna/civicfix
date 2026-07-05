@@ -148,7 +148,7 @@ export async function listReports(input: ListReportsInput) {
   }
 
   // most_confirmed needs ordering by a filtered relation count, which Prisma
-  // can't express in orderBy — handle it separately (LIST-005).
+  // can't express in orderBy, so handle it separately (LIST-005).
   if (input.sort === 'most_confirmed') {
     return listByMostConfirmed(where, input.page, input.limit);
   }

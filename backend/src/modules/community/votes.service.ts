@@ -49,7 +49,7 @@ export async function castVote(
   try {
     await prisma.vote.create({ data: { reportId, userId, voteType } });
   } catch (err) {
-    if (!isUniqueViolation(err)) throw err; // already voted — no-op
+    if (!isUniqueViolation(err)) throw err; // already voted, no-op
   }
 
   // Confirming a report subscribes the user to its updates (BR-016).

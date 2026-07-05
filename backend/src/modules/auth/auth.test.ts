@@ -1,5 +1,5 @@
 /**
- * Auth integration tests — hit the real Express app and the Docker Postgres
+ * Auth integration tests: hit the real Express app and the Docker Postgres
  * DB via supertest. Covers SRS v1.1 §9.2 / AUTH-001..013 and the §6.1 token
  * strategy (httpOnly cookies, refresh rotation, logout revocation, RBAC).
  *

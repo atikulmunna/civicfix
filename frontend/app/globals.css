@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* CivicFix — clean & minimal light theme. */
+/* CivicFix: clean & minimal light theme. */
 :root {
   --background: #f8fafc; /* slate-50 */
   --foreground: #0f172a; /* slate-900 */

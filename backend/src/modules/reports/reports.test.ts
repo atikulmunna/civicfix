@@ -1,5 +1,5 @@
 /**
- * Reports integration tests — real Express app + Docker Postgres/PostGIS.
+ * Reports integration tests: real Express app + Docker Postgres/PostGIS.
  * Covers SRS v1.1 §9.4: create (multipart + magic-byte image check), list/
  * filter/paginate, detail (internal-note hiding), owner edit/delete window
  * (REP-012/BR-013), nearby (ST_DWithin), map bbox (MAP-009), duplicates (§6.9).

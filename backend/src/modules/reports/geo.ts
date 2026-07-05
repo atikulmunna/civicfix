@@ -1,7 +1,7 @@
 /**
  * PostGIS-backed geospatial queries (LIST-008, DUP-001/002). Prisma cannot
  * express ST_DWithin against the `geography` column, so these use parameterised
- * raw SQL and return only ids (+ distance) — callers hydrate full rows via
+ * raw SQL and return only ids (+ distance). Callers hydrate full rows via
  * Prisma to keep one serialization path.
  *
  * The bbox/map query lives in the service as a plain latitude/longitude range

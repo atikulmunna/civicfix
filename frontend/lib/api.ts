@@ -31,7 +31,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   try {
     res = await fetch(`${API_URL}${path}`, { credentials: 'include', ...options });
   } catch {
-    throw new ApiError('Network error — is the API running?', 'NETWORK_ERROR', 0);
+    throw new ApiError('Network error. Is the API running?', 'NETWORK_ERROR', 0);
   }
 
   let body: Envelope<T> | null = null;

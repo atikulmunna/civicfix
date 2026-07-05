@@ -46,7 +46,7 @@ communityRouter.post(
   }),
 );
 
-// Votes — upvote / confirm / false-report (§9.6)
+// Votes: upvote / confirm / false-report (§9.6)
 communityRouter.post(
   '/:id/upvote',
   requireAuth,

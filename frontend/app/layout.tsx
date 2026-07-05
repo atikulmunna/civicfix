@@ -4,7 +4,7 @@ import { Providers } from '@/components/providers';
 import { Navbar } from '@/components/navbar';
 
 export const metadata: Metadata = {
-  title: 'CivicFix — Community Problem Reporting',
+  title: 'CivicFix: Community Problem Reporting',
   description: 'Report local civic issues, track their status, and help your community.',
 };
 

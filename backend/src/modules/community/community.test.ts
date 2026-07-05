@@ -1,5 +1,5 @@
 /**
- * Community integration tests — real Express app + Docker Postgres.
+ * Community integration tests: real Express app + Docker Postgres.
  * Covers comments (COM-*), votes (VOTE-*, BR-006/007), confirm auto-follow
  * (BR-016), follow/unfollow (NOTIF-007), and vote-count wiring (VOTE-005)
  * into the reports detail/list responses.

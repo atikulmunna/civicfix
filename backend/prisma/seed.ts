@@ -199,7 +199,7 @@ async function main(): Promise<void> {
       data: {
         reportId: reportIds[i],
         userId: commenter.id,
-        content: 'I have noticed this too — it really needs attention.',
+        content: 'I have noticed this too, it really needs attention.',
       },
     });
   }

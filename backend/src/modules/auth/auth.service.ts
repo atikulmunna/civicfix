@@ -91,7 +91,7 @@ export async function login(
   const user = await prisma.user.findUnique({ where: { email } });
 
   // Verify against the found hash, or against a dummy hash when the email is
-  // unknown — keeps response timing similar either way (anti-enumeration).
+  // unknown, which keeps response timing similar either way (anti-enumeration).
   const ok = await verifyPassword(user?.passwordHash ?? DUMMY_HASH, password).catch(() => false);
 
   if (!user || !ok) {

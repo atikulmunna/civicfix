@@ -1,13 +1,13 @@
 /**
  * Password hashing (AUTH-003 / SEC-001) and policy (AUTH-013).
  *
- * Uses argon2id via @node-rs/argon2 — ships prebuilt native binaries (no
+ * Uses argon2id via @node-rs/argon2, which ships prebuilt native binaries (no
  * node-gyp build step), which keeps install reliable on Windows/CI.
  */
 import { hash, verify } from '@node-rs/argon2';
 import { ApiError } from '../../lib/errors.js';
 
-// argon2id parameters — OWASP-recommended baseline (19 MiB, 2 passes).
+// argon2id parameters: OWASP-recommended baseline (19 MiB, 2 passes).
 const HASH_OPTS = { memoryCost: 19456, timeCost: 2, parallelism: 1 } as const;
 
 /** A tiny denylist of the most common passwords (AUTH-013). */

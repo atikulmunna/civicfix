@@ -42,7 +42,7 @@ adminReportsRouter.get(
   }),
 );
 
-// Generic status change — dept workers permitted (state machine gates which).
+// Generic status change: dept workers permitted (state machine gates which).
 adminReportsRouter.patch(
   '/:id/status',
   requireAuth,

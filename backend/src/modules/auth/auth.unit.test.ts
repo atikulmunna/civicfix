@@ -1,5 +1,5 @@
 /**
- * Auth unit tests — pure logic, no DB. Password policy/hashing, token
+ * Auth unit tests: pure logic, no DB. Password policy/hashing, token
  * round-trips, and the requireRole guard (SRS §17.1 unit-test scope).
  */
 import { describe, expect, it, vi } from 'vitest';

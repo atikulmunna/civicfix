@@ -1,5 +1,5 @@
 /**
- * Admin CRUD integration tests — users (§9.3), categories (§9.8),
+ * Admin CRUD integration tests: users (§9.3), categories (§9.8),
  * departments (§9.9). Covers RBAC (admin vs super-admin), soft-disable,
  * duplicate handling, self-modification guards, and the deactivate->login
  * cross-check.

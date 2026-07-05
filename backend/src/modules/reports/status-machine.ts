@@ -1,5 +1,5 @@
 /**
- * Report status state machine — implements SRS v1.1 §26.
+ * Report status state machine: implements SRS v1.1 §26.
  *
  * Single source of truth for which status transitions are legal, who may
  * perform them, and what side effects each requires. The reports service
@@ -55,7 +55,7 @@ interface TransitionRule {
 /**
  * Owner/department-scoped roles. Note that endpoint-level checks still apply:
  * e.g. a department_worker may only act on reports assigned to their own
- * department (BR-005) — that ownership check lives in the service layer, not
+ * department (BR-005). That ownership check lives in the service layer, not
  * here, because it needs the report row.
  */
 const ADMINS: ReadonlyArray<UserRole> = ['admin', 'super_admin'];
