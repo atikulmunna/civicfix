@@ -1,18 +1,91 @@
-# CivicFix 
-A full-stack web app for reporting and resolving local civic issues. Citizens
-report problems (potholes, broken lights, garbage, flooding) with a photo and
-map location; the community confirms and discusses them; admins verify and
-assign them to departments; departments resolve them, with status tracked end
-to end through an explicit state machine and in-app notifications.
+# CivicFix
 
-## Stack
+A full-stack community problem reporting platform. Residents report local civic
+issues (potholes, broken lights, garbage, flooding) with a photo and a map pin,
+neighbours confirm and discuss them, admins verify and route them to the right
+department, and departments resolve them. Every report is tracked end to end
+through an explicit status lifecycle with in-app notifications.
+
+**Live demo:** https://civicfix-mu.vercel.app &nbsp;·&nbsp; **API:** https://civicfix-api.fly.dev
+
+![CivicFix home page](docs/screenshots/01-home.png)
+
+## Demo logins
+
+The live demo is seeded with data. Sign in with any of these accounts (all use
+the password **`Password123!`**):
+
+| Role | Email | What they can do |
+|---|---|---|
+| Super admin | `super@civicfix.local` | Everything, plus assign user roles |
+| Admin | `admin@civicfix.local` | Verify, assign, moderate, view analytics |
+| Department worker | `worker.publicworks@civicfix.local` | Act on reports assigned to their department |
+| Citizen | `citizen1@civicfix.local` | Report issues, confirm, upvote, comment |
+
+## Features
+
+- **Map-first reporting.** Every report carries precise GPS coordinates set by
+  dropping a pin, plus a photo whose image type is verified server-side.
+- **Community verification.** Residents upvote and confirm reports, surfacing
+  the issues that matter most.
+- **Transparent status lifecycle.** Reports move through a six-stage workflow
+  (Submitted, Under review, Verified, Assigned, In progress, Resolved), and every
+  transition is recorded with who changed it and when.
+- **Department routing.** Admins assign issues to the responsible department;
+  department workers only see and act on their own department's reports.
+- **Notifications.** Subscribers are notified in-app on every status change.
+- **Analytics.** Admin dashboard with reports by status, severity, category,
+  department workload, and a monthly trend.
+- **Role-based access control.** Four roles enforced in the API, not just the UI.
+
+## Screenshots
+
+| Interactive map | Reports feed |
+|---|---|
+| [![Map](docs/screenshots/02-map.png)](docs/screenshots/02-map.png) | [![Reports](docs/screenshots/03-reports.png)](docs/screenshots/03-reports.png) |
+
+| Report detail and status history | Report an issue |
+|---|---|
+| [![Report detail](docs/screenshots/04-report-detail.png)](docs/screenshots/04-report-detail.png) | [![New report](docs/screenshots/05-new-report.png)](docs/screenshots/05-new-report.png) |
+
+| Admin dashboard | Analytics |
+|---|---|
+| [![Admin dashboard](docs/screenshots/06-admin-dashboard.png)](docs/screenshots/06-admin-dashboard.png) | [![Analytics](docs/screenshots/07-admin-analytics.png)](docs/screenshots/07-admin-analytics.png) |
+
+Admin moderation, with the guarded status transitions, department assignment,
+and resolve / mark-duplicate actions:
+
+[![Admin moderation](docs/screenshots/09-admin-report-detail.png)](docs/screenshots/09-admin-report-detail.png)
+
+## Tech stack
 
 - **Backend:** Node + Express + TypeScript, Prisma ORM, PostgreSQL 16 + PostGIS,
   JWT auth (httpOnly cookie access token + rotating refresh token), argon2id
-  hashing, Multer + magic-byte upload validation, Zod, Vitest.
+  hashing, Multer + magic-byte upload validation, Zod, Vitest + supertest.
 - **Frontend:** Next.js 16 (App Router) + React 19 + TypeScript + Tailwind v4,
   React-Leaflet + OpenStreetMap, Vitest + React Testing Library.
-- **Free-tier only.** No paid APIs. Local file storage for uploads; OSM tiles.
+- **Hosting (free tier):** Supabase (Postgres + PostGIS), Fly.io (API), Vercel (web).
+
+## Architecture notes
+
+- **Status state machine.** All report status changes flow through one guarded
+  transition that enforces the legal moves, the role permitted to make them, the
+  required side effects (assignment, resolved timestamp, duplicate target), and
+  always writes a status-history row.
+- **Role-based access control.** The role lives in a signed JWT. The API
+  enforces access in three layers: authentication, a coarse role gate per route,
+  and resource-level ownership checks (for example, a department worker can only
+  act on reports assigned to their own department). The frontend mirrors this for
+  UX only; the API is the real boundary.
+- **Geospatial.** `location geography(Point,4326)` is derived from latitude and
+  longitude by a database trigger and indexed with GiST. Nearby and bounding-box
+  map queries use PostGIS.
+- **Auth.** Short-lived access JWT in an httpOnly cookie, plus an opaque rotating
+  refresh token stored only as a SHA-256 hash and revocable server-side.
+- **Uploads.** Image type is verified by magic bytes rather than the client
+  content-type, size-capped, and stored with random keys.
+- **Same-origin proxy.** In production the web app proxies `/api` and `/uploads`
+  to the API, so the browser stays same-origin and the httpOnly auth cookies work.
 
 ## Prerequisites
 
@@ -43,37 +116,10 @@ npm run dev                     # http://localhost:3000
 
 Open http://localhost:3000.
 
-### Demo logins (after `npm run seed`)
-
-All seeded accounts use the password **`Password123!`**:
-
-| Role | Email |
-|---|---|
-| Super admin | `super@civicfix.local` |
-| Admin | `admin@civicfix.local` |
-| Department worker | `worker.publicworks@civicfix.local` |
-| Citizen | `citizen1@civicfix.local` |
-
-## Environment variables
-
-**Backend (`backend/.env`)**, see `backend/.env.example`:
-
-- `DATABASE_URL`: Postgres connection (matches docker-compose, port 5433)
-- `JWT_ACCESS_SECRET`: long random string (required)
-- `JWT_ACCESS_EXPIRES_IN` (default `15m`), `REFRESH_TOKEN_TTL_DAYS` (default `7`)
-- `CORS_ORIGIN` (default `http://localhost:3000`)
-- `MAX_UPLOAD_BYTES` (default 5 MB), `LOCAL_UPLOAD_DIR` (default `uploads`)
-- Rate limits: `RATE_LIMIT_REPORTS_PER_HOUR`, `RATE_LIMIT_COMMENTS_PER_HOUR`,
-  `RATE_LIMIT_AUTH_PER_15MIN`
-
-**Frontend (`frontend/.env.local`)**, see `frontend/.env.example`:
-
-- `NEXT_PUBLIC_API_URL`: backend base URL (default `http://localhost:5000/api/v1`)
-
 ## Testing
 
 ```bash
-cd backend && npm test     # integration + unit tests (real Docker DB)
+cd backend && npm test      # integration + unit tests (real Docker DB)
 cd frontend && npm test     # component tests (Vitest + React Testing Library)
 ```
 
@@ -91,7 +137,7 @@ backend/
     middleware/           requireAuth/requireRole, rate limiting
     modules/
       auth/               register/login/logout/refresh/me, tokens, password
-      reports/            CRUD, geo (PostGIS), status-machine (§26)
+      reports/            CRUD, geo (PostGIS), status-machine
       community/          comments, votes, subscriptions
       admin/              workflow, analytics, users + catalog CRUD
       notifications/      status-change notifications
@@ -102,28 +148,31 @@ frontend/
   lib/                    api client, types, formatting, map helpers
 ```
 
-## Key design notes
+## Environment variables
 
-- **Status state machine (§26):** all report status changes flow through one
-  guarded transition (`assertTransition`) that enforces legal moves, role
-  permissions, required side effects, and always writes a status-history row.
-- **Auth:** short-lived access JWT in an httpOnly cookie + opaque rotating
-  refresh token stored hashed and revocable server-side; logout revokes it.
-- **Geospatial:** `location geography(Point,4326)` is derived from lat/lng by a
-  DB trigger and indexed with GiST; nearby/duplicate use `ST_DWithin`.
-- **Uploads:** image type verified by magic bytes (not client content-type),
-  size-capped, stored with random keys outside the app webroot.
+**Backend (`backend/.env`)**, see `backend/.env.example`:
+
+- `DATABASE_URL`: Postgres connection (matches docker-compose, port 5433)
+- `JWT_ACCESS_SECRET`: long random string (required)
+- `JWT_ACCESS_EXPIRES_IN` (default `15m`), `REFRESH_TOKEN_TTL_DAYS` (default `7`)
+- `CORS_ORIGIN` (default `http://localhost:3000`)
+- `MAX_UPLOAD_BYTES` (default 5 MB), `LOCAL_UPLOAD_DIR` (default `uploads`)
+- Rate limits: `RATE_LIMIT_REPORTS_PER_HOUR`, `RATE_LIMIT_COMMENTS_PER_HOUR`,
+  `RATE_LIMIT_AUTH_PER_15MIN`
+
+**Frontend (`frontend/.env.local`)**, see `frontend/.env.example`:
+
+- `NEXT_PUBLIC_API_URL`: backend base URL (default `http://localhost:5000/api/v1`)
 
 ## Deployment (free tier)
 
-Three services: a managed Postgres+PostGIS database, the API, and the web app.
+Three services: a managed Postgres + PostGIS database, the API, and the web app.
 Recommended free hosts: **Supabase** (DB), **Fly.io** (API), **Vercel** (web).
-Fly keeps one machine always on, so there are no cold starts. The repo is
-pre-configured, and you only enter the env values below.
+Fly keeps one machine always on, so there are no cold starts.
 
 ### 1. Database: Supabase
 1. Create a project, then in the SQL editor run: `create extension if not exists postgis;`
-2. Settings → Database → copy the connection string (**URI**) → this is `DATABASE_URL`.
+2. Settings, Database, copy the connection string (**URI**); this is `DATABASE_URL`.
 3. From your machine, apply the schema once:
    ```bash
    cd backend
@@ -142,14 +191,11 @@ fly secrets set \
   CORS_ORIGIN="https://<your-app>.vercel.app"   # fill in after step 3
 fly deploy
 ```
-- `Dockerfile` builds the image (Prisma client + compiled `dist`); `fly.toml`
-  keeps one 512 MB machine always on with a `/health` check.
-- You get a URL like `https://civicfix-api.fly.dev`.
-- Redeploy after any backend change with `fly deploy` (or wire up the Fly
-  GitHub Action for auto-deploy on push).
+`Dockerfile` builds the image and `fly.toml` keeps one 512 MB machine always on
+with a `/health` check. You get a URL like `https://civicfix-api.fly.dev`.
 
 ### 3. Web: Vercel
-- Add New → Project → import this repo, **Root Directory: `frontend`**.
+- Add New, Project, import this repo, **Root Directory: `frontend`**.
 - Environment variables:
   - `BACKEND_URL` = your Fly URL (e.g. `https://civicfix-api.fly.dev`)
   - `NEXT_PUBLIC_API_URL` = `/api/v1`
@@ -170,7 +216,7 @@ Vercel redeploys automatically on every push to `main`; redeploy the API with
 
 > **Free-tier notes:** Fly requires a card on file but keeps a single small
 > machine effectively free; `min_machines_running = 1` avoids cold starts.
-> Supabase free projects pause after ~7 days idle (resume from the dashboard).
-> Uploaded images live on the machine's ephemeral disk, so they are cleared on
-> redeploy. Attach a Fly volume, or wire up Supabase Storage / Cloudinary in
-> `backend/src/lib/uploads.ts`, if you need them to persist.
+> Supabase free projects pause after about 7 days idle (resume from the
+> dashboard). Uploaded images live on the machine's ephemeral disk, so they are
+> cleared on redeploy. Attach a Fly volume, or wire up Supabase Storage or
+> Cloudinary in `backend/src/lib/uploads.ts`, if you need them to persist.
