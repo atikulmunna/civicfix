@@ -35,6 +35,24 @@ const DEPARTMENTS = [
   { name: 'Parks & Recreation', contactEmail: 'parks@city.gov' },
 ];
 
+// Curated, topical stock photos per category (Unsplash) so seeded reports look
+// like real civic issues instead of random stock landscapes.
+const CATEGORY_PHOTOS: Record<string, string[]> = {
+  'Roads & Potholes': ['1657811146537-90d7d8133224', '1560782202-154b39d57ef2', '1739517747161-fe59efffe64b'],
+  'Street Lighting': ['1782821826858-9cf8296f3ca2', '1675196395051-cea90e1642b2', '1762120658004-db6e194ea40e'],
+  'Garbage & Sanitation': ['1762805545352-4ac5355b0f0b', '1621408422423-4392b2711f69', '1580767114670-c778cc443675'],
+  'Water & Drainage': ['1657069345471-c54f2432b79c', '1609520778163-a16fb3862581', '1621871567192-e29a9b8b5aee'],
+  'Public Safety': ['1604716053460-3f66248bf8de', '1517776832751-0a7e6993de03', '1543097840-fc84594dd9e6'],
+  'Parks & Greenery': ['1445937888010-cc262f556033', '1595183670211-2b42f6663bf7', '1604606672490-5597473d8a69'],
+  'Electricity': ['1554735231-2250c114a31d', '1574173799345-e672ea143892', '1473341304170-971dccb5ac1e'],
+};
+
+function photoFor(categoryName: string, n: number): string {
+  const pool = CATEGORY_PHOTOS[categoryName] ?? CATEGORY_PHOTOS['Roads & Potholes'];
+  const id = pool[n % pool.length];
+  return `https://images.unsplash.com/photo-${id}?w=800&h=600&fit=crop&auto=format&q=70`;
+}
+
 // Canonical paths through the §26 state machine for building histories.
 function pathTo(target: ReportStatus): ReportStatus[] {
   const linear: ReportStatus[] = ['SUBMITTED', 'UNDER_REVIEW', 'VERIFIED', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED'];
@@ -56,17 +74,16 @@ const STATUS_PLAN: ReportStatus[] = [
   'SUBMITTED', 'VERIFIED', 'IN_PROGRESS', 'RESOLVED', 'ASSIGNED',
 ];
 const SEVERITIES: Severity[] = ['low', 'medium', 'high', 'urgent'];
-const TITLES = [
-  'Large pothole on the main road', 'Streetlight out for a week', 'Overflowing garbage bin',
-  'Blocked drain causing flooding', 'Broken footpath railing', 'Fallen tree branch on path',
-  'Exposed electrical wire', 'Cracked road near school', 'Dim lighting in the park',
-  'Illegal dumping by the canal', 'Sewage leak on the street', 'Missing manhole cover',
-  'Faded pedestrian crossing', 'Water main burst', 'Damaged bus stop shelter',
-  'Graffiti on public wall', 'Stagnant water breeding mosquitoes', 'Loose paving stones',
-  'Duplicate pothole report', 'Need more info: vague location', 'Garbage not collected',
-  'Traffic signal malfunction', 'Park bench broken', 'Drain cleared after report',
-  'Streetlight flickering at night',
-];
+// Titles grouped by category so each report's title, category, and photo agree.
+const CATEGORY_TITLES: Record<string, string[]> = {
+  'Roads & Potholes': ['Large pothole on the main road', 'Cracked road near the school', 'Faded pedestrian crossing', 'Sunken road after the rains'],
+  'Street Lighting': ['Streetlight out for a week', 'Streetlight flickering at night', 'Dim lighting in the park', 'Leaning, damaged lamp post'],
+  'Garbage & Sanitation': ['Overflowing garbage bin', 'Garbage not collected', 'Illegal dumping by the canal', 'Litter piling up at the corner'],
+  'Water & Drainage': ['Blocked drain causing flooding', 'Water main burst', 'Sewage leak on the street', 'Stagnant water breeding mosquitoes'],
+  'Public Safety': ['Graffiti on a public wall', 'Broken footpath railing', 'Missing manhole cover', 'Loose paving stones on the walkway'],
+  'Parks & Greenery': ['Park bench broken', 'Fallen tree branch on the path', 'Overgrown bushes blocking the trail', 'Damaged playground equipment'],
+  'Electricity': ['Exposed electrical wire', 'Sparking utility pole', 'Frequent power cuts on the block', 'Sagging power line over the road'],
+};
 
 async function reset(): Promise<void> {
   // Reports cascade to images/comments/votes/subscriptions/history/assignments/
@@ -125,6 +142,8 @@ async function main(): Promise<void> {
   for (let i = 0; i < STATUS_PLAN.length; i++) {
     const status = STATUS_PLAN[i];
     const category = categories[i % categories.length];
+    const catTitles = CATEGORY_TITLES[category.name] ?? ['Civic issue'];
+    const title = catTitles[Math.floor(i / categories.length) % catTitles.length];
     const reporter = citizens[i % citizens.length];
     const createdAt = new Date(now - (STATUS_PLAN.length - i) * 2 * DAY);
     const assigned = ASSIGNED_STATES.includes(status);
@@ -134,8 +153,8 @@ async function main(): Promise<void> {
     const report = await prisma.report.create({
       data: {
         userId: reporter.id,
-        title: TITLES[i] ?? `Civic issue #${i + 1}`,
-        description: `${TITLES[i] ?? 'Issue'} reported by a resident. Please look into this as soon as possible.`,
+        title,
+        description: `${title} reported by a resident. Please look into this as soon as possible.`,
         categoryId: category.id,
         severity: SEVERITIES[i % SEVERITIES.length],
         latitude: DHAKA.lat + (i % 7) * 0.004 - 0.014,
@@ -181,13 +200,13 @@ async function main(): Promise<void> {
     if (report.id === firstResolvedId) {
       await prisma.reportImage.createMany({
         data: [
-          { reportId: report.id, imageUrl: `https://picsum.photos/seed/before${i}/800/600`, imageType: 'before', uploadedBy: reporter.id },
-          { reportId: report.id, imageUrl: `https://picsum.photos/seed/after${i}/800/600`, imageType: 'after', uploadedBy: worker1.id },
+          { reportId: report.id, imageUrl: photoFor(category.name, 0), imageType: 'before', uploadedBy: reporter.id },
+          { reportId: report.id, imageUrl: photoFor(category.name, 1), imageType: 'after', uploadedBy: worker1.id },
         ],
       });
     } else {
       await prisma.reportImage.create({
-        data: { reportId: report.id, imageUrl: `https://picsum.photos/seed/rep${i}/800/600`, imageType: 'evidence', uploadedBy: reporter.id },
+        data: { reportId: report.id, imageUrl: photoFor(category.name, i), imageType: 'evidence', uploadedBy: reporter.id },
       });
     }
   }
