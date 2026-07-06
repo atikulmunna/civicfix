@@ -6,7 +6,9 @@ neighbours confirm and discuss them, admins verify and route them to the right
 department, and departments resolve them. Every report is tracked end to end
 through an explicit status lifecycle with in-app notifications.
 
-**Live demo:** https://civicfix-mu.vercel.app &nbsp;·&nbsp; **API:** https://civicfix-api.fly.dev
+[![Live Demo](https://img.shields.io/badge/Live_Demo-0d9488?style=for-the-badge&logo=vercel&logoColor=white)](https://civicfix-mu.vercel.app)
+&nbsp;&nbsp;
+[![API Health](https://img.shields.io/badge/API_Health-0f172a?style=for-the-badge&logo=flydotio&logoColor=white)](https://civicfix-api.fly.dev/health)
 
 ![CivicFix home page](docs/screenshots/01-home.png)
 
@@ -40,22 +42,9 @@ the password **`Password123!`**):
 
 ## Screenshots
 
-| Interactive map | Reports feed |
-|---|---|
-| [![Map](docs/screenshots/02-map.png)](docs/screenshots/02-map.png) | [![Reports](docs/screenshots/03-reports.png)](docs/screenshots/03-reports.png) |
-
-| Report detail and status history | Report an issue |
-|---|---|
-| [![Report detail](docs/screenshots/04-report-detail.png)](docs/screenshots/04-report-detail.png) | [![New report](docs/screenshots/05-new-report.png)](docs/screenshots/05-new-report.png) |
-
-| Admin dashboard | Analytics |
-|---|---|
-| [![Admin dashboard](docs/screenshots/06-admin-dashboard.png)](docs/screenshots/06-admin-dashboard.png) | [![Analytics](docs/screenshots/07-admin-analytics.png)](docs/screenshots/07-admin-analytics.png) |
-
-Admin moderation, with the guarded status transitions, department assignment,
-and resolve / mark-duplicate actions:
-
-[![Admin moderation](docs/screenshots/09-admin-report-detail.png)](docs/screenshots/09-admin-report-detail.png)
+The image above is the landing page. A full walkthrough (interactive map, reports
+feed, report detail with status history, the report form, admin dashboard,
+analytics, and moderation) is in **[`docs/screenshots/`](docs/screenshots)**.
 
 ## Tech stack
 
