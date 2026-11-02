@@ -29,12 +29,10 @@ describe('GET /health/ready (readiness)', () => {
 
   it('returns 503 when the database fails, while liveness stays up', async () => {
     vi.spyOn(prisma, '$queryRaw').mockRejectedValueOnce(new Error('connection refused'));
-    const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     const res = await request(app).get('/health/ready');
     expect(res.status).toBe(503);
     expect(res.body).toMatchObject({ success: false, code: 'SERVICE_UNAVAILABLE' });
-    expect(logged).toHaveBeenCalledOnce();
 
     expect((await request(app).get('/health')).status).toBe(200);
   });

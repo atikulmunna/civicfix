@@ -18,6 +18,7 @@ import { fileTypeFromBuffer } from 'file-type';
 import sharp from 'sharp';
 import { env } from '../config/env.js';
 import { ApiError } from './errors.js';
+import { logger } from './logger.js';
 import { objectStore } from './storage.js';
 
 /** Accepted input types (verified by magic bytes). Output is always WebP. */
@@ -113,7 +114,7 @@ export async function deleteStoredImages(keys: readonly string[]): Promise<void>
   try {
     await objectStore.delete(keys);
   } catch (err) {
-    console.error('[uploads] failed to delete stored images', { keys, err });
+    logger.error({ err, keys }, 'failed to delete stored images');
   }
 }
 

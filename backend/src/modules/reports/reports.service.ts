@@ -141,6 +141,18 @@ export async function getReportById(id: string, actor: Actor | null) {
   return { ...toPublicReport(report, isAdmin(actor)), counts };
 }
 
+/**
+ * Sort orders for the report list. "Most confirmed" uses the confirm_count
+ * column kept in sync by a trigger on votes, so every sort runs as one indexed
+ * query with the same filters (LIST-005).
+ */
+const ORDER_BY: Record<ListReportsInput['sort'], Prisma.ReportOrderByWithRelationInput[]> = {
+  newest: [{ createdAt: 'desc' }],
+  oldest: [{ createdAt: 'asc' }],
+  priority: [{ priorityScore: 'desc' }, { createdAt: 'desc' }],
+  most_confirmed: [{ confirmCount: 'desc' }, { createdAt: 'desc' }],
+};
+
 export async function listReports(input: ListReportsInput) {
   const where: Prisma.ReportWhereInput = {};
   if (input.categoryId) where.categoryId = input.categoryId;
@@ -153,18 +165,7 @@ export async function listReports(input: ListReportsInput) {
     ];
   }
 
-  // most_confirmed needs ordering by a filtered relation count, which Prisma
-  // can't express in orderBy, so handle it separately (LIST-005).
-  if (input.sort === 'most_confirmed') {
-    return listByMostConfirmed(where, input.page, input.limit);
-  }
-
-  const orderBy: Prisma.ReportOrderByWithRelationInput[] =
-    input.sort === 'oldest'
-      ? [{ createdAt: 'asc' }]
-      : input.sort === 'priority'
-        ? [{ priorityScore: 'desc' }, { createdAt: 'desc' }]
-        : [{ createdAt: 'desc' }];
+  const orderBy = ORDER_BY[input.sort];
 
   const [total, rows] = await prisma.$transaction([
     prisma.report.count({ where }),
@@ -178,37 +179,6 @@ export async function listReports(input: ListReportsInput) {
   ]);
 
   return paginated(rows, input.page, input.limit, await voteCountsFor(rows), total);
-}
-
-/**
- * List ordered by confirm count desc (then newest). Fetches matching ids +
- * confirm counts, sorts, then hydrates only the requested page.
- */
-async function listByMostConfirmed(where: Prisma.ReportWhereInput, page: number, limit: number) {
-  const idRows = await prisma.report.findMany({ where, select: { id: true, createdAt: true } });
-  const confirmGroups = await prisma.vote.groupBy({
-    by: ['reportId'],
-    where: { reportId: { in: idRows.map((r) => r.id) }, voteType: 'confirm' },
-    _count: { _all: true },
-  });
-  const confirms = new Map(confirmGroups.map((g) => [g.reportId, g._count._all]));
-
-  idRows.sort((a, b) => {
-    const diff = (confirms.get(b.id) ?? 0) - (confirms.get(a.id) ?? 0);
-    return diff !== 0 ? diff : b.createdAt.getTime() - a.createdAt.getTime();
-  });
-
-  const total = idRows.length;
-  const pageIds = idRows.slice((page - 1) * limit, page * limit).map((r) => r.id);
-  const rows = await prisma.report.findMany({
-    where: { id: { in: pageIds } },
-    include: { images: { orderBy: { createdAt: 'asc' } }, category: true },
-  });
-  // Restore confirm-count order lost by findMany.
-  const byId = new Map(rows.map((r) => [r.id, r]));
-  const ordered = pageIds.map((id) => byId.get(id)).filter((r): r is (typeof rows)[number] => !!r);
-
-  return paginated(ordered, page, limit, await voteCountsFor(ordered), total);
 }
 
 async function voteCountsFor(rows: { id: string }[]) {

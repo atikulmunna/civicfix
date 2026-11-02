@@ -6,6 +6,7 @@
 import type { User, UserRole } from '@prisma/client';
 import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 import { isUniqueViolation } from '../../lib/prisma-errors.js';
 import { assertPasswordPolicy, hashPassword, verifyPassword } from './password.js';
 import { generateRefreshToken, hashRefreshToken, signAccessToken } from './tokens.js';
@@ -20,6 +21,8 @@ export interface PublicUser {
   trustScore: number;
   phone: string | null;
   phoneIsPublic: boolean;
+  /** True after an admin reset: the client should ask for a new password. */
+  mustChangePassword: boolean;
   createdAt: Date;
 }
 
@@ -33,6 +36,7 @@ export function toPublicUser(u: User): PublicUser {
     trustScore: u.trustScore,
     phone: u.phone,
     phoneIsPublic: u.phoneIsPublic,
+    mustChangePassword: u.mustChangePassword,
     createdAt: u.createdAt,
   };
 }
@@ -145,9 +149,7 @@ export async function refresh(rawToken: string): Promise<IssuedSession> {
     // simply fails.
     if (now.getTime() - record.revokedAt.getTime() > REUSE_GRACE_MS) {
       await revokeAllSessions(record.userId);
-      console.warn('[auth] refresh token reuse detected; revoked all sessions', {
-        userId: record.userId,
-      });
+      logger.warn({ userId: record.userId }, 'refresh token reuse detected; revoked all sessions');
     }
     throw invalidSession();
   }
@@ -176,6 +178,44 @@ export async function logout(rawToken: string | undefined): Promise<void> {
     where: { tokenHash, revokedAt: null },
     data: { revokedAt: new Date() },
   });
+}
+
+/**
+ * Change the signed-in user's password (R19). Requires the current password,
+ * applies the password policy, and refuses reusing the current one. Every
+ * session of the user is revoked (so a stolen session cannot outlive the
+ * change) and a fresh one is issued for the caller.
+ */
+export async function changePassword(
+  userId: string,
+  currentPassword: string,
+  newPassword: string,
+): Promise<{ user: PublicUser; session: IssuedSession }> {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user?.isActive) {
+    throw new ApiError('AUTH_REQUIRED', 'Please sign in again.');
+  }
+  if (!(await verifyPassword(user.passwordHash, currentPassword).catch(() => false))) {
+    throw new ApiError('VALIDATION_ERROR', 'Your current password is incorrect.');
+  }
+  assertPasswordPolicy(newPassword);
+  if (await verifyPassword(user.passwordHash, newPassword).catch(() => false)) {
+    throw new ApiError('VALIDATION_ERROR', 'Choose a password different from your current one.');
+  }
+
+  const passwordHash = await hashPassword(newPassword);
+  const [updated] = await prisma.$transaction([
+    prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash, mustChangePassword: false },
+    }),
+    prisma.refreshToken.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    }),
+  ]);
+  const session = await issueSession(updated.id, updated.role);
+  return { user: toPublicUser(updated), session };
 }
 
 export async function getUserById(id: string): Promise<PublicUser | null> {

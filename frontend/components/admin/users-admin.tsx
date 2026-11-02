@@ -6,6 +6,7 @@ import { api, errorMessage } from '@/lib/api';
 import type { Paginated, Role } from '@/lib/types';
 import { queryKeys } from '@/lib/query-keys';
 import { useAuth } from '@/components/auth-context';
+import { canManageUser } from '@/lib/permissions';
 import { useToast } from '@/components/toast';
 import { Button, Input, LoadError, Select, Spinner } from '@/components/ui';
 
@@ -27,6 +28,9 @@ export function UsersAdmin() {
   const isSuper = user?.role === 'super_admin';
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  // Password reset: the account awaiting confirmation, then the one-time result.
+  const [confirmReset, setConfirmReset] = useState<AdminUser | null>(null);
+  const [issued, setIssued] = useState<{ email: string; password: string } | null>(null);
 
   const params = { search: search || undefined, page, limit: 20 };
   const users = useQuery({
@@ -44,6 +48,26 @@ export function UsersAdmin() {
     onSuccess: () => refreshUsers(),
     onError: (err) => toast(errorMessage(err, 'Failed.'), 'error'),
   });
+
+  const resetPassword = useMutation({
+    mutationFn: (u: AdminUser) =>
+      api.post<{ temporaryPassword: string }>(`/admin/users/${u.id}/reset-password`),
+    onSuccess: (data, u) => {
+      setConfirmReset(null);
+      setIssued({ email: u.email, password: data.temporaryPassword });
+    },
+    onError: (err) => toast(errorMessage(err, 'Could not reset the password.'), 'error'),
+  });
+
+  async function copyIssued() {
+    if (!issued) return;
+    try {
+      await navigator.clipboard.writeText(issued.password);
+      toast('Temporary password copied.', 'success');
+    } catch {
+      toast('Copy failed; select the password and copy it manually.', 'error');
+    }
+  }
 
   const changeRole = useMutation({
     mutationFn: ({ u, role }: { u: AdminUser; role: Role }) =>
@@ -66,6 +90,51 @@ export function UsersAdmin() {
         }}
         aria-label="Search users"
       />
+      {issued && (
+        <div role="status" className="rounded-lg border border-teal-200 bg-teal-50 p-4 text-sm">
+          <p className="text-slate-800">
+            Temporary password for <strong>{issued.email}</strong>. It is shown only once; share it
+            privately. They will be asked to choose a new password when they sign in.
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <code
+              data-testid="temporary-password"
+              className="rounded bg-white px-3 py-1.5 font-mono text-base text-slate-900"
+            >
+              {issued.password}
+            </code>
+            <Button variant="secondary" onClick={() => void copyIssued()}>
+              Copy
+            </Button>
+            <Button variant="secondary" onClick={() => setIssued(null)}>
+              Done
+            </Button>
+          </div>
+        </div>
+      )}
+      {confirmReset && (
+        <div
+          role="alertdialog"
+          aria-label="Confirm password reset"
+          className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm"
+        >
+          <p className="text-slate-800">
+            Reset the password for <strong>{confirmReset.email}</strong>? They will be signed out
+            everywhere and need the temporary password to sign in.
+          </p>
+          <div className="mt-3 flex gap-2">
+            <Button
+              disabled={resetPassword.isPending}
+              onClick={() => resetPassword.mutate(confirmReset)}
+            >
+              {resetPassword.isPending ? 'Resetting…' : 'Reset password'}
+            </Button>
+            <Button variant="secondary" onClick={() => setConfirmReset(null)}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
       {users.isPending ? (
         <Spinner />
       ) : users.isError ? (
@@ -112,10 +181,21 @@ export function UsersAdmin() {
                     )}
                   </td>
                   <td className="text-right">
-                    {u.id !== user?.id && (
-                      <Button variant="secondary" onClick={() => toggleActive.mutate(u)}>
-                        {u.isActive ? 'Deactivate' : 'Activate'}
-                      </Button>
+                    {canManageUser(user, u) && (
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="secondary"
+                          onClick={() => {
+                            setIssued(null);
+                            setConfirmReset(u);
+                          }}
+                        >
+                          Reset password
+                        </Button>
+                        <Button variant="secondary" onClick={() => toggleActive.mutate(u)}>
+                          {u.isActive ? 'Deactivate' : 'Activate'}
+                        </Button>
+                      </div>
                     )}
                   </td>
                 </tr>

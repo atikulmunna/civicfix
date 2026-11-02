@@ -23,9 +23,15 @@ function LoginForm() {
     setError(null);
     setBusy(true);
     try {
-      await login(email, password);
-      toast('Signed in.', 'success');
-      router.push(params.get('next') || '/');
+      const signedIn = await login(email, password);
+      if (signedIn.mustChangePassword) {
+        // An admin reset the password: choosing a new one comes first.
+        toast('Please choose a new password.', 'info');
+        router.push('/me#change-password');
+      } else {
+        toast('Signed in.', 'success');
+        router.push(params.get('next') || '/');
+      }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.');
     } finally {

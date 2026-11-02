@@ -2,16 +2,18 @@
  * Express application factory. Kept separate from server.ts so tests can
  * import a configured app without binding a port.
  */
-import express, { type NextFunction, type Request, type Response } from 'express';
+import { randomUUID } from 'node:crypto';
+import express from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import helmet from 'helmet';
-import multer from 'multer';
+import { pinoHttp } from 'pino-http';
 import { env } from './config/env.js';
 import { ApiError } from './lib/errors.js';
+import { errorHandler } from './lib/error-handler.js';
 import { checkDatabase } from './lib/health.js';
-import { apiErrorFromPrisma } from './lib/prisma-errors.js';
 import { asyncHandler, routeParam, sendSuccess } from './lib/http.js';
+import { logger } from './lib/logger.js';
 import { LocalStore, objectStore, STORAGE_KEY_PATTERN } from './lib/storage.js';
 import { authRouter } from './modules/auth/auth.routes.js';
 import { reportsRouter } from './modules/reports/reports.routes.js';
@@ -32,6 +34,9 @@ import {
 } from './modules/admin/admin-crud.routes.js';
 import { analyticsRouter } from './modules/admin/analytics.routes.js';
 
+/** A caller-supplied X-Request-Id is reused only if it looks like an id. */
+const REQUEST_ID_PATTERN = /^[\w-]{8,64}$/;
+
 export function buildApp() {
   const app = express();
 
@@ -39,6 +44,34 @@ export function buildApp() {
   // req.ip is the address that connected to them, never a client-supplied
   // X-Forwarded-For value. See lib/client-ip.ts for the web-proxy hop.
   app.set('trust proxy', env.TRUST_PROXY_HOPS);
+
+  // One structured log line per request, with a request id that is echoed in
+  // X-Request-Id (and in 500 responses) so reports can be traced. Fly's
+  // liveness check hits /health every 30 s and is not worth logging.
+  app.use(
+    pinoHttp({
+      logger,
+      genReqId: (req, res) => {
+        const incoming = req.headers['x-request-id'];
+        const id =
+          typeof incoming === 'string' && REQUEST_ID_PATTERN.test(incoming)
+            ? incoming
+            : randomUUID();
+        res.setHeader('X-Request-Id', id);
+        return id;
+      },
+      autoLogging: { ignore: (req) => req.url === '/health' },
+      customLogLevel: (_req, res, err) => (err || res.statusCode >= 500 ? 'error' : 'info'),
+      serializers: {
+        req: (req: { id: unknown; method: string; url: string }) => ({
+          id: req.id,
+          method: req.method,
+          url: req.url,
+        }),
+        res: (res: { statusCode: number }) => ({ statusCode: res.statusCode }),
+      },
+    }),
+  );
 
   app.use(helmet()); // baseline security headers (SEC-013)
   app.use(express.json());
@@ -54,12 +87,12 @@ export function buildApp() {
   // Readiness (uptime monitor): the database answers.
   app.get(
     '/health/ready',
-    asyncHandler(async (_req, res) => {
+    asyncHandler(async (req, res) => {
       res.set('Cache-Control', 'no-store');
       try {
         await checkDatabase();
       } catch (err) {
-        console.error('[health] database check failed', err);
+        req.log.error({ err }, 'database check failed');
         throw new ApiError('SERVICE_UNAVAILABLE', 'Database unavailable.');
       }
       sendSuccess(res, { status: 'ready', checks: { database: 'ok' } });
@@ -108,36 +141,8 @@ export function buildApp() {
     res.status(404).json({ success: false, message: 'Not found.', code: 'NOT_FOUND' });
   });
 
-  // Central error handler → standard error envelope (§22.1).
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
-    // Known database outcomes (duplicate, missing record, malformed id) are
-    // client or concurrency errors, not server faults: see lib/prisma-errors.ts.
-    const apiError = err instanceof ApiError ? err : apiErrorFromPrisma(err);
-    if (apiError) {
-      res.status(apiError.status).json({
-        success: false,
-        message: apiError.message,
-        code: apiError.code,
-        ...(apiError.details ? { details: apiError.details } : {}),
-      });
-      return;
-    }
-    // Multer upload failures (e.g. file too large) → VALIDATION_ERROR.
-    if (err instanceof multer.MulterError) {
-      const message =
-        err.code === 'LIMIT_FILE_SIZE'
-          ? `Each image must be at most ${env.MAX_UPLOAD_BYTES} bytes.`
-          : `Upload error: ${err.message}.`;
-      res.status(400).json({ success: false, message, code: 'VALIDATION_ERROR' });
-      return;
-    }
-    // Unexpected: log server-side, return generic 500 (don't leak internals).
-    console.error('[unhandled error]', err);
-    res
-      .status(500)
-      .json({ success: false, message: 'Internal server error.', code: 'INTERNAL_ERROR' });
-  });
+  // Central error handler: standard error envelope (§22.1).
+  app.use(errorHandler);
 
   return app;
 }

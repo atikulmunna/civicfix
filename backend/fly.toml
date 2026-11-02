@@ -5,6 +5,10 @@
 
 app = 'civicfix-api'
 primary_region = 'sin'
+# Graceful shutdown (src/lib/shutdown.ts): the API drains in-flight requests
+# on SIGTERM and exits within 8 s, inside this 10 s window.
+kill_signal = 'SIGTERM'
+kill_timeout = '10s'
 
 [build]
 

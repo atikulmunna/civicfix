@@ -193,6 +193,28 @@ describe('users (§9.3)', () => {
       .send({ isActive: true });
   });
 
+  it('stops admins from deactivating admins or super admins; super admins can', async () => {
+    const superAdmin = await prisma.user.findUniqueOrThrow({ where: { email: emails.super } });
+    const admin = await prisma.user.findUniqueOrThrow({ where: { email: emails.admin } });
+
+    const adminOnSuper = await request(app)
+      .patch(`/api/v1/admin/users/${superAdmin.id}/status`)
+      .set(...bearer(adminToken))
+      .send({ isActive: false });
+    expect(adminOnSuper.status).toBe(403);
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: superAdmin.id } })).isActive).toBe(
+      true,
+    );
+
+    const superOnAdmin = await request(app)
+      .patch(`/api/v1/admin/users/${admin.id}/status`)
+      .set(...bearer(superToken))
+      .send({ isActive: false });
+    expect(superOnAdmin.status).toBe(200);
+    // Restore so later tests can use the admin token.
+    await prisma.user.update({ where: { id: admin.id }, data: { isActive: true } });
+  });
+
   it('blocks changing your own status', async () => {
     const me = await prisma.user.findUnique({ where: { email: emails.admin } });
     const res = await request(app)
@@ -225,5 +247,67 @@ describe('users (§9.3)', () => {
       .set(...bearer(superToken))
       .send({ role: 'admin' });
     expect(res.status).toBe(400);
+  });
+});
+
+describe('admin password reset (R19)', () => {
+  const signIn = (password: string) =>
+    request(app).post('/api/v1/auth/login').send({ email: emails.target, password });
+
+  it('issues a one-time password, signs the user out and asks for a new one', async () => {
+    const before = await signIn('CorrectHorse9');
+    const oldRefresh = (before.headers['set-cookie'] as unknown as string[]).find((c) =>
+      c.startsWith('refresh_token='),
+    )!;
+
+    const res = await request(app)
+      .post(`/api/v1/admin/users/${targetId}/reset-password`)
+      .set(...bearer(adminToken));
+    expect(res.status).toBe(200);
+    const temporary = res.body.data.temporaryPassword as string;
+    expect(temporary).toMatch(/^[\w-]{16}$/);
+    expect(res.body.data.user.mustChangePassword).toBe(true);
+    expect(JSON.stringify(res.body)).not.toContain('passwordHash');
+
+    // Existing sessions end; the old password no longer works.
+    const refreshed = await request(app).post('/api/v1/auth/refresh').set('Cookie', oldRefresh);
+    expect(refreshed.status).toBe(401);
+    expect((await signIn('CorrectHorse9')).status).toBe(400);
+
+    // The temporary password works and the client is told to change it.
+    const withTemp = await signIn(temporary);
+    expect(withTemp.status).toBe(200);
+    expect(withTemp.body.data.user.mustChangePassword).toBe(true);
+
+    // Changing it clears the flag (and restores the fixture password).
+    const access = (withTemp.headers['set-cookie'] as unknown as string[]).find((c) =>
+      c.startsWith('access_token='),
+    )!;
+    const changed = await request(app)
+      .post('/api/v1/auth/change-password')
+      .set('Cookie', access)
+      .send({ currentPassword: temporary, newPassword: 'CorrectHorse9' });
+    expect(changed.status).toBe(200);
+    expect(changed.body.data.user.mustChangePassword).toBe(false);
+  });
+
+  it('follows the account hierarchy and is not a way to change your own password', async () => {
+    const superAdmin = await prisma.user.findUniqueOrThrow({ where: { email: emails.super } });
+    const admin = await prisma.user.findUniqueOrThrow({ where: { email: emails.admin } });
+
+    const adminOnSuper = await request(app)
+      .post(`/api/v1/admin/users/${superAdmin.id}/reset-password`)
+      .set(...bearer(adminToken));
+    expect(adminOnSuper.status).toBe(403);
+
+    const self = await request(app)
+      .post(`/api/v1/admin/users/${admin.id}/reset-password`)
+      .set(...bearer(adminToken));
+    expect(self.status).toBe(400);
+
+    const citizen = await request(app)
+      .post(`/api/v1/admin/users/${targetId}/reset-password`)
+      .set(...bearer(citizenToken));
+    expect(citizen.status).toBe(403);
   });
 });
