@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { use, useState } from 'react';
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -99,14 +100,15 @@ export function Moderation({ id }: { id: string }) {
         {report.images && report.images.length > 0 && (
           <div className="grid grid-cols-3 gap-2">
             {report.images.map((img) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={img.id}
-                src={assetUrl(img.imageUrl)}
-                alt=""
-                className="aspect-square rounded object-cover"
-                loading="lazy"
-              />
+              <div key={img.id} className="relative aspect-square">
+                <Image
+                  src={assetUrl(img.imageUrl)}
+                  alt={`${img.imageType} photo`}
+                  fill
+                  sizes="(min-width: 1024px) 20vw, 33vw"
+                  className="rounded object-cover"
+                />
+              </div>
             ))}
           </div>
         )}

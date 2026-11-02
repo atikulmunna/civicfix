@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import type { Report } from '@/lib/types';
 import { assetUrl } from '@/lib/api';
@@ -18,12 +19,12 @@ export function ReportCard({
       className="group flex gap-4 rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
     >
       {thumb ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <Image
           src={assetUrl(thumb)}
           alt=""
+          width={96}
+          height={96}
           className="h-24 w-24 shrink-0 rounded-xl object-cover ring-1 ring-slate-200/70"
-          loading="lazy"
         />
       ) : (
         <div className="grid h-24 w-24 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400">

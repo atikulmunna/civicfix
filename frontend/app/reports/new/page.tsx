@@ -222,6 +222,8 @@ function NewReportForm() {
             {previews.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-2">
                 {previews.map((p) => (
+                  // Local blob: previews of files not yet uploaded; the image
+                  // optimizer cannot fetch them, so a plain img is correct here.
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     key={p.url}

@@ -1,6 +1,7 @@
 'use client';
 
 import { use } from 'react';
+import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
 import { api, assetUrl, errorMessage } from '@/lib/api';
 import { queryKeys } from '@/lib/query-keys';
@@ -48,14 +49,15 @@ export function ReportDetail({ id }: { id: string }) {
         {report.images && report.images.length > 0 && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {report.images.map((img) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={img.id}
-                src={assetUrl(img.imageUrl)}
-                alt={img.imageType}
-                className="aspect-square w-full rounded-md object-cover"
-                loading="lazy"
-              />
+              <div key={img.id} className="relative aspect-square w-full">
+                <Image
+                  src={assetUrl(img.imageUrl)}
+                  alt={`${img.imageType} photo`}
+                  fill
+                  sizes="(min-width: 1024px) 22vw, (min-width: 640px) 33vw, 50vw"
+                  className="rounded-md object-cover"
+                />
+              </div>
             ))}
           </div>
         )}
