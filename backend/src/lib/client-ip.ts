@@ -17,6 +17,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { isIP } from 'node:net';
 import type { Request } from 'express';
 import { env } from '../config/env.js';
+import { logger } from './logger.js';
 
 export const PROXY_SECRET_HEADER = 'x-civicfix-proxy-secret';
 export const CLIENT_IP_HEADER = 'x-civicfix-client-ip';
@@ -64,11 +65,9 @@ function reportOnce(status: SecretStatus): void {
   if (status === 'absent' || reported.has(status)) return;
   reported.add(status);
   if (status === 'match') {
-    console.info('[client-ip] web proxy authenticated; rate limits use its forwarded client IP');
+    logger.info('web proxy authenticated; rate limits use its forwarded client IP');
   } else {
-    console.warn(
-      `[client-ip] web proxy secret ${status}; check PROXY_SHARED_SECRET on Fly and Vercel`,
-    );
+    logger.warn(`web proxy secret ${status}; check PROXY_SHARED_SECRET on Fly and Vercel`);
   }
 }
 

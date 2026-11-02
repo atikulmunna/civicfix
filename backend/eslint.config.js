@@ -29,7 +29,14 @@ export default defineConfig(
       // Numbers stringify predictably in templates (e.g. byte limits, ports);
       // everything else (objects, nullish, any) must still be converted explicitly.
       '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
+      // App code logs through lib/logger.ts (structured, redacted, leveled).
+      'no-console': 'error',
     },
+  },
+  {
+    // The seed script is a CLI that reports to the terminal.
+    files: ['prisma/seed.ts'],
+    rules: { 'no-console': 'off' },
   },
   {
     files: ['src/**/*.test.ts'],

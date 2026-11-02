@@ -6,6 +6,7 @@
 import type { User, UserRole } from '@prisma/client';
 import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 import { isUniqueViolation } from '../../lib/prisma-errors.js';
 import { assertPasswordPolicy, hashPassword, verifyPassword } from './password.js';
 import { generateRefreshToken, hashRefreshToken, signAccessToken } from './tokens.js';
@@ -145,9 +146,7 @@ export async function refresh(rawToken: string): Promise<IssuedSession> {
     // simply fails.
     if (now.getTime() - record.revokedAt.getTime() > REUSE_GRACE_MS) {
       await revokeAllSessions(record.userId);
-      console.warn('[auth] refresh token reuse detected; revoked all sessions', {
-        userId: record.userId,
-      });
+      logger.warn({ userId: record.userId }, 'refresh token reuse detected; revoked all sessions');
     }
     throw invalidSession();
   }
