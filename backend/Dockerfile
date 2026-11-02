@@ -4,7 +4,7 @@
 # Node 24 LTS (matches .nvmrc and package.json engines).
 
 # ---- build ----
-FROM node:24-slim AS build
+FROM node:26-slim AS build
 # openssl is required by Prisma's query engine (both to generate and at runtime).
 RUN apt-get update && apt-get install -y --no-install-recommends openssl \
   && rm -rf /var/lib/apt/lists/*
@@ -26,7 +26,7 @@ RUN npm run build
 RUN npm prune --omit=dev
 
 # ---- runtime ----
-FROM node:24-slim
+FROM node:26-slim
 RUN apt-get update && apt-get install -y --no-install-recommends openssl \
   && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
