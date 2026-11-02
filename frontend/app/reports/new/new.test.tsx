@@ -74,7 +74,7 @@ describe('NewReportPage', () => {
     await user.click(screen.getByRole('button', { name: /submit report/i }));
 
     await waitFor(() => expect(postForm).toHaveBeenCalledWith('/reports', expect.any(FormData)));
-    const fd = postForm.mock.calls[0][1] as FormData;
+    const fd = postForm.mock.calls[0]?.[1] as FormData;
     expect(fd.get('title')).toBe('Broken light');
     expect(fd.get('categoryId')).toBe('c1');
     expect(fd.get('latitude')).toBe('23.8');

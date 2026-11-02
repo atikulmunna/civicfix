@@ -1,0 +1,11 @@
+{
+  // Type-checks tests and test tooling, which tsconfig.json leaves out so that
+  // `next build` checks only app code. Run by `npm run typecheck` (and CI).
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false,
+    "types": ["vitest/globals", "@testing-library/jest-dom"]
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.mts"],
+  "exclude": ["node_modules", ".next"]
+}
