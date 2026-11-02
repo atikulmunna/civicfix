@@ -1,13 +1,18 @@
+import path from 'node:path';
 import type { NextConfig } from 'next';
 
 // In production we proxy the API + uploads through this app so the browser only
 // talks to one origin, which keeps the httpOnly auth cookies same-site.
-// Set BACKEND_URL (e.g. https://civicfix-api.onrender.com) on the host and
+// Set BACKEND_URL (e.g. https://civicfix-api.fly.dev) on the host and
 // NEXT_PUBLIC_API_URL=/api/v1. Locally BACKEND_URL is unset, so no rewrites are
 // added and the app calls NEXT_PUBLIC_API_URL (http://localhost:5000/api/v1).
+// proxy.ts adds the API shared secret on auth routes before these rewrites run.
 const backend = process.env.BACKEND_URL;
 
 const nextConfig: NextConfig = {
+  // The repo root has its own package-lock.json (shared tooling), so pin the
+  // app root explicitly instead of letting Next.js guess between lockfiles.
+  outputFileTracingRoot: path.join(__dirname),
   async rewrites() {
     if (!backend) return [];
     return [
