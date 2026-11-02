@@ -4,16 +4,24 @@
  * filter/paginate, detail (internal-note hiding), owner edit/delete window
  * (REP-012/BR-013), nearby (ST_DWithin), map bbox (MAP-009), duplicates (§6.9).
  */
-import { unlink } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 import { buildApp } from '../../app.js';
 import { prisma } from '../../lib/prisma.js';
-import { uploadDir } from '../../lib/uploads.js';
+import { LocalStore, objectStore } from '../../lib/storage.js';
+import { deleteStoredImages } from '../../lib/uploads.js';
 
 const app = buildApp();
 const stamp = Date.now();
+
+/** Integration tests run with UPLOAD_PROVIDER=local (the default). */
+function localStoreDir(): string {
+  if (!(objectStore instanceof LocalStore)) throw new Error('tests expect local storage');
+  return objectStore.dir;
+}
 
 // A real, fully decodable 1x1 PNG for upload tests (uploads are re-encoded).
 const PNG = Buffer.from(
@@ -104,9 +112,7 @@ afterAll(async () => {
   await prisma.user.deleteMany({ where: { id: { in: ids } } });
   await prisma.category.deleteMany({ where: { id: { in: [categoryId, otherCategoryId] } } });
   // Remove files written to disk during the run.
-  await Promise.all(
-    storedUrls.map((u) => unlink(path.join(uploadDir, path.basename(u))).catch(() => undefined)),
-  );
+  await deleteStoredImages(storedUrls.map((u) => path.basename(u)));
   await prisma.$disconnect();
 });
 
@@ -388,6 +394,33 @@ describe('PATCH/DELETE /reports/:id (edit window, REP-012/BR-013)', () => {
     expect(res.status).toBe(200);
     const gone = await request(app).get(`/api/v1/reports/${id}`);
     expect(gone.status).toBe(404);
+  });
+
+  it('removes the report images from storage when it is deleted', async () => {
+    const id = await freshReport();
+    const image = await prisma.reportImage.findFirstOrThrow({ where: { reportId: id } });
+    const file = path.join(localStoreDir(), image.storageKey!);
+    expect(existsSync(file)).toBe(true);
+
+    const res = await request(app)
+      .delete(`/api/v1/reports/${id}`)
+      .set('Authorization', `Bearer ${ownerToken}`);
+    expect(res.status).toBe(200);
+    expect(existsSync(file)).toBe(false);
+  });
+
+  it('removes stored images when the report cannot be created', async () => {
+    const put = vi.spyOn(objectStore, 'put');
+    try {
+      // A well-formed but unknown category fails after the images are stored.
+      const res = await createReport({ token: ownerToken, category: randomUUID() });
+      expect(res.status).toBe(400);
+      expect(put).toHaveBeenCalledTimes(1);
+      const storedKey = put.mock.calls[0]![0];
+      expect(existsSync(path.join(localStoreDir(), storedKey))).toBe(false);
+    } finally {
+      put.mockRestore();
+    }
   });
 
   it('lets an admin delete any report', async () => {

@@ -5,13 +5,12 @@
  * BR-005 department scoping, RBAC, the admin list, department queue, and the
  * status-history timeline (STAT-006).
  */
-import { unlink } from 'node:fs/promises';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import request from 'supertest';
 import { buildApp } from '../../app.js';
 import { prisma } from '../../lib/prisma.js';
-import { uploadDir } from '../../lib/uploads.js';
+import { deleteStoredImages } from '../../lib/uploads.js';
 
 const app = buildApp();
 const stamp = Date.now();
@@ -98,9 +97,7 @@ afterAll(async () => {
   await prisma.user.deleteMany({ where: { id: { in: ids } } });
   await prisma.department.deleteMany({ where: { id: { in: [deptA, deptB] } } });
   await prisma.category.deleteMany({ where: { id: categoryId } });
-  await Promise.all(
-    storedUrls.map((u) => unlink(path.join(uploadDir, path.basename(u))).catch(() => undefined)),
-  );
+  await deleteStoredImages(storedUrls.map((u) => path.basename(u)));
   await prisma.$disconnect();
 });
 

@@ -8,6 +8,11 @@ import type { NextConfig } from 'next';
 // added and the app calls NEXT_PUBLIC_API_URL (http://localhost:5000/api/v1).
 // proxy.ts adds the API shared secret on auth routes before these rewrites run.
 const backend = process.env.BACKEND_URL;
+// Optional: public base URL of the report-images bucket, e.g.
+// https://<branch>.storage.<region>.aws.neon.tech/report-images. When set,
+// /uploads is served from the bucket directly (objects carry immutable cache
+// headers, so the CDN can keep them); otherwise the API redirects there.
+const uploads = process.env.UPLOADS_URL?.replace(/\/+$/, '');
 
 const nextConfig: NextConfig = {
   // The repo root has its own package-lock.json (shared tooling), so pin the
@@ -17,7 +22,7 @@ const nextConfig: NextConfig = {
     if (!backend) return [];
     return [
       { source: '/api/:path*', destination: `${backend}/api/:path*` },
-      { source: '/uploads/:path*', destination: `${backend}/uploads/:path*` },
+      { source: '/uploads/:path*', destination: `${uploads ?? `${backend}/uploads`}/:path*` },
     ];
   },
 };

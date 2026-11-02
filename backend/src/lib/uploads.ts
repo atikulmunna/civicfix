@@ -8,18 +8,17 @@
  *   orientation, capped to MAX_IMAGE_EDGE, and written as WebP with ALL
  *   metadata stripped. Phone photos carry EXIF GPS coordinates and device
  *   details; publishing them as-is could reveal where a reporter lives.
- * - Files are written under LOCAL_UPLOAD_DIR with server-generated random
- *   keys, never the client filename (SEC-012). The dir is outside the source
- *   tree's served code and the files are never executed.
+ * - Files are stored through the configured ObjectStore (lib/storage.ts:
+ *   local disk or an S3-compatible bucket) under server-generated random
+ *   keys, never the client filename (SEC-012), and are never executed.
  */
 import { randomUUID } from 'node:crypto';
-import { mkdir, writeFile } from 'node:fs/promises';
-import path from 'node:path';
 import multer from 'multer';
 import { fileTypeFromBuffer } from 'file-type';
 import sharp from 'sharp';
 import { env } from '../config/env.js';
 import { ApiError } from './errors.js';
+import { objectStore } from './storage.js';
 
 /** Accepted input types (verified by magic bytes). Output is always WebP. */
 const ALLOWED_INPUT = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -57,9 +56,6 @@ export interface NormalizedImage {
   width: number;
   height: number;
 }
-
-/** Absolute path to the upload directory (resolved once). */
-export const uploadDir = path.resolve(process.cwd(), env.LOCAL_UPLOAD_DIR);
 
 /**
  * Verify an upload by magic bytes, then re-encode it upright, size-capped and
@@ -102,9 +98,23 @@ export async function normalizeImage(input: Buffer): Promise<NormalizedImage> {
 
 async function writeImage(image: NormalizedImage): Promise<StoredImage> {
   const storageKey = `${randomUUID()}.${image.ext}`;
-  await mkdir(uploadDir, { recursive: true });
-  await writeFile(path.join(uploadDir, storageKey), image.buffer);
+  await objectStore.put(storageKey, image.buffer, image.mime);
+  // Stored as a provider-neutral path; see lib/storage.ts.
   return { imageUrl: `/uploads/${storageKey}`, storageKey, mime: image.mime };
+}
+
+/**
+ * Best-effort removal of stored images, e.g. after a failed report create or a
+ * report delete. A failure is logged, never thrown: the caller's outcome (the
+ * original error, or a successful delete) matters more than an orphaned file.
+ */
+export async function deleteStoredImages(keys: readonly string[]): Promise<void> {
+  if (keys.length === 0) return;
+  try {
+    await objectStore.delete(keys);
+  } catch (err) {
+    console.error('[uploads] failed to delete stored images', { keys, err });
+  }
 }
 
 /** Verify, normalize and persist one upload. */
@@ -122,6 +132,12 @@ export async function storeImages(files: Express.Multer.File[]): Promise<StoredI
   const normalized: NormalizedImage[] = [];
   for (const file of files) normalized.push(await normalizeImage(file.buffer));
   const stored: StoredImage[] = [];
-  for (const image of normalized) stored.push(await writeImage(image));
+  try {
+    for (const image of normalized) stored.push(await writeImage(image));
+  } catch (err) {
+    // A storage failure part-way through: remove what was already written.
+    await deleteStoredImages(stored.map((s) => s.storageKey));
+    throw err;
+  }
   return stored;
 }

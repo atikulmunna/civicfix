@@ -7,7 +7,7 @@ import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../lib/errors.js';
 import { env } from '../../config/env.js';
 import { sanitizeText } from '../../lib/sanitize.js';
-import type { StoredImage } from '../../lib/uploads.js';
+import { deleteStoredImages, type StoredImage } from '../../lib/uploads.js';
 import { getVoteCounts } from '../community/votes.service.js';
 import { findDuplicateIds, findNearbyIds } from './geo.js';
 import type {
@@ -324,7 +324,14 @@ export async function updateReport(id: string, actor: Actor, input: UpdateReport
 
 export async function deleteReport(id: string, actor: Actor): Promise<void> {
   await loadForMutation(id, actor);
+  // Image rows cascade with the report; read their storage keys first so the
+  // files can be removed once the delete has committed.
+  const images = await prisma.reportImage.findMany({
+    where: { reportId: id, storageKey: { not: null } },
+    select: { storageKey: true },
+  });
   await prisma.report.delete({ where: { id } });
+  await deleteStoredImages(images.flatMap((i) => (i.storageKey ? [i.storageKey] : [])));
 }
 
 // --- internals ------------------------------------------------------------

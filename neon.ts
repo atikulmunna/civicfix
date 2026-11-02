@@ -3,6 +3,11 @@ import { defineConfig } from '@neon/config/v1';
 export default defineConfig({
   // Declare your Neon services here
   auth: false,
+  buckets: {
+    // Report photos. Public read so the web app's CDN can cache them; writes
+    // need the branch's S3 credentials (only the API has them).
+    'report-images': { access: 'public_read' },
+  },
   // Branch policy: per-branch tuning
   branch: (branch) => {
     if (branch.isDefault) {

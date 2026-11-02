@@ -7,7 +7,7 @@ import { asyncHandler, parseInput, routeParam, sendSuccess } from '../../lib/htt
 import { ApiError } from '../../lib/errors.js';
 import { authUser, optionalAuth, requireAuth } from '../../middleware/require-auth.js';
 import { reportLimiter } from '../../middleware/rate-limit.js';
-import { storeImages, upload } from '../../lib/uploads.js';
+import { deleteStoredImages, storeImages, upload } from '../../lib/uploads.js';
 import * as reports from './reports.service.js';
 import type { Actor } from './reports.service.js';
 import {
@@ -36,8 +36,14 @@ reportsRouter.post(
       throw new ApiError('VALIDATION_ERROR', 'At least one image is required.');
     }
     const images = await storeImages(files);
-    const report = await reports.createReport(authUser(req).id, input, images);
-    sendSuccess(res, { report }, 201);
+    try {
+      const report = await reports.createReport(authUser(req).id, input, images);
+      sendSuccess(res, { report }, 201);
+    } catch (err) {
+      // The report was not created (e.g. unknown category): drop its files.
+      await deleteStoredImages(images.map((i) => i.storageKey));
+      throw err;
+    }
   }),
 );
 

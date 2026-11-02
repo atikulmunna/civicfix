@@ -9,7 +9,8 @@ import helmet from 'helmet';
 import multer from 'multer';
 import { env } from './config/env.js';
 import { ApiError } from './lib/errors.js';
-import { uploadDir } from './lib/uploads.js';
+import { routeParam } from './lib/http.js';
+import { LocalStore, objectStore, STORAGE_KEY_PATTERN } from './lib/storage.js';
 import { authRouter } from './modules/auth/auth.routes.js';
 import { reportsRouter } from './modules/reports/reports.routes.js';
 import { commentsRouter, communityRouter } from './modules/community/community.routes.js';
@@ -44,14 +45,25 @@ export function buildApp() {
 
   app.get('/health', (_req, res) => res.json({ success: true, data: { status: 'ok' } }));
 
-  // Serve uploaded images read-only; nosniff prevents content-type confusion.
-  app.use(
-    '/uploads',
-    express.static(uploadDir, {
-      index: false,
-      setHeaders: (res) => res.setHeader('X-Content-Type-Options', 'nosniff'),
-    }),
-  );
+  if (objectStore instanceof LocalStore) {
+    // Serve uploaded images read-only; nosniff prevents content-type confusion.
+    app.use(
+      '/uploads',
+      express.static(objectStore.dir, {
+        index: false,
+        setHeaders: (res) => res.setHeader('X-Content-Type-Options', 'nosniff'),
+      }),
+    );
+  } else {
+    // Bucket storage: images live at the bucket's public URL. Redirect so
+    // direct API clients keep working; the web app rewrites /uploads straight
+    // to the bucket (and its CDN caches it).
+    app.get('/uploads/:key', (req, res) => {
+      const key = routeParam(req, 'key');
+      if (!STORAGE_KEY_PATTERN.test(key)) throw new ApiError('NOT_FOUND', 'Not found.');
+      res.redirect(301, objectStore.publicUrl(key));
+    });
+  }
 
   app.use('/api/v1/auth', authRouter);
   app.use('/api/v1/reports', reportsRouter);
