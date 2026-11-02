@@ -38,24 +38,66 @@ const DEPARTMENTS = [
 // Curated, topical stock photos per category (Unsplash) so seeded reports look
 // like real civic issues instead of random stock landscapes.
 const CATEGORY_PHOTOS: Record<string, string[]> = {
-  'Roads & Potholes': ['1657811146537-90d7d8133224', '1560782202-154b39d57ef2', '1739517747161-fe59efffe64b'],
-  'Street Lighting': ['1782821826858-9cf8296f3ca2', '1675196395051-cea90e1642b2', '1762120658004-db6e194ea40e'],
-  'Garbage & Sanitation': ['1762805545352-4ac5355b0f0b', '1621408422423-4392b2711f69', '1580767114670-c778cc443675'],
-  'Water & Drainage': ['1657069345471-c54f2432b79c', '1609520778163-a16fb3862581', '1621871567192-e29a9b8b5aee'],
-  'Public Safety': ['1604716053460-3f66248bf8de', '1517776832751-0a7e6993de03', '1543097840-fc84594dd9e6'],
-  'Parks & Greenery': ['1445937888010-cc262f556033', '1595183670211-2b42f6663bf7', '1604606672490-5597473d8a69'],
-  'Electricity': ['1554735231-2250c114a31d', '1574173799345-e672ea143892', '1473341304170-971dccb5ac1e'],
+  'Roads & Potholes': [
+    '1657811146537-90d7d8133224',
+    '1560782202-154b39d57ef2',
+    '1739517747161-fe59efffe64b',
+  ],
+  'Street Lighting': [
+    '1782821826858-9cf8296f3ca2',
+    '1675196395051-cea90e1642b2',
+    '1762120658004-db6e194ea40e',
+  ],
+  'Garbage & Sanitation': [
+    '1762805545352-4ac5355b0f0b',
+    '1621408422423-4392b2711f69',
+    '1580767114670-c778cc443675',
+  ],
+  'Water & Drainage': [
+    '1657069345471-c54f2432b79c',
+    '1609520778163-a16fb3862581',
+    '1621871567192-e29a9b8b5aee',
+  ],
+  'Public Safety': [
+    '1604716053460-3f66248bf8de',
+    '1517776832751-0a7e6993de03',
+    '1543097840-fc84594dd9e6',
+  ],
+  'Parks & Greenery': [
+    '1445937888010-cc262f556033',
+    '1595183670211-2b42f6663bf7',
+    '1604606672490-5597473d8a69',
+  ],
+  Electricity: [
+    '1554735231-2250c114a31d',
+    '1574173799345-e672ea143892',
+    '1473341304170-971dccb5ac1e',
+  ],
 };
 
+/** The element at `i`, wrapping around, for deterministic seed rotation. */
+function pick<T>(list: readonly T[], i: number): T {
+  const item = list[i % list.length];
+  if (item === undefined) throw new Error('pick() needs a non-empty list');
+  return item;
+}
+
 function photoFor(categoryName: string, n: number): string {
-  const pool = CATEGORY_PHOTOS[categoryName] ?? CATEGORY_PHOTOS['Roads & Potholes'];
-  const id = pool[n % pool.length];
+  const pool = CATEGORY_PHOTOS[categoryName] ?? CATEGORY_PHOTOS['Roads & Potholes'] ?? [];
+  const id = pick(pool, n);
   return `https://images.unsplash.com/photo-${id}?w=800&h=600&fit=crop&auto=format&q=70`;
 }
 
 // Canonical paths through the §26 state machine for building histories.
 function pathTo(target: ReportStatus): ReportStatus[] {
-  const linear: ReportStatus[] = ['SUBMITTED', 'UNDER_REVIEW', 'VERIFIED', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED'];
+  const linear: ReportStatus[] = [
+    'SUBMITTED',
+    'UNDER_REVIEW',
+    'VERIFIED',
+    'ASSIGNED',
+    'IN_PROGRESS',
+    'RESOLVED',
+  ];
   if (linear.includes(target)) return linear.slice(0, linear.indexOf(target) + 1);
   if (target === 'REJECTED') return ['SUBMITTED', 'UNDER_REVIEW', 'REJECTED'];
   if (target === 'DUPLICATE') return ['SUBMITTED', 'DUPLICATE'];
@@ -67,22 +109,77 @@ const ASSIGNED_STATES: ReportStatus[] = ['ASSIGNED', 'IN_PROGRESS', 'RESOLVED'];
 
 // 25 reports: titles + statuses chosen for a realistic spread.
 const STATUS_PLAN: ReportStatus[] = [
-  'SUBMITTED', 'SUBMITTED', 'SUBMITTED', 'UNDER_REVIEW', 'UNDER_REVIEW',
-  'VERIFIED', 'VERIFIED', 'ASSIGNED', 'ASSIGNED', 'IN_PROGRESS',
-  'IN_PROGRESS', 'IN_PROGRESS', 'RESOLVED', 'RESOLVED', 'RESOLVED',
-  'RESOLVED', 'REJECTED', 'REJECTED', 'DUPLICATE', 'NEEDS_MORE_INFO',
-  'SUBMITTED', 'VERIFIED', 'IN_PROGRESS', 'RESOLVED', 'ASSIGNED',
+  'SUBMITTED',
+  'SUBMITTED',
+  'SUBMITTED',
+  'UNDER_REVIEW',
+  'UNDER_REVIEW',
+  'VERIFIED',
+  'VERIFIED',
+  'ASSIGNED',
+  'ASSIGNED',
+  'IN_PROGRESS',
+  'IN_PROGRESS',
+  'IN_PROGRESS',
+  'RESOLVED',
+  'RESOLVED',
+  'RESOLVED',
+  'RESOLVED',
+  'REJECTED',
+  'REJECTED',
+  'DUPLICATE',
+  'NEEDS_MORE_INFO',
+  'SUBMITTED',
+  'VERIFIED',
+  'IN_PROGRESS',
+  'RESOLVED',
+  'ASSIGNED',
 ];
 const SEVERITIES: Severity[] = ['low', 'medium', 'high', 'urgent'];
 // Titles grouped by category so each report's title, category, and photo agree.
 const CATEGORY_TITLES: Record<string, string[]> = {
-  'Roads & Potholes': ['Large pothole on the main road', 'Cracked road near the school', 'Faded pedestrian crossing', 'Sunken road after the rains'],
-  'Street Lighting': ['Streetlight out for a week', 'Streetlight flickering at night', 'Dim lighting in the park', 'Leaning, damaged lamp post'],
-  'Garbage & Sanitation': ['Overflowing garbage bin', 'Garbage not collected', 'Illegal dumping by the canal', 'Litter piling up at the corner'],
-  'Water & Drainage': ['Blocked drain causing flooding', 'Water main burst', 'Sewage leak on the street', 'Stagnant water breeding mosquitoes'],
-  'Public Safety': ['Graffiti on a public wall', 'Broken footpath railing', 'Missing manhole cover', 'Loose paving stones on the walkway'],
-  'Parks & Greenery': ['Park bench broken', 'Fallen tree branch on the path', 'Overgrown bushes blocking the trail', 'Damaged playground equipment'],
-  'Electricity': ['Exposed electrical wire', 'Sparking utility pole', 'Frequent power cuts on the block', 'Sagging power line over the road'],
+  'Roads & Potholes': [
+    'Large pothole on the main road',
+    'Cracked road near the school',
+    'Faded pedestrian crossing',
+    'Sunken road after the rains',
+  ],
+  'Street Lighting': [
+    'Streetlight out for a week',
+    'Streetlight flickering at night',
+    'Dim lighting in the park',
+    'Leaning, damaged lamp post',
+  ],
+  'Garbage & Sanitation': [
+    'Overflowing garbage bin',
+    'Garbage not collected',
+    'Illegal dumping by the canal',
+    'Litter piling up at the corner',
+  ],
+  'Water & Drainage': [
+    'Blocked drain causing flooding',
+    'Water main burst',
+    'Sewage leak on the street',
+    'Stagnant water breeding mosquitoes',
+  ],
+  'Public Safety': [
+    'Graffiti on a public wall',
+    'Broken footpath railing',
+    'Missing manhole cover',
+    'Loose paving stones on the walkway',
+  ],
+  'Parks & Greenery': [
+    'Park bench broken',
+    'Fallen tree branch on the path',
+    'Overgrown bushes blocking the trail',
+    'Damaged playground equipment',
+  ],
+  Electricity: [
+    'Exposed electrical wire',
+    'Sparking utility pole',
+    'Frequent power cuts on the block',
+    'Sagging power line over the road',
+  ],
 };
 
 async function reset(): Promise<void> {
@@ -99,9 +196,7 @@ async function main(): Promise<void> {
   await reset();
   const passwordHash = await hashPassword(SEED_PASSWORD);
 
-  const categories = await Promise.all(
-    CATEGORIES.map((c) => prisma.category.create({ data: c })),
-  );
+  const categories = await Promise.all(CATEGORIES.map((c) => prisma.category.create({ data: c })));
   const departments = await Promise.all(
     DEPARTMENTS.map((d) => prisma.department.create({ data: d })),
   );
@@ -114,14 +209,20 @@ async function main(): Promise<void> {
   });
   const worker1 = await prisma.user.create({
     data: {
-      name: 'Wendy Works', email: 'worker.publicworks@civicfix.local', passwordHash,
-      role: 'department_worker', departmentId: departments[0].id,
+      name: 'Wendy Works',
+      email: 'worker.publicworks@civicfix.local',
+      passwordHash,
+      role: 'department_worker',
+      departmentId: pick(departments, 0).id,
     },
   });
   await prisma.user.create({
     data: {
-      name: 'Sam Sanitation', email: 'worker.sanitation@civicfix.local', passwordHash,
-      role: 'department_worker', departmentId: departments[1].id,
+      name: 'Sam Sanitation',
+      email: 'worker.sanitation@civicfix.local',
+      passwordHash,
+      role: 'department_worker',
+      departmentId: pick(departments, 1).id,
     },
   });
   const citizens = await Promise.all(
@@ -140,14 +241,14 @@ async function main(): Promise<void> {
   const reportIds: string[] = [];
 
   for (let i = 0; i < STATUS_PLAN.length; i++) {
-    const status = STATUS_PLAN[i];
-    const category = categories[i % categories.length];
+    const status = pick(STATUS_PLAN, i);
+    const category = pick(categories, i);
     const catTitles = CATEGORY_TITLES[category.name] ?? ['Civic issue'];
-    const title = catTitles[Math.floor(i / categories.length) % catTitles.length];
-    const reporter = citizens[i % citizens.length];
+    const title = pick(catTitles, Math.floor(i / categories.length));
+    const reporter = pick(citizens, i);
     const createdAt = new Date(now - (STATUS_PLAN.length - i) * 2 * DAY);
     const assigned = ASSIGNED_STATES.includes(status);
-    const dept = departments[i % departments.length];
+    const dept = pick(departments, i);
     const resolvedAt = status === 'RESOLVED' ? new Date(createdAt.getTime() + 3 * DAY) : null;
 
     const report = await prisma.report.create({
@@ -156,7 +257,7 @@ async function main(): Promise<void> {
         title,
         description: `${title} reported by a resident. Please look into this as soon as possible.`,
         categoryId: category.id,
-        severity: SEVERITIES[i % SEVERITIES.length],
+        severity: pick(SEVERITIES, i),
         latitude: DHAKA.lat + (i % 7) * 0.004 - 0.014,
         longitude: DHAKA.lng + (i % 5) * 0.004 - 0.008,
         address: `${100 + i} Sample Road, Dhaka`,
@@ -200,23 +301,38 @@ async function main(): Promise<void> {
     if (report.id === firstResolvedId) {
       await prisma.reportImage.createMany({
         data: [
-          { reportId: report.id, imageUrl: photoFor(category.name, 0), imageType: 'before', uploadedBy: reporter.id },
-          { reportId: report.id, imageUrl: photoFor(category.name, 1), imageType: 'after', uploadedBy: worker1.id },
+          {
+            reportId: report.id,
+            imageUrl: photoFor(category.name, 0),
+            imageType: 'before',
+            uploadedBy: reporter.id,
+          },
+          {
+            reportId: report.id,
+            imageUrl: photoFor(category.name, 1),
+            imageType: 'after',
+            uploadedBy: worker1.id,
+          },
         ],
       });
     } else {
       await prisma.reportImage.create({
-        data: { reportId: report.id, imageUrl: photoFor(category.name, i), imageType: 'evidence', uploadedBy: reporter.id },
+        data: {
+          reportId: report.id,
+          imageUrl: photoFor(category.name, i),
+          imageType: 'evidence',
+          uploadedBy: reporter.id,
+        },
       });
     }
   }
 
   // Sample comments on the first few reports.
   for (let i = 0; i < 6; i++) {
-    const commenter = citizens[(i + 1) % citizens.length];
+    const commenter = pick(citizens, i + 1);
     await prisma.comment.create({
       data: {
-        reportId: reportIds[i],
+        reportId: pick(reportIds, i),
         userId: commenter.id,
         content: 'I have noticed this too, it really needs attention.',
       },
@@ -226,7 +342,7 @@ async function main(): Promise<void> {
   // Sample votes: each of the first 12 reports gets a few upvotes and confirms;
   // confirms add a confirm-sourced subscription (BR-016).
   for (let i = 0; i < 12; i++) {
-    const reportId = reportIds[i];
+    const reportId = pick(reportIds, i);
     const upvoters = citizens.slice(0, (i % 4) + 1);
     await prisma.vote.createMany({
       data: upvoters.map((u) => ({ reportId, userId: u.id, voteType: 'upvote' as const })),
@@ -251,7 +367,7 @@ async function main(): Promise<void> {
 }
 
 main()
-  .catch((err) => {
+  .catch((err: unknown) => {
     console.error(err);
     process.exitCode = 1;
   })

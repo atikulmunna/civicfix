@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
+import { renderWithQuery } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 
 const { push, post, get } = vi.hoisted(() => ({ push: vi.fn(), post: vi.fn(), get: vi.fn() }));
@@ -22,7 +23,7 @@ import { ToastProvider } from '@/components/toast';
 import LoginPage from './page';
 
 function renderLogin() {
-  return render(
+  return renderWithQuery(
     <ToastProvider>
       <AuthProvider>
         <LoginPage />
@@ -47,7 +48,12 @@ describe('LoginPage', () => {
     await user.type(screen.getByLabelText('Password'), 'CorrectHorse9');
     await user.click(screen.getByRole('button', { name: /sign in/i }));
 
-    await waitFor(() => expect(post).toHaveBeenCalledWith('/auth/login', { email: 't@e.com', password: 'CorrectHorse9' }));
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith('/auth/login', {
+        email: 't@e.com',
+        password: 'CorrectHorse9',
+      }),
+    );
     await waitFor(() => expect(push).toHaveBeenCalledWith('/'));
   });
 

@@ -5,6 +5,9 @@
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
@@ -34,6 +37,7 @@
     "node_modules",
     "vitest.config.mts",
     "vitest.setup.ts",
+    "test-utils.tsx",
     "**/*.test.ts",
     "**/*.test.tsx"
   ]

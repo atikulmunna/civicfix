@@ -13,7 +13,9 @@ function NavLink({ href, children }: { href: string; children: ReactNode }) {
     <Link
       href={href}
       className={`rounded-lg px-3 py-1.5 font-medium transition ${
-        active ? 'bg-teal-50 text-teal-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+        active
+          ? 'bg-teal-50 text-teal-700'
+          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
       }`}
     >
       {children}
@@ -74,7 +76,10 @@ export function Navbar() {
             </>
           ) : (
             <>
-              <Link href="/login" className="rounded-lg px-3 py-1.5 font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900">
+              <Link
+                href="/login"
+                className="rounded-lg px-3 py-1.5 font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+              >
                 Sign in
               </Link>
               <Link

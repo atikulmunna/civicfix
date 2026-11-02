@@ -75,8 +75,15 @@ export async function register(
   }
 
   const passwordHash = await hashPassword(input.password);
+  // A blank or whitespace-only phone is stored as null, not ''.
+  const phone = input.phone?.trim();
   const user = await prisma.user.create({
-    data: { name: input.name.trim(), email, passwordHash, phone: input.phone?.trim() || null },
+    data: {
+      name: input.name.trim(),
+      email,
+      passwordHash,
+      phone: phone === undefined || phone === '' ? null : phone,
+    },
   });
 
   const session = await issueSession(user.id, user.role);

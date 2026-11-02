@@ -3,8 +3,16 @@
 export type Role = 'citizen' | 'department_worker' | 'admin' | 'super_admin';
 
 export type ReportStatus =
-  | 'SUBMITTED' | 'UNDER_REVIEW' | 'VERIFIED' | 'ASSIGNED' | 'IN_PROGRESS'
-  | 'RESOLVED' | 'REJECTED' | 'DUPLICATE' | 'NEEDS_MORE_INFO' | 'ARCHIVED';
+  | 'SUBMITTED'
+  | 'UNDER_REVIEW'
+  | 'VERIFIED'
+  | 'ASSIGNED'
+  | 'IN_PROGRESS'
+  | 'RESOLVED'
+  | 'REJECTED'
+  | 'DUPLICATE'
+  | 'NEEDS_MORE_INFO'
+  | 'ARCHIVED';
 
 export type Severity = 'low' | 'medium' | 'high' | 'urgent';
 

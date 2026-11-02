@@ -24,9 +24,12 @@ Thumbs.db
 .idea/
 .vscode/
 
-# Internal spec / planning docs (not published)
+# Internal spec / planning docs and instructions (not published)
 community_problem_reporting_platform_srs.md
 community_problem_reporting_platform_srs_v1.1.md
 tasks.md
+task.md
+CLAUDE.md
 .playwright-mcp/
 desktop.ini
+.neon

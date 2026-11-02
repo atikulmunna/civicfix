@@ -3,14 +3,26 @@ import type { ReactNode } from 'react';
 
 const STEPS = [
   { n: '01', title: 'Report', body: 'Describe the issue, add a photo, and drop a pin on the map.' },
-  { n: '02', title: 'Verify', body: 'Neighbours confirm it and admins review and assign it to a department.' },
+  {
+    n: '02',
+    title: 'Verify',
+    body: 'Neighbours confirm it and admins review and assign it to a department.',
+  },
   { n: '03', title: 'Resolve', body: 'Track status changes and get notified when it’s fixed.' },
 ];
 
 const FEATURES: { icon: ReactNode; title: string; body: string }[] = [
   {
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-9 w-9">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.75}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-9 w-9"
+      >
         <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
         <circle cx="12" cy="10" r="3" />
       </svg>
@@ -20,7 +32,15 @@ const FEATURES: { icon: ReactNode; title: string; body: string }[] = [
   },
   {
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-9 w-9">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.75}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-9 w-9"
+      >
         <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z" />
         <circle cx="12" cy="13" r="3" />
       </svg>
@@ -30,7 +50,15 @@ const FEATURES: { icon: ReactNode; title: string; body: string }[] = [
   },
   {
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-9 w-9">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.75}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-9 w-9"
+      >
         <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
         <circle cx="9" cy="7" r="4" />
         <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
@@ -42,7 +70,15 @@ const FEATURES: { icon: ReactNode; title: string; body: string }[] = [
   },
   {
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-9 w-9">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.75}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-9 w-9"
+      >
         <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
       </svg>
     ),
@@ -51,7 +87,15 @@ const FEATURES: { icon: ReactNode; title: string; body: string }[] = [
   },
   {
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-9 w-9">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.75}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-9 w-9"
+      >
         <rect x="4" y="2" width="16" height="20" rx="2" />
         <path d="M9 22v-4h6v4" />
         <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01" />
@@ -62,7 +106,15 @@ const FEATURES: { icon: ReactNode; title: string; body: string }[] = [
   },
   {
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-9 w-9">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.75}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-9 w-9"
+      >
         <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
         <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
       </svg>
@@ -73,8 +125,13 @@ const FEATURES: { icon: ReactNode; title: string; body: string }[] = [
 ];
 
 const CATEGORIES = [
-  'Roads & Potholes', 'Street Lighting', 'Garbage & Sanitation', 'Water & Drainage',
-  'Public Safety', 'Parks & Greenery', 'Electricity',
+  'Roads & Potholes',
+  'Street Lighting',
+  'Garbage & Sanitation',
+  'Water & Drainage',
+  'Public Safety',
+  'Parks & Greenery',
+  'Electricity',
 ];
 
 const LIFECYCLE = ['Submitted', 'Under review', 'Verified', 'Assigned', 'In progress', 'Resolved'];
@@ -95,7 +152,15 @@ const TEAM_ITEMS = [
 
 function Check() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 h-5 w-5 shrink-0 text-teal-600">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.25}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="mt-0.5 h-5 w-5 shrink-0 text-teal-600"
+    >
       <path d="m5 12 5 5L20 7" />
     </svg>
   );
@@ -130,14 +195,31 @@ function HeroArt() {
           strokeDasharray="2 8"
           strokeLinecap="round"
         >
-          <animate attributeName="stroke-dashoffset" values="40;0" dur="2.4s" repeatCount="indefinite" />
+          <animate
+            attributeName="stroke-dashoffset"
+            values="40;0"
+            dur="2.4s"
+            repeatCount="indefinite"
+          />
         </path>
 
         {/* pulse rings radiating from the main pin */}
         {[0, 1, 2].map((i) => (
           <circle key={i} cx="200" cy="170" r="20" fill="none" stroke="#14b8a6" strokeWidth={2}>
-            <animate attributeName="r" values="20;150" dur="3s" begin={`${i}s`} repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0.5;0" dur="3s" begin={`${i}s`} repeatCount="indefinite" />
+            <animate
+              attributeName="r"
+              values="20;150"
+              dur="3s"
+              begin={`${i}s`}
+              repeatCount="indefinite"
+            />
+            <animate
+              attributeName="opacity"
+              values="0.5;0"
+              dur="3s"
+              begin={`${i}s`}
+              repeatCount="indefinite"
+            />
           </circle>
         ))}
 
@@ -225,7 +307,9 @@ export default function HomePage() {
 
       {/* How it works */}
       <section>
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">How it works</p>
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">
+          How it works
+        </p>
         <h2 className="mt-2 max-w-2xl text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
           From report to resolution in three steps
         </h2>
@@ -244,7 +328,9 @@ export default function HomePage() {
 
       {/* Features */}
       <section>
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">What you can do</p>
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">
+          What you can do
+        </p>
         <h2 className="mt-2 max-w-2xl text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
           Everything a report needs to get fixed
         </h2>
@@ -266,7 +352,9 @@ export default function HomePage() {
       {/* Categories + lifecycle */}
       <section className="grid gap-12 lg:grid-cols-2">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">What you can report</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">
+            What you can report
+          </p>
           <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
             Seven categories of civic issues
           </h2>
@@ -282,7 +370,9 @@ export default function HomePage() {
           </ul>
         </div>
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">Every report, tracked</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">
+            Every report, tracked
+          </p>
           <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
             A transparent status lifecycle
           </h2>
@@ -299,7 +389,9 @@ export default function HomePage() {
                   {s}
                 </span>
                 {i < LIFECYCLE.length - 1 && (
-                  <span className="text-slate-400" aria-hidden>→</span>
+                  <span className="text-slate-400" aria-hidden>
+                    →
+                  </span>
                 )}
               </li>
             ))}
@@ -309,7 +401,9 @@ export default function HomePage() {
 
       {/* Two audiences */}
       <section>
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">Built for both sides</p>
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">
+          Built for both sides
+        </p>
         <h2 className="mt-2 max-w-2xl text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
           For the people who report, and the people who fix
         </h2>
@@ -341,7 +435,9 @@ export default function HomePage() {
 
       {/* CTA */}
       <section className="rounded-3xl bg-slate-900 px-6 py-14 text-center sm:px-12">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-400">Get started</p>
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-400">
+          Get started
+        </p>
         <h2 className="mx-auto mt-3 max-w-2xl text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
           Spotted something broken? Report it.
         </h2>

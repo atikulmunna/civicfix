@@ -4,19 +4,18 @@
  * (NOTIF-001/002/003, §13.5), list + unread count, mark one / mark all read
  * (NOTIF-004), and ownership enforcement.
  */
-import { unlink } from 'node:fs/promises';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import request from 'supertest';
 import { buildApp } from '../../app.js';
 import { prisma } from '../../lib/prisma.js';
-import { uploadDir } from '../../lib/uploads.js';
+import { deleteStoredImages } from '../../lib/uploads.js';
 
 const app = buildApp();
 const stamp = Date.now();
 
 const PNG = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAADElEQVQImWPgL8sDAAGLAPRp2A2cAAAAAElFTkSuQmCC',
   'base64',
 );
 const POINT = { lat: 23.73, lng: 90.4 };
@@ -41,10 +40,17 @@ const storedUrls: string[] = [];
 const bearer = (t: string) => ['Authorization', `Bearer ${t}`] as const;
 
 async function registerAndLogin(email: string): Promise<string> {
-  await request(app).post('/api/v1/auth/register').send({ name: 'User', email, password: 'CorrectHorse9' });
-  const login = await request(app).post('/api/v1/auth/login').send({ email, password: 'CorrectHorse9' });
+  await request(app)
+    .post('/api/v1/auth/register')
+    .send({ name: 'User', email, password: 'CorrectHorse9' });
+  const login = await request(app)
+    .post('/api/v1/auth/login')
+    .send({ email, password: 'CorrectHorse9' });
   const cookies = login.headers['set-cookie'] as unknown as string[];
-  return cookies.find((c) => c.startsWith('access_token='))!.split(';')[0].split('=')[1];
+  return cookies
+    .find((c) => c.startsWith('access_token='))!
+    .split(';')[0]!
+    .split('=')[1]!;
 }
 
 async function createReport(): Promise<string> {
@@ -63,11 +69,15 @@ async function createReport(): Promise<string> {
 }
 
 async function setStatus(id: string, status: string, token = adminToken) {
-  return request(app).patch(`/api/v1/admin/reports/${id}/status`).set(...bearer(token)).send({ status });
+  return request(app)
+    .patch(`/api/v1/admin/reports/${id}/status`)
+    .set(...bearer(token))
+    .send({ status });
 }
 
 beforeAll(async () => {
-  categoryId = (await prisma.category.create({ data: { name: `Roads N ${stamp}`, icon: 'road' } })).id;
+  categoryId = (await prisma.category.create({ data: { name: `Roads N ${stamp}`, icon: 'road' } }))
+    .id;
   authorToken = await registerAndLogin(emails.author);
   voterToken = await registerAndLogin(emails.voter);
   await registerAndLogin(emails.admin);
@@ -84,7 +94,9 @@ beforeAll(async () => {
 
   reportId = await createReport();
   // Voter confirms -> becomes a subscriber (BR-016).
-  await request(app).post(`/api/v1/reports/${reportId}/confirm`).set(...bearer(voterToken));
+  await request(app)
+    .post(`/api/v1/reports/${reportId}/confirm`)
+    .set(...bearer(voterToken));
 });
 
 afterAll(async () => {
@@ -92,9 +104,7 @@ afterAll(async () => {
   await prisma.report.deleteMany({ where: { userId: { in: ids } } });
   await prisma.user.deleteMany({ where: { id: { in: ids } } });
   await prisma.category.deleteMany({ where: { id: categoryId } });
-  await Promise.all(
-    storedUrls.map((u) => unlink(path.join(uploadDir, path.basename(u))).catch(() => {})),
-  );
+  await deleteStoredImages(storedUrls.map((u) => path.basename(u)));
   await prisma.$disconnect();
 });
 
@@ -110,23 +120,31 @@ describe('status-change emission (§13.5)', () => {
     const res = await setStatus(reportId, 'UNDER_REVIEW');
     expect(res.status).toBe(200);
 
-    const author = await request(app).get('/api/v1/notifications').set(...bearer(authorToken));
+    const author = await request(app)
+      .get('/api/v1/notifications')
+      .set(...bearer(authorToken));
     expect(author.body.data.unreadCount).toBeGreaterThanOrEqual(1);
     expect(author.body.data.items[0].message).toContain(TITLE);
     expect(author.body.data.items[0].message).toContain('under review');
     expect(author.body.data.items[0].type).toBe('status_change');
 
-    const voter = await request(app).get('/api/v1/notifications').set(...bearer(voterToken));
+    const voter = await request(app)
+      .get('/api/v1/notifications')
+      .set(...bearer(voterToken));
     expect(voter.body.data.unreadCount).toBeGreaterThanOrEqual(1);
 
     // The admin triggered the change and is not a subscriber → no notification.
-    const admin = await request(app).get('/api/v1/notifications').set(...bearer(adminToken));
+    const admin = await request(app)
+      .get('/api/v1/notifications')
+      .set(...bearer(adminToken));
     expect(admin.body.data.total).toBe(0);
   });
 
   it('excludes the actor even when the actor is a subscriber', async () => {
     const r2 = await createReport();
-    await request(app).post(`/api/v1/reports/${r2}/follow`).set(...bearer(adminToken));
+    await request(app)
+      .post(`/api/v1/reports/${r2}/follow`)
+      .set(...bearer(adminToken));
     await setStatus(r2, 'UNDER_REVIEW');
 
     const adminForR2 = await prisma.notification.count({
@@ -142,11 +160,15 @@ describe('status-change emission (§13.5)', () => {
 
 describe('mark read (NOTIF-004)', () => {
   it('marks a single notification read, lowering the unread count', async () => {
-    const list = await request(app).get('/api/v1/notifications').set(...bearer(authorToken));
+    const list = await request(app)
+      .get('/api/v1/notifications')
+      .set(...bearer(authorToken));
     const before = list.body.data.unreadCount;
     const id = list.body.data.items.find((n: { isRead: boolean }) => !n.isRead).id;
 
-    const res = await request(app).patch(`/api/v1/notifications/${id}/read`).set(...bearer(authorToken));
+    const res = await request(app)
+      .patch(`/api/v1/notifications/${id}/read`)
+      .set(...bearer(authorToken));
     expect(res.status).toBe(200);
 
     const after = await request(app)
@@ -157,7 +179,7 @@ describe('mark read (NOTIF-004)', () => {
     expect(after.body.data.items.every((n: { isRead: boolean }) => !n.isRead)).toBe(true);
   });
 
-  it('returns 404 marking another user\'s notification', async () => {
+  it("returns 404 marking another user's notification", async () => {
     const voterNote = await prisma.notification.findFirst({ where: { userId: voterId } });
     const res = await request(app)
       .patch(`/api/v1/notifications/${voterNote!.id}/read`)
@@ -167,11 +189,15 @@ describe('mark read (NOTIF-004)', () => {
 
   it('marks all read', async () => {
     await setStatus(reportId, 'VERIFIED'); // new unread for author
-    const res = await request(app).patch('/api/v1/notifications/read-all').set(...bearer(authorToken));
+    const res = await request(app)
+      .patch('/api/v1/notifications/read-all')
+      .set(...bearer(authorToken));
     expect(res.status).toBe(200);
     expect(res.body.data.updated).toBeGreaterThanOrEqual(1);
 
-    const after = await request(app).get('/api/v1/notifications').set(...bearer(authorToken));
+    const after = await request(app)
+      .get('/api/v1/notifications')
+      .set(...bearer(authorToken));
     expect(after.body.data.unreadCount).toBe(0);
   });
 });

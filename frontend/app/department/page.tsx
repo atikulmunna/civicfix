@@ -17,9 +17,14 @@ function Queue() {
   const [busyId, setBusyId] = useState<string | null>(null);
 
   function load() {
-    return api.get<Paginated<Report>>('/department/reports', { limit: 50 }).then(setData).catch(() => setData(null));
+    return api
+      .get<Paginated<Report>>('/department/reports', { limit: 50 })
+      .then(setData)
+      .catch(() => setData(null));
   }
-  useEffect(() => { load().finally(() => setLoading(false)); }, []);
+  useEffect(() => {
+    load().finally(() => setLoading(false));
+  }, []);
 
   async function act(id: string, fn: () => Promise<unknown>, ok: string) {
     setBusyId(id);
@@ -38,18 +43,28 @@ function Queue() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader eyebrow="Department" title="My department queue" subtitle="Reports assigned to your department." />
+      <PageHeader
+        eyebrow="Department"
+        title="My department queue"
+        subtitle="Reports assigned to your department."
+      />
       {data && data.items.length > 0 ? (
         <ul className="flex flex-col gap-3">
           {data.items.map((r) => (
-            <li key={r.id} className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-white p-4">
+            <li
+              key={r.id}
+              className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-white p-4"
+            >
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusBadge status={r.status} />
                   <SeverityBadge severity={r.severity} />
                   <span className="text-xs text-slate-400">{formatDate(r.createdAt)}</span>
                 </div>
-                <Link href={`/reports/${r.id}`} className="mt-1 block truncate font-medium text-slate-900 hover:underline">
+                <Link
+                  href={`/reports/${r.id}`}
+                  className="mt-1 block truncate font-medium text-slate-900 hover:underline"
+                >
                   {r.title}
                 </Link>
               </div>
@@ -57,7 +72,13 @@ function Queue() {
                 {r.status === 'ASSIGNED' && (
                   <Button
                     disabled={busyId === r.id}
-                    onClick={() => act(r.id, () => api.patch(`/admin/reports/${r.id}/status`, { status: 'IN_PROGRESS' }), 'Work started.')}
+                    onClick={() =>
+                      act(
+                        r.id,
+                        () => api.patch(`/admin/reports/${r.id}/status`, { status: 'IN_PROGRESS' }),
+                        'Work started.',
+                      )
+                    }
                   >
                     Start work
                   </Button>
@@ -65,7 +86,13 @@ function Queue() {
                 {r.status === 'IN_PROGRESS' && (
                   <Button
                     disabled={busyId === r.id}
-                    onClick={() => act(r.id, () => api.post(`/admin/reports/${r.id}/resolve`, {}), 'Marked resolved.')}
+                    onClick={() =>
+                      act(
+                        r.id,
+                        () => api.post(`/admin/reports/${r.id}/resolve`, {}),
+                        'Marked resolved.',
+                      )
+                    }
                   >
                     Resolve
                   </Button>
@@ -75,7 +102,9 @@ function Queue() {
           ))}
         </ul>
       ) : (
-        <p className="py-10 text-center text-sm text-slate-500">No reports assigned to your department.</p>
+        <p className="py-10 text-center text-sm text-slate-500">
+          No reports assigned to your department.
+        </p>
       )}
     </div>
   );

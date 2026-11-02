@@ -7,7 +7,7 @@ import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../lib/errors.js';
 import { env } from '../../config/env.js';
 import { sanitizeText } from '../../lib/sanitize.js';
-import type { StoredImage } from '../../lib/uploads.js';
+import { deleteStoredImages, type StoredImage } from '../../lib/uploads.js';
 import { getVoteCounts } from '../community/votes.service.js';
 import { findDuplicateIds, findNearbyIds } from './geo.js';
 import type {
@@ -67,7 +67,7 @@ export function toPublicReport(r: ReportWithRelations, canSeeInternal = false) {
 
 async function assertCategoryExists(categoryId: string): Promise<void> {
   const category = await prisma.category.findUnique({ where: { id: categoryId } });
-  if (!category || !category.isActive) {
+  if (!category?.isActive) {
     throw new ApiError('VALIDATION_ERROR', 'The selected category does not exist.');
   }
 }
@@ -109,7 +109,13 @@ export async function createReport(
 
     // Initial status record (BR-009): null -> SUBMITTED.
     await tx.statusHistory.create({
-      data: { reportId: created.id, oldStatus: null, newStatus: 'SUBMITTED', changedBy: userId, note: 'Report submitted.' },
+      data: {
+        reportId: created.id,
+        oldStatus: null,
+        newStatus: 'SUBMITTED',
+        changedBy: userId,
+        note: 'Report submitted.',
+      },
     });
 
     // Subscribe the reporter to their own report (§13.5, NOTIF-003).
@@ -240,8 +246,13 @@ export async function mapReports(input: MapInput) {
     where,
     take: input.limit,
     select: {
-      id: true, title: true, status: true, severity: true,
-      latitude: true, longitude: true, categoryId: true,
+      id: true,
+      title: true,
+      status: true,
+      severity: true,
+      latitude: true,
+      longitude: true,
+      categoryId: true,
     },
   });
 
@@ -300,8 +311,12 @@ export async function updateReport(id: string, actor: Actor, input: UpdateReport
       ...(input.severity !== undefined && { severity: input.severity }),
       ...(input.latitude !== undefined && { latitude: input.latitude }),
       ...(input.longitude !== undefined && { longitude: input.longitude }),
-      ...(input.address !== undefined && { address: input.address === null ? null : sanitizeText(input.address) }),
-      ...(input.landmark !== undefined && { landmark: input.landmark === null ? null : sanitizeText(input.landmark) }),
+      ...(input.address !== undefined && {
+        address: input.address === null ? null : sanitizeText(input.address),
+      }),
+      ...(input.landmark !== undefined && {
+        landmark: input.landmark === null ? null : sanitizeText(input.landmark),
+      }),
     },
   });
   return getReportById(id, actor);
@@ -309,7 +324,14 @@ export async function updateReport(id: string, actor: Actor, input: UpdateReport
 
 export async function deleteReport(id: string, actor: Actor): Promise<void> {
   await loadForMutation(id, actor);
+  // Image rows cascade with the report; read their storage keys first so the
+  // files can be removed once the delete has committed.
+  const images = await prisma.reportImage.findMany({
+    where: { reportId: id, storageKey: { not: null } },
+    select: { storageKey: true },
+  });
   await prisma.report.delete({ where: { id } });
+  await deleteStoredImages(images.flatMap((i) => (i.storageKey ? [i.storageKey] : [])));
 }
 
 // --- internals ------------------------------------------------------------
@@ -329,7 +351,10 @@ async function loadForMutation(id: string, actor: Actor): Promise<Report> {
     throw new ApiError('FORBIDDEN', 'You can only modify your own reports.');
   }
   if (report.status !== 'SUBMITTED') {
-    throw new ApiError('FORBIDDEN', 'A report can only be edited or deleted while it is still under submission.');
+    throw new ApiError(
+      'FORBIDDEN',
+      'A report can only be edited or deleted while it is still under submission.',
+    );
   }
   return report;
 }

@@ -1,9 +1,10 @@
 # CivicFix backend: container image for Fly.io.
 # Two stages: build (compiles TS + generates the Prisma client), then a slim
 # runtime that carries only production deps + the compiled dist.
+# Node 24 LTS (matches .nvmrc and package.json engines).
 
 # ---- build ----
-FROM node:20-slim AS build
+FROM node:24-slim AS build
 # openssl is required by Prisma's query engine (both to generate and at runtime).
 RUN apt-get update && apt-get install -y --no-install-recommends openssl \
   && rm -rf /var/lib/apt/lists/*
@@ -25,16 +26,20 @@ RUN npm run build
 RUN npm prune --omit=dev
 
 # ---- runtime ----
-FROM node:20-slim
+FROM node:24-slim
 RUN apt-get update && apt-get install -y --no-install-recommends openssl \
   && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 ENV NODE_ENV=production
 
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/prisma ./prisma
-COPY package.json ./
+# Run as the image's unprivileged `node` user, not root. It owns the app
+# files and the local uploads directory (the only path the app writes to).
+COPY --from=build --chown=node:node /app/node_modules ./node_modules
+COPY --from=build --chown=node:node /app/dist ./dist
+COPY --from=build --chown=node:node /app/prisma ./prisma
+COPY --chown=node:node package.json ./
+RUN mkdir -p /app/uploads && chown node:node /app/uploads
+USER node
 
 EXPOSE 8080
 CMD ["node", "dist/server.js"]

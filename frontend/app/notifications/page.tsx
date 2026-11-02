@@ -18,7 +18,10 @@ function NotificationsList() {
   const [loading, setLoading] = useState(true);
 
   function load() {
-    return api.get<NotificationsData>('/notifications', { limit: 50 }).then(setData).catch(() => setData(null));
+    return api
+      .get<NotificationsData>('/notifications', { limit: 50 })
+      .then(setData)
+      .catch(() => setData(null));
   }
 
   useEffect(() => {
@@ -30,7 +33,11 @@ function NotificationsList() {
       await api.patch(`/notifications/${n.id}/read`).catch(() => {});
       setData((d) =>
         d
-          ? { ...d, unreadCount: Math.max(0, d.unreadCount - 1), items: d.items.map((x) => (x.id === n.id ? { ...x, isRead: true } : x)) }
+          ? {
+              ...d,
+              unreadCount: Math.max(0, d.unreadCount - 1),
+              items: d.items.map((x) => (x.id === n.id ? { ...x, isRead: true } : x)),
+            }
           : d,
       );
     }
@@ -60,7 +67,9 @@ function NotificationsList() {
         }
         actions={
           data && data.unreadCount > 0 ? (
-            <Button variant="secondary" onClick={markAll}>Mark all read</Button>
+            <Button variant="secondary" onClick={markAll}>
+              Mark all read
+            </Button>
           ) : undefined
         }
       />

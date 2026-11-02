@@ -26,11 +26,58 @@ interface Envelope<T> {
   details?: unknown;
 }
 
+/** Per-call options. `signal` lets callers (e.g. TanStack Query) cancel stale requests. */
+export interface RequestOptions {
+  signal?: AbortSignal;
+}
+
+/** Auth endpoints establish or end the session themselves, so they never trigger a refresh. */
+const NO_REFRESH_PATHS = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/logout'];
+
+let refreshInFlight: Promise<boolean> | null = null;
+
+/**
+ * Exchange the refresh cookie for a new access cookie. Single-flight: callers
+ * that hit an expired session at the same time share one request, because the
+ * API rotates (and so invalidates) the refresh token on every use.
+ */
+function refreshSession(): Promise<boolean> {
+  refreshInFlight ??= fetch(`${API_URL}/auth/refresh`, { method: 'POST', credentials: 'include' })
+    .then((res) => res.ok)
+    .catch(() => false)
+    .finally(() => {
+      refreshInFlight = null;
+    });
+  return refreshInFlight;
+}
+
+/**
+ * Send a request; if the access token has expired (AUTH_REQUIRED), refresh the
+ * session once and retry. The access cookie lives 15 minutes while the refresh
+ * cookie lives days, so without this users were silently signed out.
+ */
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  try {
+    return await send<T>(path, options);
+  } catch (err) {
+    const canRefresh =
+      err instanceof ApiError &&
+      err.code === 'AUTH_REQUIRED' &&
+      !options.signal?.aborted &&
+      !NO_REFRESH_PATHS.some((p) => path.startsWith(p));
+    if (!canRefresh || !(await refreshSession())) throw err;
+    return send<T>(path, options);
+  }
+}
+
+async function send<T>(path: string, options: RequestInit): Promise<T> {
   let res: Response;
   try {
     res = await fetch(`${API_URL}${path}`, { credentials: 'include', ...options });
-  } catch {
+  } catch (err) {
+    // A cancelled request is not a network failure: rethrow the abort as-is so
+    // the caller (or TanStack Query) can recognise and ignore it.
+    if (options.signal?.aborted) throw err;
     throw new ApiError('Network error. Is the API running?', 'NETWORK_ERROR', 0);
   }
 
@@ -52,6 +99,11 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return body.data as T;
 }
 
+/** User-facing message for a failed call: the API's message, or `fallback`. */
+export function errorMessage(error: unknown, fallback: string): string {
+  return error instanceof ApiError ? error.message : fallback;
+}
+
 function toQuery(params?: Record<string, unknown>): string {
   if (!params) return '';
   const q = new URLSearchParams();
@@ -63,14 +115,15 @@ function toQuery(params?: Record<string, unknown>): string {
 }
 
 export const api = {
-  get: <T>(path: string, params?: Record<string, unknown>) =>
-    request<T>(`${path}${toQuery(params)}`, { method: 'GET' }),
+  get: <T>(path: string, params?: Record<string, unknown>, opts: RequestOptions = {}) =>
+    request<T>(`${path}${toQuery(params)}`, { method: 'GET', signal: opts.signal }),
 
-  post: <T>(path: string, data?: unknown) =>
+  post: <T>(path: string, data?: unknown, opts: RequestOptions = {}) =>
     request<T>(path, {
       method: 'POST',
       headers: data !== undefined ? { 'Content-Type': 'application/json' } : undefined,
       body: data !== undefined ? JSON.stringify(data) : undefined,
+      signal: opts.signal,
     }),
 
   patch: <T>(path: string, data?: unknown) =>
@@ -83,8 +136,7 @@ export const api = {
   del: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
 
   /** Multipart POST (e.g. report creation with images). No JSON content-type. */
-  postForm: <T>(path: string, form: FormData) =>
-    request<T>(path, { method: 'POST', body: form }),
+  postForm: <T>(path: string, form: FormData) => request<T>(path, { method: 'POST', body: form }),
 };
 
 /** Absolute URL for a backend-served upload path like /uploads/abc.png. */

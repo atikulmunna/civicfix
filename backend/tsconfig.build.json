@@ -1,4 +1,12 @@
 {
+  // Production build: compiles only app code (no tests, seed or tool configs)
+  // from src/ into dist/, so `node dist/server.js` keeps working.
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "dist", "src/**/*.test.ts"]
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts"]
 }

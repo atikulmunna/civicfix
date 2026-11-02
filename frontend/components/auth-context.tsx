@@ -1,65 +1,91 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import { api } from '@/lib/api';
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { api, ApiError } from '@/lib/api';
+import { queryKeys } from '@/lib/query-keys';
 import type { User } from '@/lib/types';
 
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (input: { name: string; email: string; password: string; phone?: string }) => Promise<void>;
+  register: (input: {
+    name: string;
+    email: string;
+    password: string;
+    phone?: string;
+  }) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+/** Current user, or null when there is no valid session (AUTH_REQUIRED is not an error). */
+async function fetchCurrentUser(signal: AbortSignal): Promise<User | null> {
+  try {
+    const { user } = await api.get<{ user: User }>('/auth/me', undefined, { signal });
+    return user;
+  } catch (err) {
+    if (err instanceof ApiError && err.code === 'AUTH_REQUIRED') return null;
+    throw err;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const me = useQuery({
+    queryKey: queryKeys.me,
+    queryFn: ({ signal }) => fetchCurrentUser(signal),
+  });
+  // Any failure to load the session (e.g. network) leaves the user signed out.
+  const user = me.data ?? null;
 
-  const bootstrap = useCallback(async () => {
-    try {
-      const { user } = await api.get<{ user: User }>('/auth/me');
-      setUser(user);
-    } catch {
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  /** After the signed-in identity changes, cached data may be role-specific. */
+  const resetOtherQueries = useCallback(
+    () => queryClient.removeQueries({ predicate: (q) => q.queryKey[0] !== queryKeys.me[0] }),
+    [queryClient],
+  );
 
-  useEffect(() => {
-    void bootstrap();
-  }, [bootstrap]);
-
-  const login = useCallback(async (email: string, password: string) => {
-    const { user } = await api.post<{ user: User }>('/auth/login', { email, password });
-    setUser(user);
-  }, []);
+  const login = useCallback(
+    async (email: string, password: string) => {
+      const { user } = await api.post<{ user: User }>('/auth/login', { email, password });
+      resetOtherQueries();
+      queryClient.setQueryData(queryKeys.me, user);
+    },
+    [queryClient, resetOtherQueries],
+  );
 
   const register = useCallback(
     async (input: { name: string; email: string; password: string; phone?: string }) => {
       const { user } = await api.post<{ user: User }>('/auth/register', input);
-      setUser(user);
+      resetOtherQueries();
+      queryClient.setQueryData(queryKeys.me, user);
     },
-    [],
+    [queryClient, resetOtherQueries],
   );
 
   const logout = useCallback(async () => {
     try {
       await api.post('/auth/logout');
     } finally {
-      setUser(null);
+      resetOtherQueries();
+      queryClient.setQueryData(queryKeys.me, null);
     }
-  }, []);
+  }, [queryClient, resetOtherQueries]);
 
-  return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser: bootstrap }}>
-      {children}
-    </AuthContext.Provider>
+  const refreshUser = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: queryKeys.me }),
+    [queryClient],
   );
+
+  const value = useMemo(
+    () => ({ user, loading: me.isPending, login, register, logout, refreshUser }),
+    [user, me.isPending, login, register, logout, refreshUser],
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth(): AuthContextValue {

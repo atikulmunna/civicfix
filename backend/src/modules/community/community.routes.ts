@@ -5,20 +5,25 @@
  */
 import { Router } from 'express';
 import { z } from 'zod';
-import { asyncHandler, sendSuccess } from '../../lib/http.js';
+import { asyncHandler, routeParam, sendSuccess } from '../../lib/http.js';
 import { ApiError } from '../../lib/errors.js';
-import { optionalAuth, requireAuth } from '../../middleware/require-auth.js';
+import { authUser, optionalAuth, requireAuth } from '../../middleware/require-auth.js';
 import { commentLimiter } from '../../middleware/rate-limit.js';
 import * as comments from './comments.service.js';
 import * as votes from './votes.service.js';
 import * as subscriptions from './subscriptions.service.js';
 
-const commentSchema = z.object({ content: z.string().min(1, 'Comment cannot be empty.').max(2000) });
+const commentSchema = z.object({
+  content: z.string().min(1, 'Comment cannot be empty.').max(2000),
+});
 
 function parseComment(body: unknown): { content: string } {
   const result = commentSchema.safeParse(body);
   if (!result.success) {
-    const details = result.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message }));
+    const details = result.error.issues.map((i) => ({
+      path: i.path.join('.'),
+      message: i.message,
+    }));
     throw new ApiError('VALIDATION_ERROR', 'Invalid request data.', details);
   }
   return result.data;
@@ -31,7 +36,7 @@ communityRouter.get(
   '/:id/comments',
   optionalAuth,
   asyncHandler(async (req, res) => {
-    sendSuccess(res, { comments: await comments.listComments(req.params.id) });
+    sendSuccess(res, { comments: await comments.listComments(routeParam(req, 'id')) });
   }),
 );
 
@@ -41,7 +46,7 @@ communityRouter.post(
   commentLimiter,
   asyncHandler(async (req, res) => {
     const { content } = parseComment(req.body);
-    const comment = await comments.addComment(req.params.id, req.user!.id, content);
+    const comment = await comments.addComment(routeParam(req, 'id'), authUser(req).id, content);
     sendSuccess(res, { comment }, 201);
   }),
 );
@@ -51,35 +56,35 @@ communityRouter.post(
   '/:id/upvote',
   requireAuth,
   asyncHandler(async (req, res) => {
-    sendSuccess(res, await votes.castVote(req.params.id, req.user!.id, 'upvote'));
+    sendSuccess(res, await votes.castVote(routeParam(req, 'id'), authUser(req).id, 'upvote'));
   }),
 );
 communityRouter.delete(
   '/:id/upvote',
   requireAuth,
   asyncHandler(async (req, res) => {
-    sendSuccess(res, await votes.removeVote(req.params.id, req.user!.id, 'upvote'));
+    sendSuccess(res, await votes.removeVote(routeParam(req, 'id'), authUser(req).id, 'upvote'));
   }),
 );
 communityRouter.post(
   '/:id/confirm',
   requireAuth,
   asyncHandler(async (req, res) => {
-    sendSuccess(res, await votes.castVote(req.params.id, req.user!.id, 'confirm'));
+    sendSuccess(res, await votes.castVote(routeParam(req, 'id'), authUser(req).id, 'confirm'));
   }),
 );
 communityRouter.delete(
   '/:id/confirm',
   requireAuth,
   asyncHandler(async (req, res) => {
-    sendSuccess(res, await votes.removeVote(req.params.id, req.user!.id, 'confirm'));
+    sendSuccess(res, await votes.removeVote(routeParam(req, 'id'), authUser(req).id, 'confirm'));
   }),
 );
 communityRouter.post(
   '/:id/false-report',
   requireAuth,
   asyncHandler(async (req, res) => {
-    sendSuccess(res, await votes.castVote(req.params.id, req.user!.id, 'false_report'));
+    sendSuccess(res, await votes.castVote(routeParam(req, 'id'), authUser(req).id, 'false_report'));
   }),
 );
 
@@ -88,14 +93,14 @@ communityRouter.post(
   '/:id/follow',
   requireAuth,
   asyncHandler(async (req, res) => {
-    sendSuccess(res, await subscriptions.follow(req.params.id, req.user!.id));
+    sendSuccess(res, await subscriptions.follow(routeParam(req, 'id'), authUser(req).id));
   }),
 );
 communityRouter.delete(
   '/:id/follow',
   requireAuth,
   asyncHandler(async (req, res) => {
-    sendSuccess(res, await subscriptions.unfollow(req.params.id, req.user!.id));
+    sendSuccess(res, await subscriptions.unfollow(routeParam(req, 'id'), authUser(req).id));
   }),
 );
 
@@ -105,7 +110,7 @@ commentsRouter.delete(
   '/:id',
   requireAuth,
   asyncHandler(async (req, res) => {
-    await comments.deleteComment(req.params.id, req.user!);
+    await comments.deleteComment(routeParam(req, 'id'), authUser(req));
     sendSuccess(res, { deleted: true });
   }),
 );

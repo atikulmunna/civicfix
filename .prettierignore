@@ -1,0 +1,12 @@
+# Generated or vendored output (Prettier also honours .gitignore).
+package-lock.json
+**/dist/
+**/.next/
+**/coverage/
+**/uploads/
+*.tsbuildinfo
+frontend/next-env.d.ts
+frontend/public/
+
+# Prisma migrations are applied history; never reformat them.
+backend/prisma/migrations/

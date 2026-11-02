@@ -1,4 +1,10 @@
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
+import type {
+  ButtonHTMLAttributes,
+  InputHTMLAttributes,
+  ReactNode,
+  SelectHTMLAttributes,
+  TextareaHTMLAttributes,
+} from 'react';
 
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
@@ -26,9 +32,13 @@ export function PageHeader({
     <div className={`flex flex-wrap items-end justify-between gap-4 ${className}`}>
       <div>
         {eyebrow && (
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">{eyebrow}</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">
+            {eyebrow}
+          </p>
         )}
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">{title}</h1>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+          {title}
+        </h1>
         {subtitle && <p className="mt-2 text-slate-600">{subtitle}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-3 text-sm">{actions}</div>}
@@ -40,7 +50,9 @@ export function PageHeader({
 export function StatTile({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="border-t-2 border-slate-900 pt-4">
-      <p className="text-3xl font-extrabold tracking-tight tabular-nums text-slate-900 sm:text-4xl">{value}</p>
+      <p className="text-3xl font-extrabold tracking-tight tabular-nums text-slate-900 sm:text-4xl">
+        {value}
+      </p>
       <p className="mt-1 text-sm text-slate-500">{label}</p>
     </div>
   );
@@ -50,11 +62,14 @@ export function Button({
   variant = 'primary',
   className = '',
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'dark' | 'danger' }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: 'primary' | 'secondary' | 'dark' | 'danger';
+}) {
   const styles = {
     primary: 'bg-teal-600 text-white hover:bg-teal-700 disabled:bg-teal-600/40',
     dark: 'bg-slate-900 text-white hover:bg-slate-800 disabled:bg-slate-900/40',
-    secondary: 'border border-slate-300 bg-white text-slate-800 hover:bg-slate-50 disabled:opacity-50',
+    secondary:
+      'border border-slate-300 bg-white text-slate-800 hover:bg-slate-50 disabled:opacity-50',
     danger: 'bg-red-600 text-white hover:bg-red-700 disabled:opacity-50',
   }[variant];
   return (
@@ -95,4 +110,13 @@ export function FieldError({ children }: { children?: ReactNode }) {
 
 export function Spinner({ label = 'Loading…' }: { label?: string }) {
   return <p className="py-10 text-center text-sm text-slate-500">{label}</p>;
+}
+
+/** Full-width message shown when a page's data failed to load. */
+export function LoadError({ children }: { children: ReactNode }) {
+  return (
+    <p role="alert" className="py-10 text-center text-sm text-red-700">
+      {children}
+    </p>
+  );
 }

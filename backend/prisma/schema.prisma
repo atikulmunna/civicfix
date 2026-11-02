@@ -2,24 +2,28 @@
 // Source of truth: community_problem_reporting_platform_srs_v1.1.md (§8 Data Requirements, §26 State Machine)
 //
 // Notes:
-// - Postgres + PostGIS. The `location` geography column on Report is managed
-//   outside Prisma (Prisma has no native geography type). It is created and
-//   indexed via the migration in prisma/migrations and kept in sync with
-//   latitude/longitude on write (see backend/src/modules/reports). The
+// - Postgres + PostGIS. The PostGIS extension is created by the 0_init SQL
+//   migration (not via Prisma's preview postgresqlExtensions, which reports
+//   false drift). The `location` geography column on Report is kept in sync
+//   with latitude/longitude by a DB trigger (1_postgis migration). The
 //   `Unsupported("geography(Point, 4326)")` mapping lets Prisma round-trip the
-//   column without trying to manage its type.
+//   column without managing its type; its GiST index is declared below so the
+//   schema matches the migrations exactly (CI drift check).
 // - All status-transition rules live in code (backend/src/modules/reports/status-machine.ts),
 //   not in the DB, so they can return INVALID_STATUS_TRANSITION with context.
 
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["postgresqlExtensions"]
+  provider = "prisma-client-js"
 }
 
+// url: the app's runtime connection. On Neon this is the pooled (-pooler) URL.
+// directUrl: used by Prisma Migrate. On Neon this is the direct (unpooled) URL,
+// because migrations need session state that a transaction pooler drops.
+// Locally both point at the same docker-compose database.
 datasource db {
-  provider   = "postgresql"
-  url        = env("DATABASE_URL")
-  extensions = [postgis]
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 // ---------------------------------------------------------------------------
@@ -96,16 +100,16 @@ model User {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  department        Department?        @relation(fields: [departmentId], references: [id])
-  reports           Report[]           @relation("ReportReporter")
-  comments          Comment[]
-  votes             Vote[]
-  uploadedImages    ReportImage[]      @relation("ImageUploader")
-  statusChanges     StatusHistory[]    @relation("StatusChanger")
-  assignmentsMade   ReportAssignment[] @relation("AssignmentAuthor")
-  subscriptions     ReportSubscription[]
-  notifications     Notification[]
-  refreshTokens     RefreshToken[]
+  department      Department?          @relation(fields: [departmentId], references: [id])
+  reports         Report[]             @relation("ReportReporter")
+  comments        Comment[]
+  votes           Vote[]
+  uploadedImages  ReportImage[]        @relation("ImageUploader")
+  statusChanges   StatusHistory[]      @relation("StatusChanger")
+  assignmentsMade ReportAssignment[]   @relation("AssignmentAuthor")
+  subscriptions   ReportSubscription[]
+  notifications   Notification[]
+  refreshTokens   RefreshToken[]
 
   @@index([role])
   @@index([departmentId])
@@ -134,54 +138,55 @@ model Department {
   isActive     Boolean  @default(true) @map("is_active")
   createdAt    DateTime @default(now()) @map("created_at")
 
-  members           User[]
-  assignedReports   Report[]           @relation("ReportAssignedDept")
-  assignments       ReportAssignment[]
+  members         User[]
+  assignedReports Report[]           @relation("ReportAssignedDept")
+  assignments     ReportAssignment[]
 
   @@map("departments")
 }
 
 model Report {
-  id                      String       @id @default(uuid()) @db.Uuid
-  userId                  String       @map("user_id") @db.Uuid
-  title                   String       @db.VarChar(180)
-  description             String
-  categoryId              String       @map("category_id") @db.Uuid
-  status                  ReportStatus @default(SUBMITTED)
-  severity                Severity
-  latitude                Decimal      @db.Decimal(9, 6)
-  longitude               Decimal      @db.Decimal(9, 6)
+  id                     String                                 @id @default(uuid()) @db.Uuid
+  userId                 String                                 @map("user_id") @db.Uuid
+  title                  String                                 @db.VarChar(180)
+  description            String
+  categoryId             String                                 @map("category_id") @db.Uuid
+  status                 ReportStatus                           @default(SUBMITTED)
+  severity               Severity
+  latitude               Decimal                                @db.Decimal(9, 6)
+  longitude              Decimal                                @db.Decimal(9, 6)
   // Managed via raw SQL/migration; derived from latitude/longitude on write.
-  location                Unsupported("geography(Point, 4326)")?
-  address                 String?
-  landmark                String?
-  assignedDepartmentId    String?      @map("assigned_department_id") @db.Uuid
-  priorityScore           Int          @default(0) @map("priority_score")
-  priorityScoreUpdatedAt  DateTime?    @map("priority_score_updated_at")
-  duplicateOfReportId     String?      @map("duplicate_of_report_id") @db.Uuid
-  internalNote            String?      @map("internal_note")
-  createdAt               DateTime     @default(now()) @map("created_at")
-  updatedAt               DateTime     @updatedAt @map("updated_at")
-  resolvedAt              DateTime?    @map("resolved_at")
+  location               Unsupported("geography(Point, 4326)")?
+  address                String?
+  landmark               String?
+  assignedDepartmentId   String?                                @map("assigned_department_id") @db.Uuid
+  priorityScore          Int                                    @default(0) @map("priority_score")
+  priorityScoreUpdatedAt DateTime?                              @map("priority_score_updated_at")
+  duplicateOfReportId    String?                                @map("duplicate_of_report_id") @db.Uuid
+  internalNote           String?                                @map("internal_note")
+  createdAt              DateTime                               @default(now()) @map("created_at")
+  updatedAt              DateTime                               @updatedAt @map("updated_at")
+  resolvedAt             DateTime?                              @map("resolved_at")
 
-  reporter           User                 @relation("ReportReporter", fields: [userId], references: [id])
-  category           Category             @relation(fields: [categoryId], references: [id])
-  assignedDepartment Department?          @relation("ReportAssignedDept", fields: [assignedDepartmentId], references: [id])
-  duplicateOf        Report?              @relation("ReportDuplicates", fields: [duplicateOfReportId], references: [id])
-  duplicates         Report[]             @relation("ReportDuplicates")
+  reporter           User        @relation("ReportReporter", fields: [userId], references: [id])
+  category           Category    @relation(fields: [categoryId], references: [id])
+  assignedDepartment Department? @relation("ReportAssignedDept", fields: [assignedDepartmentId], references: [id])
+  duplicateOf        Report?     @relation("ReportDuplicates", fields: [duplicateOfReportId], references: [id])
+  duplicates         Report[]    @relation("ReportDuplicates")
 
-  images         ReportImage[]
-  comments       Comment[]
-  votes          Vote[]
-  statusHistory  StatusHistory[]
-  assignments    ReportAssignment[]
-  subscriptions  ReportSubscription[]
-  notifications  Notification[]
+  images        ReportImage[]
+  comments      Comment[]
+  votes         Vote[]
+  statusHistory StatusHistory[]
+  assignments   ReportAssignment[]
+  subscriptions ReportSubscription[]
+  notifications Notification[]
 
   @@index([status])
   @@index([categoryId])
   @@index([createdAt])
   @@index([assignedDepartmentId])
+  @@index([location], map: "idx_reports_location_gist", type: Gist)
   @@map("reports")
 }
 

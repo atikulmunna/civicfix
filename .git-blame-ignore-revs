@@ -1,0 +1,8 @@
+# Bulk formatting commits; skipped by `git blame` and GitHub blame.
+# Local use: git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# style: format the codebase with Prettier
+a97991b001d1cca9d5d8606cc9a4e9f1203ae3eb
+
+# style(db): format schema.prisma with prisma format
+21dbcc0945aa7898906f4bef5f0da879788be115

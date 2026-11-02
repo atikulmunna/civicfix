@@ -12,9 +12,20 @@ const HASH_OPTS = { memoryCost: 19456, timeCost: 2, parallelism: 1 } as const;
 
 /** A tiny denylist of the most common passwords (AUTH-013). */
 const COMMON_PASSWORDS = new Set([
-  'password', 'password1', '12345678', '123456789', '1234567890',
-  'qwerty123', 'qwertyuiop', 'iloveyou', 'admin123', 'letmein123',
-  'welcome1', 'password123', '11111111', '00000000',
+  'password',
+  'password1',
+  '12345678',
+  '123456789',
+  '1234567890',
+  'qwerty123',
+  'qwertyuiop',
+  'iloveyou',
+  'admin123',
+  'letmein123',
+  'welcome1',
+  'password123',
+  '11111111',
+  '00000000',
 ]);
 
 /** Throws VALIDATION_ERROR if the password fails policy. */

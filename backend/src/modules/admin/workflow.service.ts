@@ -12,11 +12,7 @@ import { ApiError } from '../../lib/errors.js';
 import { assertReportExists } from '../community/shared.js';
 import { getVoteCounts } from '../community/votes.service.js';
 import { createStatusChangeNotifications } from '../notifications/notifications.service.js';
-import {
-  getReportById,
-  toPublicReport,
-  type Actor,
-} from '../reports/reports.service.js';
+import { getReportById, toPublicReport, type Actor } from '../reports/reports.service.js';
 import {
   assertTransition,
   InvalidStatusTransitionError,
@@ -84,7 +80,7 @@ export async function transitionStatus(
       throw new ApiError('VALIDATION_ERROR', 'A department is required to assign this report.');
     }
     const dept = await prisma.department.findUnique({ where: { id: payload.departmentId } });
-    if (!dept || !dept.isActive) {
+    if (!dept?.isActive) {
       throw new ApiError('VALIDATION_ERROR', 'The selected department does not exist.');
     }
   }

@@ -11,6 +11,9 @@ primary_region = 'sin'
 [env]
   NODE_ENV = 'production'
   PORT = '8080'
+  # Fly's edge proxy sits in front of the app: trust exactly one
+  # X-Forwarded-For hop (see backend/src/lib/client-ip.ts).
+  TRUST_PROXY_HOPS = '1'
 
 [http_service]
   internal_port = 8080

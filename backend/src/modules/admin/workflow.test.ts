@@ -5,19 +5,18 @@
  * BR-005 department scoping, RBAC, the admin list, department queue, and the
  * status-history timeline (STAT-006).
  */
-import { unlink } from 'node:fs/promises';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import request from 'supertest';
 import { buildApp } from '../../app.js';
 import { prisma } from '../../lib/prisma.js';
-import { uploadDir } from '../../lib/uploads.js';
+import { deleteStoredImages } from '../../lib/uploads.js';
 
 const app = buildApp();
 const stamp = Date.now();
 
 const PNG = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAADElEQVQImWPgL8sDAAGLAPRp2A2cAAAAAElFTkSuQmCC',
   'base64',
 );
 const POINT = { lat: 23.75, lng: 90.39 };
@@ -39,10 +38,17 @@ const storedUrls: string[] = [];
 const bearer = (t: string) => ['Authorization', `Bearer ${t}`] as const;
 
 async function registerAndLogin(email: string): Promise<string> {
-  await request(app).post('/api/v1/auth/register').send({ name: 'User', email, password: 'CorrectHorse9' });
-  const login = await request(app).post('/api/v1/auth/login').send({ email, password: 'CorrectHorse9' });
+  await request(app)
+    .post('/api/v1/auth/register')
+    .send({ name: 'User', email, password: 'CorrectHorse9' });
+  const login = await request(app)
+    .post('/api/v1/auth/login')
+    .send({ email, password: 'CorrectHorse9' });
   const cookies = login.headers['set-cookie'] as unknown as string[];
-  return cookies.find((c) => c.startsWith('access_token='))!.split(';')[0].split('=')[1];
+  return cookies
+    .find((c) => c.startsWith('access_token='))!
+    .split(';')[0]!
+    .split('=')[1]!;
 }
 
 async function createReport(): Promise<string> {
@@ -61,7 +67,8 @@ async function createReport(): Promise<string> {
 }
 
 beforeAll(async () => {
-  categoryId = (await prisma.category.create({ data: { name: `Roads ${stamp}`, icon: 'road' } })).id;
+  categoryId = (await prisma.category.create({ data: { name: `Roads ${stamp}`, icon: 'road' } }))
+    .id;
   deptA = (await prisma.department.create({ data: { name: `Public Works ${stamp}` } })).id;
   deptB = (await prisma.department.create({ data: { name: `Sanitation Dept ${stamp}` } })).id;
 
@@ -90,9 +97,7 @@ afterAll(async () => {
   await prisma.user.deleteMany({ where: { id: { in: ids } } });
   await prisma.department.deleteMany({ where: { id: { in: [deptA, deptB] } } });
   await prisma.category.deleteMany({ where: { id: categoryId } });
-  await Promise.all(
-    storedUrls.map((u) => unlink(path.join(uploadDir, path.basename(u))).catch(() => {})),
-  );
+  await deleteStoredImages(storedUrls.map((u) => path.basename(u)));
   await prisma.$disconnect();
 });
 
@@ -145,7 +150,12 @@ describe('full lifecycle SUBMITTED -> RESOLVED (§26)', () => {
     const hist = await request(app).get(`/api/v1/reports/${id}/history`);
     const statuses = hist.body.data.history.map((h: { newStatus: string }) => h.newStatus);
     expect(statuses).toEqual([
-      'SUBMITTED', 'UNDER_REVIEW', 'VERIFIED', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED',
+      'SUBMITTED',
+      'UNDER_REVIEW',
+      'VERIFIED',
+      'ASSIGNED',
+      'IN_PROGRESS',
+      'RESOLVED',
     ]);
     expect(hist.body.data.history.at(-1).changedBy.name).toBeDefined();
   });
@@ -243,7 +253,9 @@ describe('admin list + department queue', () => {
   });
 
   it('forbids non-admins from the admin list', async () => {
-    const res = await request(app).get('/api/v1/admin/reports').set(...bearer(citizenToken));
+    const res = await request(app)
+      .get('/api/v1/admin/reports')
+      .set(...bearer(citizenToken));
     expect(res.status).toBe(403);
   });
 
@@ -253,7 +265,9 @@ describe('admin list + department queue', () => {
       where: { id },
       data: { status: 'ASSIGNED', assignedDepartmentId: deptA },
     });
-    const res = await request(app).get('/api/v1/department/reports').set(...bearer(workerToken));
+    const res = await request(app)
+      .get('/api/v1/department/reports')
+      .set(...bearer(workerToken));
     expect(res.status).toBe(200);
     expect(res.body.data.items.some((r: { id: string }) => r.id === id)).toBe(true);
   });

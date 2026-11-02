@@ -48,7 +48,7 @@ interface TransitionRule {
   from: ReportStatus;
   to: ReportStatus;
   /** Roles permitted to perform this transition. */
-  allowedRoles: ReadonlyArray<UserRole>;
+  allowedRoles: readonly UserRole[];
   effects?: TransitionEffects;
 }
 
@@ -58,18 +58,38 @@ interface TransitionRule {
  * department (BR-005). That ownership check lives in the service layer, not
  * here, because it needs the report row.
  */
-const ADMINS: ReadonlyArray<UserRole> = ['admin', 'super_admin'];
-const DEPT_OR_ADMIN: ReadonlyArray<UserRole> = ['department_worker', 'admin', 'super_admin'];
+const ADMINS: readonly UserRole[] = ['admin', 'super_admin'];
+const DEPT_OR_ADMIN: readonly UserRole[] = ['department_worker', 'admin', 'super_admin'];
 
 /** The full transition table from SRS v1.1 §26. */
-export const TRANSITIONS: ReadonlyArray<TransitionRule> = [
+export const TRANSITIONS: readonly TransitionRule[] = [
   { from: 'SUBMITTED', to: 'UNDER_REVIEW', allowedRoles: ADMINS },
-  { from: 'SUBMITTED', to: 'REJECTED', allowedRoles: ADMINS, effects: { requiresInternalNote: true } },
-  { from: 'SUBMITTED', to: 'DUPLICATE', allowedRoles: ADMINS, effects: { requiresDuplicateTarget: true } },
+  {
+    from: 'SUBMITTED',
+    to: 'REJECTED',
+    allowedRoles: ADMINS,
+    effects: { requiresInternalNote: true },
+  },
+  {
+    from: 'SUBMITTED',
+    to: 'DUPLICATE',
+    allowedRoles: ADMINS,
+    effects: { requiresDuplicateTarget: true },
+  },
 
   { from: 'UNDER_REVIEW', to: 'VERIFIED', allowedRoles: ADMINS },
-  { from: 'UNDER_REVIEW', to: 'REJECTED', allowedRoles: ADMINS, effects: { requiresInternalNote: true } },
-  { from: 'UNDER_REVIEW', to: 'DUPLICATE', allowedRoles: ADMINS, effects: { requiresDuplicateTarget: true } },
+  {
+    from: 'UNDER_REVIEW',
+    to: 'REJECTED',
+    allowedRoles: ADMINS,
+    effects: { requiresInternalNote: true },
+  },
+  {
+    from: 'UNDER_REVIEW',
+    to: 'DUPLICATE',
+    allowedRoles: ADMINS,
+    effects: { requiresDuplicateTarget: true },
+  },
   { from: 'UNDER_REVIEW', to: 'NEEDS_MORE_INFO', allowedRoles: ADMINS },
 
   { from: 'NEEDS_MORE_INFO', to: 'UNDER_REVIEW', allowedRoles: ADMINS },
@@ -79,7 +99,12 @@ export const TRANSITIONS: ReadonlyArray<TransitionRule> = [
   { from: 'ASSIGNED', to: 'IN_PROGRESS', allowedRoles: DEPT_OR_ADMIN },
   { from: 'ASSIGNED', to: 'VERIFIED', allowedRoles: ADMINS }, // un-assign / reassign path
 
-  { from: 'IN_PROGRESS', to: 'RESOLVED', allowedRoles: DEPT_OR_ADMIN, effects: { setsResolvedAt: true } },
+  {
+    from: 'IN_PROGRESS',
+    to: 'RESOLVED',
+    allowedRoles: DEPT_OR_ADMIN,
+    effects: { setsResolvedAt: true },
+  },
   { from: 'IN_PROGRESS', to: 'NEEDS_MORE_INFO', allowedRoles: DEPT_OR_ADMIN },
 
   { from: 'RESOLVED', to: 'ARCHIVED', allowedRoles: ADMINS },
@@ -87,12 +112,6 @@ export const TRANSITIONS: ReadonlyArray<TransitionRule> = [
 
   { from: 'REJECTED', to: 'ARCHIVED', allowedRoles: ADMINS },
 ];
-
-/**
- * Super Admin administrative override: any non-terminal status -> ARCHIVED (§26).
- * Represented separately so it doesn't need 6 explicit rows.
- */
-const SUPER_ADMIN_ARCHIVE_OVERRIDE = true;
 
 function findRule(from: ReportStatus, to: ReportStatus): TransitionRule | undefined {
   return TRANSITIONS.find((r) => r.from === from && r.to === to);
@@ -119,13 +138,9 @@ export function canTransition(
     return { allowed: false, reason: `Report is already ${from}.` };
   }
 
-  // Super Admin override: non-terminal -> ARCHIVED.
-  if (
-    SUPER_ADMIN_ARCHIVE_OVERRIDE &&
-    role === 'super_admin' &&
-    to === 'ARCHIVED' &&
-    !isTerminal(from)
-  ) {
+  // Super Admin administrative override (§26): any non-terminal status ->
+  // ARCHIVED. Checked here instead of as 6 explicit rows in TRANSITIONS.
+  if (role === 'super_admin' && to === 'ARCHIVED' && !isTerminal(from)) {
     return { allowed: true, effects: {} };
   }
 
@@ -176,8 +191,16 @@ export function assertTransition(
 /** Convenience: all statuses reachable from `from` for `role` (e.g. to build UI menus). */
 export function allowedNextStatuses(from: ReportStatus, role: UserRole): ReportStatus[] {
   const all: ReportStatus[] = [
-    'SUBMITTED', 'UNDER_REVIEW', 'VERIFIED', 'ASSIGNED', 'IN_PROGRESS',
-    'RESOLVED', 'REJECTED', 'DUPLICATE', 'NEEDS_MORE_INFO', 'ARCHIVED',
+    'SUBMITTED',
+    'UNDER_REVIEW',
+    'VERIFIED',
+    'ASSIGNED',
+    'IN_PROGRESS',
+    'RESOLVED',
+    'REJECTED',
+    'DUPLICATE',
+    'NEEDS_MORE_INFO',
+    'ARCHIVED',
   ];
   return all.filter((to) => canTransition(from, to, role).allowed);
 }

@@ -4,20 +4,28 @@
  * filter/paginate, detail (internal-note hiding), owner edit/delete window
  * (REP-012/BR-013), nearby (ST_DWithin), map bbox (MAP-009), duplicates (§6.9).
  */
-import { unlink } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 import { buildApp } from '../../app.js';
 import { prisma } from '../../lib/prisma.js';
-import { uploadDir } from '../../lib/uploads.js';
+import { LocalStore, objectStore } from '../../lib/storage.js';
+import { deleteStoredImages } from '../../lib/uploads.js';
 
 const app = buildApp();
 const stamp = Date.now();
 
-// A real 1x1 PNG (valid magic bytes) for upload tests.
+/** Integration tests run with UPLOAD_PROVIDER=local (the default). */
+function localStoreDir(): string {
+  if (!(objectStore instanceof LocalStore)) throw new Error('tests expect local storage');
+  return objectStore.dir;
+}
+
+// A real, fully decodable 1x1 PNG for upload tests (uploads are re-encoded).
 const PNG = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAADElEQVQImWPgL8sDAAGLAPRp2A2cAAAAAElFTkSuQmCC',
   'base64',
 );
 
@@ -47,7 +55,7 @@ async function registerAndLogin(email: string): Promise<string> {
     .send({ email, password: 'CorrectHorse9' });
   const cookies = login.headers['set-cookie'] as unknown as string[];
   const access = cookies.find((c) => c.startsWith('access_token='))!;
-  return access.split(';')[0].split('=')[1];
+  return access.split(';')[0]!.split('=')[1]!;
 }
 
 interface CreateOpts {
@@ -104,9 +112,7 @@ afterAll(async () => {
   await prisma.user.deleteMany({ where: { id: { in: ids } } });
   await prisma.category.deleteMany({ where: { id: { in: [categoryId, otherCategoryId] } } });
   // Remove files written to disk during the run.
-  await Promise.all(
-    storedUrls.map((u) => unlink(path.join(uploadDir, path.basename(u))).catch(() => {})),
-  );
+  await deleteStoredImages(storedUrls.map((u) => path.basename(u)));
   await prisma.$disconnect();
 });
 
@@ -122,13 +128,14 @@ describe('POST /reports (create)', () => {
     const report = res.body.data.report;
     expect(report.status).toBe('SUBMITTED');
     expect(report.images).toHaveLength(1);
-    expect(report.images[0].imageUrl).toMatch(/^\/uploads\/.+\.png$/);
+    // Uploads are normalized (metadata stripped) and stored as WebP.
+    expect(report.images[0].imageUrl).toMatch(/^\/uploads\/.+\.webp$/);
     storedUrls.push(report.images[0].imageUrl);
 
     const history = await prisma.statusHistory.findMany({ where: { reportId: report.id } });
     expect(history).toHaveLength(1);
-    expect(history[0].oldStatus).toBeNull();
-    expect(history[0].newStatus).toBe('SUBMITTED');
+    expect(history[0]!.oldStatus).toBeNull();
+    expect(history[0]!.newStatus).toBe('SUBMITTED');
   });
 
   it('rejects creation with no image (REP-003)', async () => {
@@ -235,20 +242,28 @@ describe('GET /reports (list, filter, paginate)', () => {
     expect(res.body.data.items.length).toBeGreaterThan(0);
     expect(res.body.data).toMatchObject({ page: 1, limit: 5 });
     expect(res.body.data.total).toBeGreaterThan(0);
-    expect(res.body.data.items.every((r: { categoryId: string }) => r.categoryId === categoryId)).toBe(true);
+    expect(
+      res.body.data.items.every((r: { categoryId: string }) => r.categoryId === categoryId),
+    ).toBe(true);
   });
 
   it('filters by severity', async () => {
-    await createReport({ token: ownerToken, severity: 'urgent', title: 'Urgent gas leak smell' }).then(
-      (r) => storedUrls.push(r.body.data.report.images[0].imageUrl),
-    );
+    await createReport({
+      token: ownerToken,
+      severity: 'urgent',
+      title: 'Urgent gas leak smell',
+    }).then((r) => storedUrls.push(r.body.data.report.images[0].imageUrl));
     const res = await request(app).get('/api/v1/reports').query({ categoryId, severity: 'urgent' });
-    expect(res.body.data.items.every((r: { severity: string }) => r.severity === 'urgent')).toBe(true);
+    expect(res.body.data.items.every((r: { severity: string }) => r.severity === 'urgent')).toBe(
+      true,
+    );
   });
 
   it('searches by title text', async () => {
     const res = await request(app).get('/api/v1/reports').query({ search: 'gas leak' });
-    expect(res.body.data.items.some((r: { title: string }) => /gas leak/i.test(r.title))).toBe(true);
+    expect(res.body.data.items.some((r: { title: string }) => /gas leak/i.test(r.title))).toBe(
+      true,
+    );
   });
 
   it('sorts by most_confirmed (LIST-005)', async () => {
@@ -256,19 +271,23 @@ describe('GET /reports (list, filter, paginate)', () => {
     const top = await createReport({ token: ownerToken, title: 'Most confirmed candidate' });
     const topId = top.body.data.report.id;
     storedUrls.push(top.body.data.report.images[0].imageUrl);
-    await request(app).post(`/api/v1/reports/${topId}/confirm`).set('Authorization', `Bearer ${ownerToken}`);
-    await request(app).post(`/api/v1/reports/${topId}/confirm`).set('Authorization', `Bearer ${otherToken}`);
+    await request(app)
+      .post(`/api/v1/reports/${topId}/confirm`)
+      .set('Authorization', `Bearer ${ownerToken}`);
+    await request(app)
+      .post(`/api/v1/reports/${topId}/confirm`)
+      .set('Authorization', `Bearer ${otherToken}`);
 
     const res = await request(app)
       .get('/api/v1/reports')
       .query({ categoryId, sort: 'most_confirmed', limit: 50 });
     expect(res.status).toBe(200);
-    const items = res.body.data.items as Array<{ id: string; counts: { confirms: number } }>;
-    expect(items[0].id).toBe(topId);
-    expect(items[0].counts.confirms).toBe(2);
+    const items = res.body.data.items as { id: string; counts: { confirms: number } }[];
+    expect(items[0]!.id).toBe(topId);
+    expect(items[0]!.counts.confirms).toBe(2);
     // Confirm counts are non-increasing down the list.
     for (let i = 1; i < items.length; i++) {
-      expect(items[i - 1].counts.confirms).toBeGreaterThanOrEqual(items[i].counts.confirms);
+      expect(items[i - 1]!.counts.confirms).toBeGreaterThanOrEqual(items[i]!.counts.confirms);
     }
   });
 });
@@ -282,7 +301,11 @@ describe('GET /reports/nearby (ST_DWithin)', () => {
       .get('/api/v1/reports/nearby')
       .query({ lat: BASE.lat, lng: BASE.lng, radius: 1000 });
     expect(res.status).toBe(200);
-    const items = res.body.data.items as Array<{ latitude: number; distanceM: number; title: string }>;
+    const items = res.body.data.items as {
+      latitude: number;
+      distanceM: number;
+      title: string;
+    }[];
     expect(items.length).toBeGreaterThan(0);
     expect(items.every((r) => r.distanceM <= 1000)).toBe(true);
     expect(items.some((r) => /far away/i.test(r.title))).toBe(false);
@@ -294,7 +317,7 @@ describe('GET /reports/map (bbox, MAP-009)', () => {
     const bbox = `${BASE.lng - 0.01},${BASE.lat - 0.01},${BASE.lng + 0.01},${BASE.lat + 0.01}`;
     const res = await request(app).get('/api/v1/reports/map').query({ bbox });
     expect(res.status).toBe(200);
-    const items = res.body.data.items as Array<{ latitude: number; longitude: number }>;
+    const items = res.body.data.items as { latitude: number; longitude: number }[];
     expect(items.length).toBeGreaterThan(0);
     expect(
       items.every(
@@ -371,6 +394,33 @@ describe('PATCH/DELETE /reports/:id (edit window, REP-012/BR-013)', () => {
     expect(res.status).toBe(200);
     const gone = await request(app).get(`/api/v1/reports/${id}`);
     expect(gone.status).toBe(404);
+  });
+
+  it('removes the report images from storage when it is deleted', async () => {
+    const id = await freshReport();
+    const image = await prisma.reportImage.findFirstOrThrow({ where: { reportId: id } });
+    const file = path.join(localStoreDir(), image.storageKey!);
+    expect(existsSync(file)).toBe(true);
+
+    const res = await request(app)
+      .delete(`/api/v1/reports/${id}`)
+      .set('Authorization', `Bearer ${ownerToken}`);
+    expect(res.status).toBe(200);
+    expect(existsSync(file)).toBe(false);
+  });
+
+  it('removes stored images when the report cannot be created', async () => {
+    const put = vi.spyOn(objectStore, 'put');
+    try {
+      // A well-formed but unknown category fails after the images are stored.
+      const res = await createReport({ token: ownerToken, category: randomUUID() });
+      expect(res.status).toBe(400);
+      expect(put).toHaveBeenCalledTimes(1);
+      const storedKey = put.mock.calls[0]![0];
+      expect(existsSync(path.join(localStoreDir(), storedKey))).toBe(false);
+    } finally {
+      put.mockRestore();
+    }
   });
 
   it('lets an admin delete any report', async () => {
