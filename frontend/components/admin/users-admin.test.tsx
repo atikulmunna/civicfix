@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithQuery } from '@/test-utils';
 
@@ -75,5 +75,25 @@ describe('UsersAdmin password reset', () => {
     expect(await screen.findByTestId('temporary-password')).toHaveTextContent('Tmp-pass_1234567');
     await u.click(screen.getByRole('button', { name: 'Done' }));
     expect(screen.queryByTestId('temporary-password')).toBeNull();
+  });
+});
+
+describe('UsersAdmin search', () => {
+  beforeEach(() => {
+    get.mockReset();
+  });
+
+  it('waits for typing to pause instead of querying on every keystroke', async () => {
+    renderAdmin();
+    await screen.findByText('cit@e.com');
+    const u = userEvent.setup();
+    await u.type(screen.getByLabelText('Search users'), 'cit');
+
+    const searches = () =>
+      get.mock.calls
+        .filter(([path]) => path === '/admin/users')
+        .map(([, params]) => (params as { search?: string }).search)
+        .filter((s): s is string => s !== undefined);
+    await waitFor(() => expect(searches()).toEqual(['cit']));
   });
 });
