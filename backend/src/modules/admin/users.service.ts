@@ -55,14 +55,34 @@ export async function listUsers(input: ListUsersInput) {
   };
 }
 
-export async function setUserStatus(userId: string, isActive: boolean, actor: Actor) {
-  if (userId === actor.id) {
-    throw new ApiError('VALIDATION_ERROR', 'You cannot change your own account status.');
-  }
+/**
+ * Account management hierarchy: admins manage citizens and department
+ * workers; super admins manage everyone. Nobody manages their own account
+ * through admin routes (callers check that first, with a clearer message).
+ */
+export function canManageUser(actor: Actor, target: Pick<User, 'id' | 'role'>): boolean {
+  if (actor.id === target.id) return false;
+  if (actor.role === 'super_admin') return true;
+  return actor.role === 'admin' && target.role !== 'admin' && target.role !== 'super_admin';
+}
+
+/** Load a user an actor may manage, or throw NOT_FOUND / FORBIDDEN. */
+async function loadManageableUser(userId: string, actor: Actor): Promise<User> {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) {
     throw new ApiError('NOT_FOUND', 'User not found.');
   }
+  if (!canManageUser(actor, user)) {
+    throw new ApiError('FORBIDDEN', 'You do not have permission to manage this account.');
+  }
+  return user;
+}
+
+export async function setUserStatus(userId: string, isActive: boolean, actor: Actor) {
+  if (userId === actor.id) {
+    throw new ApiError('VALIDATION_ERROR', 'You cannot change your own account status.');
+  }
+  await loadManageableUser(userId, actor);
   const updated = await prisma.user.update({ where: { id: userId }, data: { isActive } });
   return toAdminUser(updated);
 }

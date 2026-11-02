@@ -193,6 +193,28 @@ describe('users (§9.3)', () => {
       .send({ isActive: true });
   });
 
+  it('stops admins from deactivating admins or super admins; super admins can', async () => {
+    const superAdmin = await prisma.user.findUniqueOrThrow({ where: { email: emails.super } });
+    const admin = await prisma.user.findUniqueOrThrow({ where: { email: emails.admin } });
+
+    const adminOnSuper = await request(app)
+      .patch(`/api/v1/admin/users/${superAdmin.id}/status`)
+      .set(...bearer(adminToken))
+      .send({ isActive: false });
+    expect(adminOnSuper.status).toBe(403);
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: superAdmin.id } })).isActive).toBe(
+      true,
+    );
+
+    const superOnAdmin = await request(app)
+      .patch(`/api/v1/admin/users/${admin.id}/status`)
+      .set(...bearer(superToken))
+      .send({ isActive: false });
+    expect(superOnAdmin.status).toBe(200);
+    // Restore so later tests can use the admin token.
+    await prisma.user.update({ where: { id: admin.id }, data: { isActive: true } });
+  });
+
   it('blocks changing your own status', async () => {
     const me = await prisma.user.findUnique({ where: { email: emails.admin } });
     const res = await request(app)

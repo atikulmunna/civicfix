@@ -6,6 +6,7 @@ import { api, errorMessage } from '@/lib/api';
 import type { Paginated, Role } from '@/lib/types';
 import { queryKeys } from '@/lib/query-keys';
 import { useAuth } from '@/components/auth-context';
+import { canManageUser } from '@/lib/permissions';
 import { useToast } from '@/components/toast';
 import { Button, Input, LoadError, Select, Spinner } from '@/components/ui';
 
@@ -112,7 +113,7 @@ export function UsersAdmin() {
                     )}
                   </td>
                   <td className="text-right">
-                    {u.id !== user?.id && (
+                    {canManageUser(user, u) && (
                       <Button variant="secondary" onClick={() => toggleActive.mutate(u)}>
                         {u.isActive ? 'Deactivate' : 'Activate'}
                       </Button>
