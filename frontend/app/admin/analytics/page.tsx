@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { useQuery } from '@tanstack/react-query';
+import { api, errorMessage } from '@/lib/api';
+import { queryKeys } from '@/lib/query-keys';
 import type { ReportStatus, Severity } from '@/lib/types';
 import { severityLabel, statusLabel } from '@/lib/format';
 import { RequireAuth } from '@/components/require-auth';
 import { BarChart } from '@/components/bar-chart';
-import { Card, PageHeader, Spinner, StatTile } from '@/components/ui';
+import { Card, LoadError, PageHeader, Spinner, StatTile } from '@/components/ui';
 
 interface Summary {
   totalReports: number;
@@ -34,28 +35,30 @@ interface DeptRow {
 }
 
 function Analytics() {
-  const [summary, setSummary] = useState<Summary | null>(null);
-  const [categories, setCategories] = useState<CategoryRow[]>([]);
-  const [departments, setDepartments] = useState<DeptRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const summaryQuery = useQuery({
+    queryKey: queryKeys.analytics('summary'),
+    queryFn: ({ signal }) => api.get<Summary>('/admin/analytics/summary', undefined, { signal }),
+  });
+  const categoriesQuery = useQuery({
+    queryKey: queryKeys.analytics('categories'),
+    queryFn: ({ signal }) =>
+      api.get<{ categories: CategoryRow[] }>('/admin/analytics/categories', undefined, { signal }),
+  });
+  const departmentsQuery = useQuery({
+    queryKey: queryKeys.analytics('departments'),
+    queryFn: ({ signal }) =>
+      api.get<{ departments: DeptRow[] }>('/admin/analytics/departments', undefined, { signal }),
+  });
+  const queries = [summaryQuery, categoriesQuery, departmentsQuery];
 
-  useEffect(() => {
-    Promise.all([
-      api.get<Summary>('/admin/analytics/summary').then(setSummary),
-      api
-        .get<{ categories: CategoryRow[] }>('/admin/analytics/categories')
-        .then((d) => setCategories(d.categories)),
-      api
-        .get<{ departments: DeptRow[] }>('/admin/analytics/departments')
-        .then((d) => setDepartments(d.departments)),
-    ])
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
-
-  if (loading) return <Spinner />;
-  if (!summary)
-    return <p className="py-10 text-center text-sm text-red-700">Failed to load analytics.</p>;
+  if (queries.some((q) => q.isPending)) return <Spinner />;
+  const failed = queries.find((q) => q.isError);
+  if (failed || !summaryQuery.data) {
+    return <LoadError>{errorMessage(failed?.error, 'Failed to load analytics.')}</LoadError>;
+  }
+  const summary = summaryQuery.data;
+  const categories = categoriesQuery.data?.categories ?? [];
+  const departments = departmentsQuery.data?.departments ?? [];
 
   const tiles = [
     { label: 'Total reports', value: summary.totalReports },

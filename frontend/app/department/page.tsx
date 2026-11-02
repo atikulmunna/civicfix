@@ -1,45 +1,48 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { api, ApiError } from '@/lib/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { api, errorMessage } from '@/lib/api';
 import type { Paginated, Report } from '@/lib/types';
 import { formatDate } from '@/lib/format';
 import { RequireAuth } from '@/components/require-auth';
 import { SeverityBadge, StatusBadge } from '@/components/badges';
 import { useToast } from '@/components/toast';
-import { Button, PageHeader, Spinner } from '@/components/ui';
+import { queryKeys } from '@/lib/query-keys';
+import { Button, LoadError, PageHeader, Spinner } from '@/components/ui';
+
+interface Action {
+  id: string;
+  run: () => Promise<unknown>;
+  done: string;
+}
 
 function Queue() {
   const { toast } = useToast();
-  const [data, setData] = useState<Paginated<Report> | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [busyId, setBusyId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const queue = useQuery({
+    queryKey: queryKeys.departmentQueue,
+    queryFn: ({ signal }) =>
+      api.get<Paginated<Report>>('/department/reports', { limit: 50 }, { signal }),
+  });
+  const data = queue.data;
 
-  function load() {
-    return api
-      .get<Paginated<Report>>('/department/reports', { limit: 50 })
-      .then(setData)
-      .catch(() => setData(null));
+  const action = useMutation({
+    mutationFn: (a: Action) => a.run(),
+    onSuccess: async (_result, a) => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.departmentQueue });
+      toast(a.done, 'success');
+    },
+    onError: (err) => toast(errorMessage(err, 'Action failed.'), 'error'),
+  });
+  const busyId = action.isPending ? action.variables.id : null;
+  const act = (id: string, run: () => Promise<unknown>, done: string) =>
+    action.mutate({ id, run, done });
+
+  if (queue.isPending) return <Spinner />;
+  if (queue.isError) {
+    return <LoadError>{errorMessage(queue.error, 'Failed to load your queue.')}</LoadError>;
   }
-  useEffect(() => {
-    load().finally(() => setLoading(false));
-  }, []);
-
-  async function act(id: string, fn: () => Promise<unknown>, ok: string) {
-    setBusyId(id);
-    try {
-      await fn();
-      await load();
-      toast(ok, 'success');
-    } catch (err) {
-      toast(err instanceof ApiError ? err.message : 'Action failed.', 'error');
-    } finally {
-      setBusyId(null);
-    }
-  }
-
-  if (loading) return <Spinner />;
 
   return (
     <div className="flex flex-col gap-6">

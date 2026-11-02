@@ -1,45 +1,34 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
-import { api, ApiError, assetUrl } from '@/lib/api';
+import { use } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { api, assetUrl, errorMessage } from '@/lib/api';
+import { queryKeys } from '@/lib/query-keys';
 import type { Report, StatusHistoryEntry } from '@/lib/types';
 import { formatDateTime } from '@/lib/format';
 import { SeverityBadge, StatusBadge } from '@/components/badges';
 import { VoteBar } from '@/components/vote-bar';
 import { StatusTimeline } from '@/components/status-timeline';
 import { CommentSection } from '@/components/comment-section';
-import { Card, Spinner } from '@/components/ui';
+import { Card, LoadError, Spinner } from '@/components/ui';
 
-export default function ReportDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
-  const [report, setReport] = useState<Report | null>(null);
-  const [history, setHistory] = useState<StatusHistoryEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+/** Report detail for one id (separate from the page so it can be tested). */
+export function ReportDetail({ id }: { id: string }) {
+  const reportQuery = useQuery({
+    queryKey: queryKeys.report(id),
+    queryFn: ({ signal }) => api.get<{ report: Report }>(`/reports/${id}`, undefined, { signal }),
+  });
+  const historyQuery = useQuery({
+    queryKey: queryKeys.reportHistory(id),
+    queryFn: ({ signal }) =>
+      api.get<{ history: StatusHistoryEntry[] }>(`/reports/${id}/history`, undefined, { signal }),
+  });
 
-  useEffect(() => {
-    let active = true;
-    Promise.all([
-      api.get<{ report: Report }>(`/reports/${id}`),
-      api.get<{ history: StatusHistoryEntry[] }>(`/reports/${id}/history`),
-    ])
-      .then(([r, h]) => {
-        if (!active) return;
-        setReport(r.report);
-        setHistory(h.history);
-      })
-      .catch(
-        (e) => active && setError(e instanceof ApiError ? e.message : 'Failed to load report.'),
-      )
-      .finally(() => active && setLoading(false));
-    return () => {
-      active = false;
-    };
-  }, [id]);
-
-  if (loading) return <Spinner />;
-  if (error || !report)
-    return <p className="py-10 text-center text-sm text-red-700">{error ?? 'Not found.'}</p>;
+  if (reportQuery.isPending) return <Spinner />;
+  if (reportQuery.isError) {
+    return <LoadError>{errorMessage(reportQuery.error, 'Failed to load report.')}</LoadError>;
+  }
+  const report = reportQuery.data.report;
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
@@ -91,9 +80,22 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
       <aside className="flex flex-col gap-4">
         <Card>
           <h2 className="mb-3 text-lg font-semibold text-slate-900">Status history</h2>
-          <StatusTimeline entries={history} />
+          {historyQuery.isPending ? (
+            <Spinner />
+          ) : historyQuery.isError ? (
+            <LoadError>
+              {errorMessage(historyQuery.error, 'Failed to load the status history.')}
+            </LoadError>
+          ) : (
+            <StatusTimeline entries={historyQuery.data.history} />
+          )}
         </Card>
       </aside>
     </div>
   );
+}
+
+export default function ReportDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  return <ReportDetail id={id} />;
 }
