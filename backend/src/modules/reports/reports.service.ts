@@ -67,7 +67,7 @@ export function toPublicReport(r: ReportWithRelations, canSeeInternal = false) {
 
 async function assertCategoryExists(categoryId: string): Promise<void> {
   const category = await prisma.category.findUnique({ where: { id: categoryId } });
-  if (!category || !category.isActive) {
+  if (!category?.isActive) {
     throw new ApiError('VALIDATION_ERROR', 'The selected category does not exist.');
   }
 }

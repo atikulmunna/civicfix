@@ -80,7 +80,7 @@ export async function transitionStatus(
       throw new ApiError('VALIDATION_ERROR', 'A department is required to assign this report.');
     }
     const dept = await prisma.department.findUnique({ where: { id: payload.departmentId } });
-    if (!dept || !dept.isActive) {
+    if (!dept?.isActive) {
       throw new ApiError('VALIDATION_ERROR', 'The selected department does not exist.');
     }
   }

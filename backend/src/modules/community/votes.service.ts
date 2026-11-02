@@ -30,13 +30,16 @@ export async function getVoteCounts(reportIds: string[]): Promise<Map<string, Vo
     if (!c) continue;
     if (g.voteType === 'upvote') c.upvotes = g._count._all;
     else if (g.voteType === 'confirm') c.confirms = g._count._all;
-    else if (g.voteType === 'false_report') c.falseReports = g._count._all;
+    else c.falseReports = g._count._all; // false_report: the only remaining VoteType
   }
   return map;
 }
 
 async function counts(reportId: string): Promise<VoteCounts> {
-  return (await getVoteCounts([reportId])).get(reportId)!;
+  // getVoteCounts seeds every requested id, so the fallback never applies.
+  return (
+    (await getVoteCounts([reportId])).get(reportId) ?? { upvotes: 0, confirms: 0, falseReports: 0 }
+  );
 }
 
 /** Cast a vote; idempotent if the same vote already exists (BR-006/007). */

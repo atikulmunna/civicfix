@@ -26,7 +26,7 @@ function getCookie(res: request.Response, name: string): string | undefined {
   return raw?.find((c) => c.startsWith(`${name}=`));
 }
 function cookieValue(setCookie: string): string {
-  return setCookie.split(';')[0].split('=')[1];
+  return setCookie.split(';')[0]!.split('=')[1]!;
 }
 
 const createdEmails: string[] = [citizen.email];

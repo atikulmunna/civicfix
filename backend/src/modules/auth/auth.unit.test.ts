@@ -16,13 +16,19 @@ import { ApiError } from '../../lib/errors.js';
 
 describe('password policy (AUTH-013)', () => {
   it('accepts a strong password', () => {
-    expect(() => assertPasswordPolicy('CorrectHorse9')).not.toThrow();
+    expect(() => {
+      assertPasswordPolicy('CorrectHorse9');
+    }).not.toThrow();
   });
   it('rejects passwords shorter than 8 chars', () => {
-    expect(() => assertPasswordPolicy('short')).toThrow(ApiError);
+    expect(() => {
+      assertPasswordPolicy('short');
+    }).toThrow(ApiError);
   });
   it('rejects common passwords (case-insensitive)', () => {
-    expect(() => assertPasswordPolicy('Password123')).toThrow(ApiError);
+    expect(() => {
+      assertPasswordPolicy('Password123');
+    }).toThrow(ApiError);
   });
 });
 

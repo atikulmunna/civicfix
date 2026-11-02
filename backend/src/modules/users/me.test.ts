@@ -26,8 +26,8 @@ beforeAll(async () => {
   const cookies = login.headers['set-cookie'] as unknown as string[];
   token = cookies
     .find((c) => c.startsWith('access_token='))!
-    .split(';')[0]
-    .split('=')[1];
+    .split(';')[0]!
+    .split('=')[1]!;
   userId = (await prisma.user.findUnique({ where: { email } }))!.id;
   categoryId = (await prisma.category.create({ data: { name: `Me Cat ${stamp}` } })).id;
 

@@ -4,11 +4,9 @@
  * and role changes are super-admin only (AUTH-010).
  */
 import { Router } from 'express';
-import { z, type ZodTypeAny } from 'zod';
-import { asyncHandler, sendSuccess } from '../../lib/http.js';
-import { ApiError } from '../../lib/errors.js';
+import { asyncHandler, parseInput, routeParam, sendSuccess } from '../../lib/http.js';
 import type { Request } from 'express';
-import { optionalAuth, requireAuth, requireRole } from '../../middleware/require-auth.js';
+import { authUser, optionalAuth, requireAuth, requireRole } from '../../middleware/require-auth.js';
 import * as users from './users.service.js';
 import * as catalog from './catalog.service.js';
 import {
@@ -20,18 +18,6 @@ import {
   userRoleSchema,
   userStatusSchema,
 } from './admin-crud.schemas.js';
-
-function parse<S extends ZodTypeAny>(schema: S, data: unknown): z.infer<S> {
-  const result = schema.safeParse(data);
-  if (!result.success) {
-    const details = result.error.issues.map((i) => ({
-      path: i.path.join('.'),
-      message: i.message,
-    }));
-    throw new ApiError('VALIDATION_ERROR', 'Invalid request data.', details);
-  }
-  return result.data;
-}
 
 const ADMIN = ['admin', 'super_admin'] as const;
 
@@ -71,7 +57,7 @@ adminUsersRouter.get(
   requireAuth,
   requireRole(...ADMIN),
   asyncHandler(async (req, res) => {
-    sendSuccess(res, await users.listUsers(parse(listUsersSchema, req.query)));
+    sendSuccess(res, await users.listUsers(parseInput(listUsersSchema, req.query)));
   }),
 );
 
@@ -80,8 +66,10 @@ adminUsersRouter.patch(
   requireAuth,
   requireRole(...ADMIN),
   asyncHandler(async (req, res) => {
-    const { isActive } = parse(userStatusSchema, req.body);
-    sendSuccess(res, { user: await users.setUserStatus(req.params.id, isActive, req.user!) });
+    const { isActive } = parseInput(userStatusSchema, req.body);
+    sendSuccess(res, {
+      user: await users.setUserStatus(routeParam(req, 'id'), isActive, authUser(req)),
+    });
   }),
 );
 
@@ -90,8 +78,10 @@ adminUsersRouter.patch(
   requireAuth,
   requireRole('super_admin'),
   asyncHandler(async (req, res) => {
-    const input = parse(userRoleSchema, req.body);
-    sendSuccess(res, { user: await users.setUserRole(req.params.id, input, req.user!) });
+    const input = parseInput(userRoleSchema, req.body);
+    sendSuccess(res, {
+      user: await users.setUserRole(routeParam(req, 'id'), input, authUser(req)),
+    });
   }),
 );
 
@@ -106,7 +96,7 @@ adminCategoriesRouter.post(
   asyncHandler(async (req, res) => {
     sendSuccess(
       res,
-      { category: await catalog.createCategory(parse(categoryCreateSchema, req.body)) },
+      { category: await catalog.createCategory(parseInput(categoryCreateSchema, req.body)) },
       201,
     );
   }),
@@ -116,8 +106,8 @@ adminCategoriesRouter.patch(
   requireAuth,
   requireRole(...ADMIN),
   asyncHandler(async (req, res) => {
-    const input = parse(categoryUpdateSchema, req.body);
-    sendSuccess(res, { category: await catalog.updateCategory(req.params.id, input) });
+    const input = parseInput(categoryUpdateSchema, req.body);
+    sendSuccess(res, { category: await catalog.updateCategory(routeParam(req, 'id'), input) });
   }),
 );
 adminCategoriesRouter.delete(
@@ -125,7 +115,7 @@ adminCategoriesRouter.delete(
   requireAuth,
   requireRole(...ADMIN),
   asyncHandler(async (req, res) => {
-    sendSuccess(res, { category: await catalog.disableCategory(req.params.id) });
+    sendSuccess(res, { category: await catalog.disableCategory(routeParam(req, 'id')) });
   }),
 );
 
@@ -140,7 +130,7 @@ adminDepartmentsRouter.post(
   asyncHandler(async (req, res) => {
     sendSuccess(
       res,
-      { department: await catalog.createDepartment(parse(departmentCreateSchema, req.body)) },
+      { department: await catalog.createDepartment(parseInput(departmentCreateSchema, req.body)) },
       201,
     );
   }),
@@ -150,8 +140,8 @@ adminDepartmentsRouter.patch(
   requireAuth,
   requireRole(...ADMIN),
   asyncHandler(async (req, res) => {
-    const input = parse(departmentUpdateSchema, req.body);
-    sendSuccess(res, { department: await catalog.updateDepartment(req.params.id, input) });
+    const input = parseInput(departmentUpdateSchema, req.body);
+    sendSuccess(res, { department: await catalog.updateDepartment(routeParam(req, 'id'), input) });
   }),
 );
 adminDepartmentsRouter.delete(
@@ -159,6 +149,6 @@ adminDepartmentsRouter.delete(
   requireAuth,
   requireRole(...ADMIN),
   asyncHandler(async (req, res) => {
-    sendSuccess(res, { department: await catalog.disableDepartment(req.params.id) });
+    sendSuccess(res, { department: await catalog.disableDepartment(routeParam(req, 'id')) });
   }),
 );

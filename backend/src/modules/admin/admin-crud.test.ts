@@ -39,8 +39,8 @@ async function registerAndLogin(email: string): Promise<string> {
   const cookies = login.headers['set-cookie'] as unknown as string[];
   return cookies
     .find((c) => c.startsWith('access_token='))!
-    .split(';')[0]
-    .split('=')[1];
+    .split(';')[0]!
+    .split('=')[1]!;
 }
 
 beforeAll(async () => {

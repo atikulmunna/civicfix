@@ -75,9 +75,16 @@ const CATEGORY_PHOTOS: Record<string, string[]> = {
   ],
 };
 
+/** The element at `i`, wrapping around, for deterministic seed rotation. */
+function pick<T>(list: readonly T[], i: number): T {
+  const item = list[i % list.length];
+  if (item === undefined) throw new Error('pick() needs a non-empty list');
+  return item;
+}
+
 function photoFor(categoryName: string, n: number): string {
-  const pool = CATEGORY_PHOTOS[categoryName] ?? CATEGORY_PHOTOS['Roads & Potholes'];
-  const id = pool[n % pool.length];
+  const pool = CATEGORY_PHOTOS[categoryName] ?? CATEGORY_PHOTOS['Roads & Potholes'] ?? [];
+  const id = pick(pool, n);
   return `https://images.unsplash.com/photo-${id}?w=800&h=600&fit=crop&auto=format&q=70`;
 }
 
@@ -206,7 +213,7 @@ async function main(): Promise<void> {
       email: 'worker.publicworks@civicfix.local',
       passwordHash,
       role: 'department_worker',
-      departmentId: departments[0].id,
+      departmentId: pick(departments, 0).id,
     },
   });
   await prisma.user.create({
@@ -215,7 +222,7 @@ async function main(): Promise<void> {
       email: 'worker.sanitation@civicfix.local',
       passwordHash,
       role: 'department_worker',
-      departmentId: departments[1].id,
+      departmentId: pick(departments, 1).id,
     },
   });
   const citizens = await Promise.all(
@@ -234,14 +241,14 @@ async function main(): Promise<void> {
   const reportIds: string[] = [];
 
   for (let i = 0; i < STATUS_PLAN.length; i++) {
-    const status = STATUS_PLAN[i];
-    const category = categories[i % categories.length];
+    const status = pick(STATUS_PLAN, i);
+    const category = pick(categories, i);
     const catTitles = CATEGORY_TITLES[category.name] ?? ['Civic issue'];
-    const title = catTitles[Math.floor(i / categories.length) % catTitles.length];
-    const reporter = citizens[i % citizens.length];
+    const title = pick(catTitles, Math.floor(i / categories.length));
+    const reporter = pick(citizens, i);
     const createdAt = new Date(now - (STATUS_PLAN.length - i) * 2 * DAY);
     const assigned = ASSIGNED_STATES.includes(status);
-    const dept = departments[i % departments.length];
+    const dept = pick(departments, i);
     const resolvedAt = status === 'RESOLVED' ? new Date(createdAt.getTime() + 3 * DAY) : null;
 
     const report = await prisma.report.create({
@@ -250,7 +257,7 @@ async function main(): Promise<void> {
         title,
         description: `${title} reported by a resident. Please look into this as soon as possible.`,
         categoryId: category.id,
-        severity: SEVERITIES[i % SEVERITIES.length],
+        severity: pick(SEVERITIES, i),
         latitude: DHAKA.lat + (i % 7) * 0.004 - 0.014,
         longitude: DHAKA.lng + (i % 5) * 0.004 - 0.008,
         address: `${100 + i} Sample Road, Dhaka`,
@@ -322,10 +329,10 @@ async function main(): Promise<void> {
 
   // Sample comments on the first few reports.
   for (let i = 0; i < 6; i++) {
-    const commenter = citizens[(i + 1) % citizens.length];
+    const commenter = pick(citizens, i + 1);
     await prisma.comment.create({
       data: {
-        reportId: reportIds[i],
+        reportId: pick(reportIds, i),
         userId: commenter.id,
         content: 'I have noticed this too, it really needs attention.',
       },
@@ -335,7 +342,7 @@ async function main(): Promise<void> {
   // Sample votes: each of the first 12 reports gets a few upvotes and confirms;
   // confirms add a confirm-sourced subscription (BR-016).
   for (let i = 0; i < 12; i++) {
-    const reportId = reportIds[i];
+    const reportId = pick(reportIds, i);
     const upvoters = citizens.slice(0, (i % 4) + 1);
     await prisma.vote.createMany({
       data: upvoters.map((u) => ({ reportId, userId: u.id, voteType: 'upvote' as const })),
@@ -360,7 +367,7 @@ async function main(): Promise<void> {
 }
 
 main()
-  .catch((err) => {
+  .catch((err: unknown) => {
     console.error(err);
     process.exitCode = 1;
   })

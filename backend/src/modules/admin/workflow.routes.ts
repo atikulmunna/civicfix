@@ -4,10 +4,8 @@
  * endpoints are focused wrappers over it.
  */
 import { Router } from 'express';
-import { z, type ZodTypeAny } from 'zod';
-import { asyncHandler, sendSuccess } from '../../lib/http.js';
-import { ApiError } from '../../lib/errors.js';
-import { optionalAuth, requireAuth, requireRole } from '../../middleware/require-auth.js';
+import { asyncHandler, parseInput, routeParam, sendSuccess } from '../../lib/http.js';
+import { authUser, optionalAuth, requireAuth, requireRole } from '../../middleware/require-auth.js';
 import * as workflow from './workflow.service.js';
 import {
   adminListSchema,
@@ -17,18 +15,6 @@ import {
   resolveSchema,
   statusSchema,
 } from './workflow.schemas.js';
-
-function parse<S extends ZodTypeAny>(schema: S, data: unknown): z.infer<S> {
-  const result = schema.safeParse(data);
-  if (!result.success) {
-    const details = result.error.issues.map((i) => ({
-      path: i.path.join('.'),
-      message: i.message,
-    }));
-    throw new ApiError('VALIDATION_ERROR', 'Invalid request data.', details);
-  }
-  return result.data;
-}
 
 const ADMIN = ['admin', 'super_admin'] as const;
 const DEPT_OR_ADMIN = ['department_worker', 'admin', 'super_admin'] as const;
@@ -41,7 +27,7 @@ adminReportsRouter.get(
   requireAuth,
   requireRole(...ADMIN),
   asyncHandler(async (req, res) => {
-    sendSuccess(res, await workflow.listAdminReports(parse(adminListSchema, req.query)));
+    sendSuccess(res, await workflow.listAdminReports(parseInput(adminListSchema, req.query)));
   }),
 );
 
@@ -51,8 +37,13 @@ adminReportsRouter.patch(
   requireAuth,
   requireRole(...DEPT_OR_ADMIN),
   asyncHandler(async (req, res) => {
-    const { status, ...payload } = parse(statusSchema, req.body);
-    const report = await workflow.transitionStatus(req.params.id, req.user!, status, payload);
+    const { status, ...payload } = parseInput(statusSchema, req.body);
+    const report = await workflow.transitionStatus(
+      routeParam(req, 'id'),
+      authUser(req),
+      status,
+      payload,
+    );
     sendSuccess(res, { report });
   }),
 );
@@ -62,8 +53,13 @@ adminReportsRouter.patch(
   requireAuth,
   requireRole(...ADMIN),
   asyncHandler(async (req, res) => {
-    const input = parse(assignSchema, req.body);
-    const report = await workflow.transitionStatus(req.params.id, req.user!, 'ASSIGNED', input);
+    const input = parseInput(assignSchema, req.body);
+    const report = await workflow.transitionStatus(
+      routeParam(req, 'id'),
+      authUser(req),
+      'ASSIGNED',
+      input,
+    );
     sendSuccess(res, { report });
   }),
 );
@@ -73,8 +69,13 @@ adminReportsRouter.post(
   requireAuth,
   requireRole(...DEPT_OR_ADMIN),
   asyncHandler(async (req, res) => {
-    const input = parse(resolveSchema, req.body);
-    const report = await workflow.transitionStatus(req.params.id, req.user!, 'RESOLVED', input);
+    const input = parseInput(resolveSchema, req.body);
+    const report = await workflow.transitionStatus(
+      routeParam(req, 'id'),
+      authUser(req),
+      'RESOLVED',
+      input,
+    );
     sendSuccess(res, { report });
   }),
 );
@@ -84,8 +85,13 @@ adminReportsRouter.post(
   requireAuth,
   requireRole(...ADMIN),
   asyncHandler(async (req, res) => {
-    const input = parse(duplicateSchema, req.body);
-    const report = await workflow.transitionStatus(req.params.id, req.user!, 'DUPLICATE', input);
+    const input = parseInput(duplicateSchema, req.body);
+    const report = await workflow.transitionStatus(
+      routeParam(req, 'id'),
+      authUser(req),
+      'DUPLICATE',
+      input,
+    );
     sendSuccess(res, { report });
   }),
 );
@@ -100,7 +106,7 @@ departmentRouter.get(
   asyncHandler(async (req, res) => {
     sendSuccess(
       res,
-      await workflow.listDepartmentReports(req.user!, parse(deptListSchema, req.query)),
+      await workflow.listDepartmentReports(authUser(req), parseInput(deptListSchema, req.query)),
     );
   }),
 );
@@ -112,6 +118,6 @@ reportHistoryRouter.get(
   '/:id/history',
   optionalAuth,
   asyncHandler(async (req, res) => {
-    sendSuccess(res, { history: await workflow.getStatusHistory(req.params.id) });
+    sendSuccess(res, { history: await workflow.getStatusHistory(routeParam(req, 'id')) });
   }),
 );

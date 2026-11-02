@@ -79,7 +79,7 @@ export async function listNotifications(userId: string, input: ListNotifications
 /** Mark a single notification read; only the owner may (NOTIF-004). */
 export async function markRead(notificationId: string, userId: string): Promise<void> {
   const notification = await prisma.notification.findUnique({ where: { id: notificationId } });
-  if (!notification || notification.userId !== userId) {
+  if (notification?.userId !== userId) {
     throw new ApiError('NOT_FOUND', 'Notification not found.');
   }
   if (!notification.isRead) {

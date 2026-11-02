@@ -47,7 +47,7 @@ async function registerAndLogin(email: string): Promise<string> {
     .send({ email, password: 'CorrectHorse9' });
   const cookies = login.headers['set-cookie'] as unknown as string[];
   const access = cookies.find((c) => c.startsWith('access_token='))!;
-  return access.split(';')[0].split('=')[1];
+  return access.split(';')[0]!.split('=')[1]!;
 }
 
 interface CreateOpts {
@@ -105,7 +105,7 @@ afterAll(async () => {
   await prisma.category.deleteMany({ where: { id: { in: [categoryId, otherCategoryId] } } });
   // Remove files written to disk during the run.
   await Promise.all(
-    storedUrls.map((u) => unlink(path.join(uploadDir, path.basename(u))).catch(() => {})),
+    storedUrls.map((u) => unlink(path.join(uploadDir, path.basename(u))).catch(() => undefined)),
   );
   await prisma.$disconnect();
 });
@@ -127,8 +127,8 @@ describe('POST /reports (create)', () => {
 
     const history = await prisma.statusHistory.findMany({ where: { reportId: report.id } });
     expect(history).toHaveLength(1);
-    expect(history[0].oldStatus).toBeNull();
-    expect(history[0].newStatus).toBe('SUBMITTED');
+    expect(history[0]!.oldStatus).toBeNull();
+    expect(history[0]!.newStatus).toBe('SUBMITTED');
   });
 
   it('rejects creation with no image (REP-003)', async () => {
@@ -275,12 +275,12 @@ describe('GET /reports (list, filter, paginate)', () => {
       .get('/api/v1/reports')
       .query({ categoryId, sort: 'most_confirmed', limit: 50 });
     expect(res.status).toBe(200);
-    const items = res.body.data.items as Array<{ id: string; counts: { confirms: number } }>;
-    expect(items[0].id).toBe(topId);
-    expect(items[0].counts.confirms).toBe(2);
+    const items = res.body.data.items as { id: string; counts: { confirms: number } }[];
+    expect(items[0]!.id).toBe(topId);
+    expect(items[0]!.counts.confirms).toBe(2);
     // Confirm counts are non-increasing down the list.
     for (let i = 1; i < items.length; i++) {
-      expect(items[i - 1].counts.confirms).toBeGreaterThanOrEqual(items[i].counts.confirms);
+      expect(items[i - 1]!.counts.confirms).toBeGreaterThanOrEqual(items[i]!.counts.confirms);
     }
   });
 });
@@ -294,11 +294,11 @@ describe('GET /reports/nearby (ST_DWithin)', () => {
       .get('/api/v1/reports/nearby')
       .query({ lat: BASE.lat, lng: BASE.lng, radius: 1000 });
     expect(res.status).toBe(200);
-    const items = res.body.data.items as Array<{
+    const items = res.body.data.items as {
       latitude: number;
       distanceM: number;
       title: string;
-    }>;
+    }[];
     expect(items.length).toBeGreaterThan(0);
     expect(items.every((r) => r.distanceM <= 1000)).toBe(true);
     expect(items.some((r) => /far away/i.test(r.title))).toBe(false);
@@ -310,7 +310,7 @@ describe('GET /reports/map (bbox, MAP-009)', () => {
     const bbox = `${BASE.lng - 0.01},${BASE.lat - 0.01},${BASE.lng + 0.01},${BASE.lat + 0.01}`;
     const res = await request(app).get('/api/v1/reports/map').query({ bbox });
     expect(res.status).toBe(200);
-    const items = res.body.data.items as Array<{ latitude: number; longitude: number }>;
+    const items = res.body.data.items as { latitude: number; longitude: number }[];
     expect(items.length).toBeGreaterThan(0);
     expect(
       items.every(

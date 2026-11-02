@@ -48,8 +48,8 @@ async function registerAndLogin(email: string): Promise<string> {
   const cookies = login.headers['set-cookie'] as unknown as string[];
   return cookies
     .find((c) => c.startsWith('access_token='))!
-    .split(';')[0]
-    .split('=')[1];
+    .split(';')[0]!
+    .split('=')[1]!;
 }
 
 async function createReport(): Promise<string> {
@@ -99,7 +99,7 @@ afterAll(async () => {
   await prisma.department.deleteMany({ where: { id: { in: [deptA, deptB] } } });
   await prisma.category.deleteMany({ where: { id: categoryId } });
   await Promise.all(
-    storedUrls.map((u) => unlink(path.join(uploadDir, path.basename(u))).catch(() => {})),
+    storedUrls.map((u) => unlink(path.join(uploadDir, path.basename(u))).catch(() => undefined)),
   );
   await prisma.$disconnect();
 });

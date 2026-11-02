@@ -56,7 +56,8 @@ export async function getSummary() {
   >;
   for (const r of severityRows) bySeverity[r.severity] = r._count._all;
 
-  const [{ seconds }] = await prisma.$queryRaw<AvgRow[]>`
+  // An aggregate without GROUP BY always returns exactly one row.
+  const [avgRow] = await prisma.$queryRaw<AvgRow[]>`
     SELECT AVG(EXTRACT(EPOCH FROM (resolved_at - created_at)))::float8 AS seconds
     FROM reports
     WHERE resolved_at IS NOT NULL
@@ -77,7 +78,7 @@ export async function getSummary() {
     bySeverity,
     resolvedCount,
     resolutionRate: total > 0 ? Math.round((resolvedCount / total) * 10000) / 10000 : 0,
-    avgResolutionHours: secondsToHours(seconds),
+    avgResolutionHours: secondsToHours(avgRow?.seconds ?? null),
     unresolvedHighPriority: highPriorityOpen,
     monthlyTrends,
   };

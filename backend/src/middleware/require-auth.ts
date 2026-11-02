@@ -8,6 +8,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import type { UserRole } from '@prisma/client';
 import { ApiError } from '../lib/errors.js';
+import { readCookie } from '../lib/http.js';
 import { verifyAccessToken } from '../modules/auth/tokens.js';
 
 export interface AuthUser {
@@ -17,6 +18,8 @@ export interface AuthUser {
 
 // Augment Express's Request with the authenticated user.
 declare global {
+  // Express exposes its Request type only through this global namespace, so
+  // module augmentation has to use `namespace` here.
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
@@ -27,8 +30,20 @@ declare global {
 
 export const ACCESS_COOKIE = 'access_token';
 
+/**
+ * The authenticated user for a route guarded by requireAuth. Throws
+ * AUTH_REQUIRED if called on a request that was never authenticated, which
+ * replaces scattered `req.user!` assertions with a checked accessor.
+ */
+export function authUser(req: Request): AuthUser {
+  if (!req.user) {
+    throw new ApiError('AUTH_REQUIRED', 'Authentication required.');
+  }
+  return req.user;
+}
+
 function extractToken(req: Request): string | undefined {
-  const fromCookie = req.cookies?.[ACCESS_COOKIE];
+  const fromCookie = readCookie(req, ACCESS_COOKIE);
   if (fromCookie) return fromCookie;
   const header = req.header('authorization');
   if (header?.startsWith('Bearer ')) return header.slice(7);
