@@ -42,16 +42,23 @@ export function LocationPicker({
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
         <p className="text-sm text-slate-600">
-          {value ? `Selected: ${value.lat.toFixed(5)}, ${value.lng.toFixed(5)}` : 'Click the map to set the location.'}
+          {value
+            ? `Selected: ${value.lat.toFixed(5)}, ${value.lng.toFixed(5)}`
+            : 'Click the map to set the location.'}
         </p>
         <Button type="button" variant="secondary" onClick={useMyLocation}>
           Use my location
         </Button>
       </div>
       <div className="h-72 overflow-hidden rounded-md border border-slate-200">
-        <MapContainer ref={mapRef} center={DHAKA} zoom={13} style={{ height: '100%', width: '100%' }}>
+        <MapContainer
+          ref={mapRef}
+          center={DHAKA}
+          zoom={13}
+          style={{ height: '100%', width: '100%' }}
+        >
           <TileLayer
-            attribution='&copy; OpenStreetMap contributors'
+            attribution="&copy; OpenStreetMap contributors"
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <ClickHandler onPick={onChange} />

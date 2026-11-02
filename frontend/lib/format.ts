@@ -1,12 +1,20 @@
 import type { ReportStatus, Severity } from './types';
 
 export function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  return new Date(iso).toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
 }
 
 export function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString(undefined, {
-    year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }
 
@@ -23,8 +31,16 @@ export function severityLabel(severity: Severity): string {
 }
 
 export const STATUS_OPTIONS: ReportStatus[] = [
-  'SUBMITTED', 'UNDER_REVIEW', 'VERIFIED', 'ASSIGNED', 'IN_PROGRESS',
-  'RESOLVED', 'REJECTED', 'DUPLICATE', 'NEEDS_MORE_INFO', 'ARCHIVED',
+  'SUBMITTED',
+  'UNDER_REVIEW',
+  'VERIFIED',
+  'ASSIGNED',
+  'IN_PROGRESS',
+  'RESOLVED',
+  'REJECTED',
+  'DUPLICATE',
+  'NEEDS_MORE_INFO',
+  'ARCHIVED',
 ];
 
 export const SEVERITY_OPTIONS: Severity[] = ['low', 'medium', 'high', 'urgent'];

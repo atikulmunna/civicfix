@@ -47,7 +47,12 @@ describe('LoginPage', () => {
     await user.type(screen.getByLabelText('Password'), 'CorrectHorse9');
     await user.click(screen.getByRole('button', { name: /sign in/i }));
 
-    await waitFor(() => expect(post).toHaveBeenCalledWith('/auth/login', { email: 't@e.com', password: 'CorrectHorse9' }));
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith('/auth/login', {
+        email: 't@e.com',
+        password: 'CorrectHorse9',
+      }),
+    );
     await waitFor(() => expect(push).toHaveBeenCalledWith('/'));
   });
 

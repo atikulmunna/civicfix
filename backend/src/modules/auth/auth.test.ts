@@ -143,9 +143,7 @@ describe('GET /auth/me', () => {
       .send({ email: citizen.email, password: citizen.password });
     const token = cookieValue(getCookie(login, 'access_token')!);
 
-    const res = await request(app)
-      .get('/api/v1/auth/me')
-      .set('Authorization', `Bearer ${token}`);
+    const res = await request(app).get('/api/v1/auth/me').set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(200);
     expect(res.body.data.user.email).toBe(citizen.email);
   });

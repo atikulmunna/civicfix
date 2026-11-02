@@ -34,7 +34,14 @@ describe('CommentSection', () => {
       if (path.endsWith('/comments'))
         return Promise.resolve({
           comments: [
-            { id: 'c1', reportId: 'r1', content: 'Existing comment', author: { id: 'u2', name: 'Bob' }, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+            {
+              id: 'c1',
+              reportId: 'r1',
+              content: 'Existing comment',
+              author: { id: 'u2', name: 'Bob' },
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
           ],
         });
       return Promise.resolve({});
@@ -49,7 +56,14 @@ describe('CommentSection', () => {
 
   it('posts a new comment and appends it', async () => {
     post.mockResolvedValue({
-      comment: { id: 'c2', reportId: 'r1', content: 'My new comment', author: ME, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+      comment: {
+        id: 'c2',
+        reportId: 'r1',
+        content: 'My new comment',
+        author: ME,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
     });
     const user = userEvent.setup();
     setup();
@@ -58,7 +72,9 @@ describe('CommentSection', () => {
     await user.type(screen.getByLabelText('Add a comment'), 'My new comment');
     await user.click(screen.getByRole('button', { name: /post comment/i }));
 
-    await waitFor(() => expect(post).toHaveBeenCalledWith('/reports/r1/comments', { content: 'My new comment' }));
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith('/reports/r1/comments', { content: 'My new comment' }),
+    );
     expect(await screen.findByText('My new comment')).toBeInTheDocument();
   });
 });

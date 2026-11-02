@@ -35,10 +35,17 @@ let reportId = '';
 const storedUrls: string[] = [];
 
 async function registerAndLogin(email: string): Promise<string> {
-  await request(app).post('/api/v1/auth/register').send({ name: 'User', email, password: 'CorrectHorse9' });
-  const login = await request(app).post('/api/v1/auth/login').send({ email, password: 'CorrectHorse9' });
+  await request(app)
+    .post('/api/v1/auth/register')
+    .send({ name: 'User', email, password: 'CorrectHorse9' });
+  const login = await request(app)
+    .post('/api/v1/auth/login')
+    .send({ email, password: 'CorrectHorse9' });
   const cookies = login.headers['set-cookie'] as unknown as string[];
-  return cookies.find((c) => c.startsWith('access_token='))!.split(';')[0].split('=')[1];
+  return cookies
+    .find((c) => c.startsWith('access_token='))!
+    .split(';')[0]
+    .split('=')[1];
 }
 
 async function createReport(token: string): Promise<string> {
@@ -59,7 +66,9 @@ async function createReport(token: string): Promise<string> {
 const bearer = (t: string) => ['Authorization', `Bearer ${t}`] as const;
 
 beforeAll(async () => {
-  const cat = await prisma.category.create({ data: { name: `Sanitation ${stamp}`, icon: 'trash' } });
+  const cat = await prisma.category.create({
+    data: { name: `Sanitation ${stamp}`, icon: 'trash' },
+  });
   categoryId = cat.id;
   authorToken = await registerAndLogin(emails.author);
   voterToken = await registerAndLogin(emails.voter);
@@ -98,7 +107,9 @@ describe('comments (COM-*)', () => {
   let commentId = '';
 
   it('requires auth to post (COM-001)', async () => {
-    const res = await request(app).post(`/api/v1/reports/${reportId}/comments`).send({ content: 'hi' });
+    const res = await request(app)
+      .post(`/api/v1/reports/${reportId}/comments`)
+      .send({ content: 'hi' });
     expect(res.status).toBe(401);
   });
 
@@ -137,12 +148,16 @@ describe('comments (COM-*)', () => {
   });
 
   it('forbids a non-owner non-admin from deleting (COM-003)', async () => {
-    const res = await request(app).delete(`/api/v1/comments/${commentId}`).set(...bearer(authorToken));
+    const res = await request(app)
+      .delete(`/api/v1/comments/${commentId}`)
+      .set(...bearer(authorToken));
     expect(res.status).toBe(403);
   });
 
   it('lets an admin delete any comment (COM-004), removing it from the list', async () => {
-    const res = await request(app).delete(`/api/v1/comments/${commentId}`).set(...bearer(adminToken));
+    const res = await request(app)
+      .delete(`/api/v1/comments/${commentId}`)
+      .set(...bearer(adminToken));
     expect(res.status).toBe(200);
     const list = await request(app).get(`/api/v1/reports/${reportId}/comments`);
     expect(list.body.data.comments.some((c: { id: string }) => c.id === commentId)).toBe(false);
@@ -154,28 +169,38 @@ describe('comments (COM-*)', () => {
       .set(...bearer(authorToken))
       .send({ content: 'my own comment' });
     const id = created.body.data.comment.id;
-    const res = await request(app).delete(`/api/v1/comments/${id}`).set(...bearer(authorToken));
+    const res = await request(app)
+      .delete(`/api/v1/comments/${id}`)
+      .set(...bearer(authorToken));
     expect(res.status).toBe(200);
   });
 });
 
 describe('votes (VOTE-*, BR-006/007)', () => {
   it('upvotes and is idempotent on repeat (BR-006)', async () => {
-    const first = await request(app).post(`/api/v1/reports/${reportId}/upvote`).set(...bearer(voterToken));
+    const first = await request(app)
+      .post(`/api/v1/reports/${reportId}/upvote`)
+      .set(...bearer(voterToken));
     expect(first.status).toBe(200);
     expect(first.body.data.counts.upvotes).toBe(1);
 
-    const second = await request(app).post(`/api/v1/reports/${reportId}/upvote`).set(...bearer(voterToken));
+    const second = await request(app)
+      .post(`/api/v1/reports/${reportId}/upvote`)
+      .set(...bearer(voterToken));
     expect(second.body.data.counts.upvotes).toBe(1);
   });
 
   it('removes an upvote', async () => {
-    const res = await request(app).delete(`/api/v1/reports/${reportId}/upvote`).set(...bearer(voterToken));
+    const res = await request(app)
+      .delete(`/api/v1/reports/${reportId}/upvote`)
+      .set(...bearer(voterToken));
     expect(res.body.data.counts.upvotes).toBe(0);
   });
 
   it('confirm auto-subscribes the user (BR-016) and counts', async () => {
-    const res = await request(app).post(`/api/v1/reports/${reportId}/confirm`).set(...bearer(voterToken));
+    const res = await request(app)
+      .post(`/api/v1/reports/${reportId}/confirm`)
+      .set(...bearer(voterToken));
     expect(res.body.data.counts.confirms).toBe(1);
 
     const voter = await prisma.user.findUnique({ where: { email: emails.voter } });
@@ -186,7 +211,9 @@ describe('votes (VOTE-*, BR-006/007)', () => {
   });
 
   it('un-confirm removes the count and the confirm subscription', async () => {
-    const res = await request(app).delete(`/api/v1/reports/${reportId}/confirm`).set(...bearer(voterToken));
+    const res = await request(app)
+      .delete(`/api/v1/reports/${reportId}/confirm`)
+      .set(...bearer(voterToken));
     expect(res.body.data.counts.confirms).toBe(0);
     const voter = await prisma.user.findUnique({ where: { email: emails.voter } });
     const sub = await prisma.reportSubscription.findFirst({
@@ -196,7 +223,9 @@ describe('votes (VOTE-*, BR-006/007)', () => {
   });
 
   it('flags a false report (VOTE-006)', async () => {
-    const res = await request(app).post(`/api/v1/reports/${reportId}/false-report`).set(...bearer(voterToken));
+    const res = await request(app)
+      .post(`/api/v1/reports/${reportId}/false-report`)
+      .set(...bearer(voterToken));
     expect(res.body.data.counts.falseReports).toBe(1);
   });
 
@@ -210,22 +239,32 @@ describe('votes (VOTE-*, BR-006/007)', () => {
 
 describe('follow / unfollow (NOTIF-007)', () => {
   it('follows (explicit) and unfollows a report', async () => {
-    const follow = await request(app).post(`/api/v1/reports/${reportId}/follow`).set(...bearer(adminToken));
+    const follow = await request(app)
+      .post(`/api/v1/reports/${reportId}/follow`)
+      .set(...bearer(adminToken));
     expect(follow.body.data.following).toBe(true);
     const admin = await prisma.user.findUnique({ where: { email: emails.admin } });
-    const sub = await prisma.reportSubscription.findFirst({ where: { reportId, userId: admin!.id } });
+    const sub = await prisma.reportSubscription.findFirst({
+      where: { reportId, userId: admin!.id },
+    });
     expect(sub?.source).toBe('explicit');
 
-    const unfollow = await request(app).delete(`/api/v1/reports/${reportId}/follow`).set(...bearer(adminToken));
+    const unfollow = await request(app)
+      .delete(`/api/v1/reports/${reportId}/follow`)
+      .set(...bearer(adminToken));
     expect(unfollow.body.data.following).toBe(false);
-    const after = await prisma.reportSubscription.findFirst({ where: { reportId, userId: admin!.id } });
+    const after = await prisma.reportSubscription.findFirst({
+      where: { reportId, userId: admin!.id },
+    });
     expect(after).toBeNull();
   });
 });
 
 describe('vote-count wiring into reports (VOTE-005)', () => {
   it('exposes counts on the report detail', async () => {
-    await request(app).post(`/api/v1/reports/${reportId}/upvote`).set(...bearer(voterToken));
+    await request(app)
+      .post(`/api/v1/reports/${reportId}/upvote`)
+      .set(...bearer(voterToken));
     const res = await request(app).get(`/api/v1/reports/${reportId}`);
     expect(res.body.data.report.counts).toMatchObject({ upvotes: 1 });
   });

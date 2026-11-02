@@ -4,8 +4,16 @@
 import { z } from 'zod';
 
 const status = z.enum([
-  'SUBMITTED', 'UNDER_REVIEW', 'VERIFIED', 'ASSIGNED', 'IN_PROGRESS',
-  'RESOLVED', 'REJECTED', 'DUPLICATE', 'NEEDS_MORE_INFO', 'ARCHIVED',
+  'SUBMITTED',
+  'UNDER_REVIEW',
+  'VERIFIED',
+  'ASSIGNED',
+  'IN_PROGRESS',
+  'RESOLVED',
+  'REJECTED',
+  'DUPLICATE',
+  'NEEDS_MORE_INFO',
+  'ARCHIVED',
 ]);
 const severity = z.enum(['low', 'medium', 'high', 'urgent']);
 

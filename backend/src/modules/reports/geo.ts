@@ -49,7 +49,9 @@ export async function findDuplicateIds(
   excludeId?: string,
 ): Promise<NearbyRow[]> {
   const point = Prisma.sql`ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography`;
-  const exclude = excludeId ? Prisma.sql`AND id <> ${Prisma.sql`${excludeId}::uuid`}` : Prisma.empty;
+  const exclude = excludeId
+    ? Prisma.sql`AND id <> ${Prisma.sql`${excludeId}::uuid`}`
+    : Prisma.empty;
   return prisma.$queryRaw<NearbyRow[]>`
     SELECT id, ST_Distance(location, ${point}) AS distance_m
     FROM reports

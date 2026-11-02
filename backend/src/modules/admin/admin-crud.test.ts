@@ -30,10 +30,17 @@ const createdDeptIds: string[] = [];
 const bearer = (t: string) => ['Authorization', `Bearer ${t}`] as const;
 
 async function registerAndLogin(email: string): Promise<string> {
-  await request(app).post('/api/v1/auth/register').send({ name: 'User', email, password: 'CorrectHorse9' });
-  const login = await request(app).post('/api/v1/auth/login').send({ email, password: 'CorrectHorse9' });
+  await request(app)
+    .post('/api/v1/auth/register')
+    .send({ name: 'User', email, password: 'CorrectHorse9' });
+  const login = await request(app)
+    .post('/api/v1/auth/login')
+    .send({ email, password: 'CorrectHorse9' });
   const cookies = login.headers['set-cookie'] as unknown as string[];
-  return cookies.find((c) => c.startsWith('access_token='))!.split(';')[0].split('=')[1];
+  return cookies
+    .find((c) => c.startsWith('access_token='))!
+    .split(';')[0]
+    .split('=')[1];
 }
 
 beforeAll(async () => {
@@ -110,7 +117,9 @@ describe('categories (§9.8)', () => {
       .send({ name: `Street Lighting ${stamp}` });
     expect(upd.body.data.category.name).toBe(`Street Lighting ${stamp}`);
 
-    const del = await request(app).delete(`/api/v1/admin/categories/${catId}`).set(...bearer(adminToken));
+    const del = await request(app)
+      .delete(`/api/v1/admin/categories/${catId}`)
+      .set(...bearer(adminToken));
     expect(del.status).toBe(200);
     expect(del.body.data.category.isActive).toBe(false);
 
@@ -140,17 +149,24 @@ describe('departments (§9.9)', () => {
     const list = await request(app).get('/api/v1/departments');
     expect(list.body.data.departments.some((d: { id: string }) => d.id === id)).toBe(true);
 
-    const del = await request(app).delete(`/api/v1/admin/departments/${id}`).set(...bearer(adminToken));
+    const del = await request(app)
+      .delete(`/api/v1/admin/departments/${id}`)
+      .set(...bearer(adminToken));
     expect(del.body.data.department.isActive).toBe(false);
   });
 });
 
 describe('users (§9.3)', () => {
   it('lists users for admins without password material; forbids citizens', async () => {
-    const forbidden = await request(app).get('/api/v1/admin/users').set(...bearer(citizenToken));
+    const forbidden = await request(app)
+      .get('/api/v1/admin/users')
+      .set(...bearer(citizenToken));
     expect(forbidden.status).toBe(403);
 
-    const res = await request(app).get('/api/v1/admin/users').set(...bearer(adminToken)).query({ limit: 100 });
+    const res = await request(app)
+      .get('/api/v1/admin/users')
+      .set(...bearer(adminToken))
+      .query({ limit: 100 });
     expect(res.status).toBe(200);
     const sample = res.body.data.items[0];
     expect(sample).not.toHaveProperty('passwordHash');

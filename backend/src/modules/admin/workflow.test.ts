@@ -39,10 +39,17 @@ const storedUrls: string[] = [];
 const bearer = (t: string) => ['Authorization', `Bearer ${t}`] as const;
 
 async function registerAndLogin(email: string): Promise<string> {
-  await request(app).post('/api/v1/auth/register').send({ name: 'User', email, password: 'CorrectHorse9' });
-  const login = await request(app).post('/api/v1/auth/login').send({ email, password: 'CorrectHorse9' });
+  await request(app)
+    .post('/api/v1/auth/register')
+    .send({ name: 'User', email, password: 'CorrectHorse9' });
+  const login = await request(app)
+    .post('/api/v1/auth/login')
+    .send({ email, password: 'CorrectHorse9' });
   const cookies = login.headers['set-cookie'] as unknown as string[];
-  return cookies.find((c) => c.startsWith('access_token='))!.split(';')[0].split('=')[1];
+  return cookies
+    .find((c) => c.startsWith('access_token='))!
+    .split(';')[0]
+    .split('=')[1];
 }
 
 async function createReport(): Promise<string> {
@@ -61,7 +68,8 @@ async function createReport(): Promise<string> {
 }
 
 beforeAll(async () => {
-  categoryId = (await prisma.category.create({ data: { name: `Roads ${stamp}`, icon: 'road' } })).id;
+  categoryId = (await prisma.category.create({ data: { name: `Roads ${stamp}`, icon: 'road' } }))
+    .id;
   deptA = (await prisma.department.create({ data: { name: `Public Works ${stamp}` } })).id;
   deptB = (await prisma.department.create({ data: { name: `Sanitation Dept ${stamp}` } })).id;
 
@@ -145,7 +153,12 @@ describe('full lifecycle SUBMITTED -> RESOLVED (§26)', () => {
     const hist = await request(app).get(`/api/v1/reports/${id}/history`);
     const statuses = hist.body.data.history.map((h: { newStatus: string }) => h.newStatus);
     expect(statuses).toEqual([
-      'SUBMITTED', 'UNDER_REVIEW', 'VERIFIED', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED',
+      'SUBMITTED',
+      'UNDER_REVIEW',
+      'VERIFIED',
+      'ASSIGNED',
+      'IN_PROGRESS',
+      'RESOLVED',
     ]);
     expect(hist.body.data.history.at(-1).changedBy.name).toBeDefined();
   });
@@ -243,7 +256,9 @@ describe('admin list + department queue', () => {
   });
 
   it('forbids non-admins from the admin list', async () => {
-    const res = await request(app).get('/api/v1/admin/reports').set(...bearer(citizenToken));
+    const res = await request(app)
+      .get('/api/v1/admin/reports')
+      .set(...bearer(citizenToken));
     expect(res.status).toBe(403);
   });
 
@@ -253,7 +268,9 @@ describe('admin list + department queue', () => {
       where: { id },
       data: { status: 'ASSIGNED', assignedDepartmentId: deptA },
     });
-    const res = await request(app).get('/api/v1/department/reports').set(...bearer(workerToken));
+    const res = await request(app)
+      .get('/api/v1/department/reports')
+      .set(...bearer(workerToken));
     expect(res.status).toBe(200);
     expect(res.body.data.items.some((r: { id: string }) => r.id === id)).toBe(true);
   });

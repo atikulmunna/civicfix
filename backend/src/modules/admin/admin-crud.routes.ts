@@ -24,7 +24,10 @@ import {
 function parse<S extends ZodTypeAny>(schema: S, data: unknown): z.infer<S> {
   const result = schema.safeParse(data);
   if (!result.success) {
-    const details = result.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message }));
+    const details = result.error.issues.map((i) => ({
+      path: i.path.join('.'),
+      message: i.message,
+    }));
     throw new ApiError('VALIDATION_ERROR', 'Invalid request data.', details);
   }
   return result.data;
@@ -101,7 +104,11 @@ adminCategoriesRouter.post(
   requireAuth,
   requireRole(...ADMIN),
   asyncHandler(async (req, res) => {
-    sendSuccess(res, { category: await catalog.createCategory(parse(categoryCreateSchema, req.body)) }, 201);
+    sendSuccess(
+      res,
+      { category: await catalog.createCategory(parse(categoryCreateSchema, req.body)) },
+      201,
+    );
   }),
 );
 adminCategoriesRouter.patch(
@@ -131,7 +138,11 @@ adminDepartmentsRouter.post(
   requireAuth,
   requireRole(...ADMIN),
   asyncHandler(async (req, res) => {
-    sendSuccess(res, { department: await catalog.createDepartment(parse(departmentCreateSchema, req.body)) }, 201);
+    sendSuccess(
+      res,
+      { department: await catalog.createDepartment(parse(departmentCreateSchema, req.body)) },
+      201,
+    );
   }),
 );
 adminDepartmentsRouter.patch(

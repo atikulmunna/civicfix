@@ -93,7 +93,9 @@ export function buildApp() {
     }
     // Unexpected: log server-side, return generic 500 (don't leak internals).
     console.error('[unhandled error]', err);
-    res.status(500).json({ success: false, message: 'Internal server error.', code: 'INTERNAL_ERROR' });
+    res
+      .status(500)
+      .json({ success: false, message: 'Internal server error.', code: 'INTERNAL_ERROR' });
   });
 
   return app;

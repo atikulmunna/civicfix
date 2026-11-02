@@ -19,7 +19,14 @@ function BoundsWatcher({ onChange }: { onChange: (bbox: string) => void }) {
   const emit = useCallback(
     (map: ReturnType<typeof useMapEvents>) => {
       const b = map.getBounds();
-      onChange(bboxString({ west: b.getWest(), south: b.getSouth(), east: b.getEast(), north: b.getNorth() }));
+      onChange(
+        bboxString({
+          west: b.getWest(),
+          south: b.getSouth(),
+          east: b.getEast(),
+          north: b.getNorth(),
+        }),
+      );
     },
     [onChange],
   );
@@ -42,7 +49,10 @@ export function ReportsMap() {
   const bboxRef = useRef('');
 
   useEffect(() => {
-    api.get<{ categories: Category[] }>('/categories').then((d) => setCategories(d.categories)).catch(() => {});
+    api
+      .get<{ categories: Category[] }>('/categories')
+      .then((d) => setCategories(d.categories))
+      .catch(() => {});
   }, []);
 
   const load = useCallback(
@@ -73,15 +83,23 @@ export function ReportsMap() {
           <Select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Status">
             <option value="">All statuses</option>
             {STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>{statusLabel(s)}</option>
+              <option key={s} value={s}>
+                {statusLabel(s)}
+              </option>
             ))}
           </Select>
         </div>
         <div className="w-48">
-          <Select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} aria-label="Category">
+          <Select
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+            aria-label="Category"
+          >
             <option value="">All categories</option>
             {categories.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
             ))}
           </Select>
         </div>
@@ -100,7 +118,11 @@ export function ReportsMap() {
               key={m.id}
               center={[m.latitude, m.longitude]}
               radius={8}
-              pathOptions={{ color: statusColor(m.status), fillColor: statusColor(m.status), fillOpacity: 0.7 }}
+              pathOptions={{
+                color: statusColor(m.status),
+                fillColor: statusColor(m.status),
+                fillOpacity: 0.7,
+              }}
             >
               <Popup>
                 <div className="flex flex-col gap-1">

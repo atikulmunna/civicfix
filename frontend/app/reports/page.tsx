@@ -30,7 +30,8 @@ export default function ReportsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.get<{ categories: Category[] }>('/categories')
+    api
+      .get<{ categories: Category[] }>('/categories')
       .then((d) => setCategories(d.categories))
       .catch(() => setCategories([]));
   }, []);
@@ -64,14 +65,17 @@ export default function ReportsPage() {
   useEffect(() => {
     let active = true;
     setLoading(true);
-    api.get<Paginated<Report>>('/reports', query)
+    api
+      .get<Paginated<Report>>('/reports', query)
       .then((d) => {
         if (active) {
           setData(d);
           setError(null);
         }
       })
-      .catch((e) => active && setError(e instanceof ApiError ? e.message : 'Failed to load reports.'))
+      .catch(
+        (e) => active && setError(e instanceof ApiError ? e.message : 'Failed to load reports.'),
+      )
       .finally(() => active && setLoading(false));
     return () => {
       active = false;
@@ -97,27 +101,51 @@ export default function ReportsPage() {
           onChange={(e) => setSearchInput(e.target.value)}
           aria-label="Search"
         />
-        <Select value={filters.categoryId} onChange={(e) => setFilter('categoryId', e.target.value)} aria-label="Category">
+        <Select
+          value={filters.categoryId}
+          onChange={(e) => setFilter('categoryId', e.target.value)}
+          aria-label="Category"
+        >
           <option value="">All categories</option>
           {categories.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
           ))}
         </Select>
-        <Select value={filters.status} onChange={(e) => setFilter('status', e.target.value)} aria-label="Status">
+        <Select
+          value={filters.status}
+          onChange={(e) => setFilter('status', e.target.value)}
+          aria-label="Status"
+        >
           <option value="">All statuses</option>
           {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s}>{statusLabel(s)}</option>
+            <option key={s} value={s}>
+              {statusLabel(s)}
+            </option>
           ))}
         </Select>
-        <Select value={filters.severity} onChange={(e) => setFilter('severity', e.target.value)} aria-label="Severity">
+        <Select
+          value={filters.severity}
+          onChange={(e) => setFilter('severity', e.target.value)}
+          aria-label="Severity"
+        >
           <option value="">All severities</option>
           {SEVERITY_OPTIONS.map((s) => (
-            <option key={s} value={s}>{severityLabel(s)}</option>
+            <option key={s} value={s}>
+              {severityLabel(s)}
+            </option>
           ))}
         </Select>
-        <Select value={filters.sort} onChange={(e) => setFilter('sort', e.target.value)} aria-label="Sort">
+        <Select
+          value={filters.sort}
+          onChange={(e) => setFilter('sort', e.target.value)}
+          aria-label="Sort"
+        >
           {SORTS.map((s) => (
-            <option key={s.value} value={s.value}>{s.label}</option>
+            <option key={s.value} value={s.value}>
+              {s.label}
+            </option>
           ))}
         </Select>
       </Card>

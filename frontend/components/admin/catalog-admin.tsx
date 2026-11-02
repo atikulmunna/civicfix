@@ -31,7 +31,8 @@ export function CatalogAdmin({ config }: { config: CatalogConfig }) {
 
   function load() {
     setLoading(true);
-    api.get<Record<string, CatalogItem[]>>(config.listPath, { includeInactive: 'true' })
+    api
+      .get<Record<string, CatalogItem[]>>(config.listPath, { includeInactive: 'true' })
       .then((d) => setItems(d[config.responseKey] ?? []))
       .catch(() => setItems([]))
       .finally(() => setLoading(false));
@@ -70,14 +71,26 @@ export function CatalogAdmin({ config }: { config: CatalogConfig }) {
     <div className="flex flex-col gap-4">
       <form onSubmit={create} className="flex flex-wrap items-end gap-2">
         <div className="flex-1">
-          <Input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} aria-label={`New ${config.itemKey} name`} />
+          <Input
+            placeholder="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            aria-label={`New ${config.itemKey} name`}
+          />
         </div>
         {config.secondary && (
           <div className="flex-1">
-            <Input placeholder={config.secondary.label} value={secondary} onChange={(e) => setSecondary(e.target.value)} aria-label={config.secondary.label} />
+            <Input
+              placeholder={config.secondary.label}
+              value={secondary}
+              onChange={(e) => setSecondary(e.target.value)}
+              aria-label={config.secondary.label}
+            />
           </div>
         )}
-        <Button type="submit" disabled={busy || !name.trim()}>Add</Button>
+        <Button type="submit" disabled={busy || !name.trim()}>
+          Add
+        </Button>
       </form>
 
       {loading ? (
@@ -87,15 +100,23 @@ export function CatalogAdmin({ config }: { config: CatalogConfig }) {
           {items.map((item) => (
             <li key={item.id} className="flex items-center justify-between py-2 text-sm">
               <div>
-                <span className={`font-medium ${item.isActive === false ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{item.name}</span>
+                <span
+                  className={`font-medium ${item.isActive === false ? 'text-slate-400 line-through' : 'text-slate-900'}`}
+                >
+                  {item.name}
+                </span>
                 {config.secondary && item[config.secondary.key] ? (
                   <span className="ml-2 text-slate-500">{String(item[config.secondary.key])}</span>
                 ) : null}
               </div>
               {item.isActive === false ? (
-                <Button variant="secondary" onClick={() => setActive(item, true)}>Enable</Button>
+                <Button variant="secondary" onClick={() => setActive(item, true)}>
+                  Enable
+                </Button>
               ) : (
-                <Button variant="secondary" onClick={() => setActive(item, false)}>Disable</Button>
+                <Button variant="secondary" onClick={() => setActive(item, false)}>
+                  Disable
+                </Button>
               )}
             </li>
           ))}

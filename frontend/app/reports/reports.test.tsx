@@ -13,12 +13,27 @@ import type { Report } from '@/lib/types';
 
 function makeReport(over: Partial<Report> = {}): Report {
   return {
-    id: 'r1', userId: 'u1', title: 'Pothole on 5th', description: 'A big pothole.',
-    categoryId: 'c1', category: { id: 'c1', name: 'Roads' }, status: 'SUBMITTED', severity: 'high',
-    latitude: 1, longitude: 1, address: '5th Ave', landmark: null, assignedDepartmentId: null,
-    priorityScore: 0, duplicateOfReportId: null, createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(), resolvedAt: null, images: [],
-    counts: { upvotes: 2, confirms: 1, falseReports: 0 }, ...over,
+    id: 'r1',
+    userId: 'u1',
+    title: 'Pothole on 5th',
+    description: 'A big pothole.',
+    categoryId: 'c1',
+    category: { id: 'c1', name: 'Roads' },
+    status: 'SUBMITTED',
+    severity: 'high',
+    latitude: 1,
+    longitude: 1,
+    address: '5th Ave',
+    landmark: null,
+    assignedDepartmentId: null,
+    priorityScore: 0,
+    duplicateOfReportId: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    resolvedAt: null,
+    images: [],
+    counts: { upvotes: 2, confirms: 1, falseReports: 0 },
+    ...over,
   };
 }
 
@@ -26,8 +41,15 @@ describe('ReportsPage', () => {
   beforeEach(() => {
     get.mockReset();
     get.mockImplementation((path: string) => {
-      if (path === '/categories') return Promise.resolve({ categories: [{ id: 'c1', name: 'Roads' }] });
-      return Promise.resolve({ items: [makeReport()], page: 1, limit: 10, total: 1, totalPages: 1 });
+      if (path === '/categories')
+        return Promise.resolve({ categories: [{ id: 'c1', name: 'Roads' }] });
+      return Promise.resolve({
+        items: [makeReport()],
+        page: 1,
+        limit: 10,
+        total: 1,
+        totalPages: 1,
+      });
     });
   });
 

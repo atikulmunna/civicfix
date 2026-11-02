@@ -22,7 +22,11 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get<Summary>('/admin/analytics/summary').then(setSummary).catch(() => setSummary(null)).finally(() => setLoading(false));
+    api
+      .get<Summary>('/admin/analytics/summary')
+      .then(setSummary)
+      .catch(() => setSummary(null))
+      .finally(() => setLoading(false));
   }, []);
 
   const tiles = summary
@@ -31,7 +35,10 @@ function Dashboard() {
         { label: 'Resolved', value: summary.resolvedCount },
         { label: 'Resolution rate', value: `${Math.round(summary.resolutionRate * 100)}%` },
         { label: 'Open high-priority', value: summary.unresolvedHighPriority },
-        { label: 'Awaiting review', value: summary.byStatus.SUBMITTED + summary.byStatus.UNDER_REVIEW },
+        {
+          label: 'Awaiting review',
+          value: summary.byStatus.SUBMITTED + summary.byStatus.UNDER_REVIEW,
+        },
         { label: 'Avg resolution (h)', value: summary.avgResolutionHours ?? '-' },
       ]
     : [];
@@ -43,9 +50,15 @@ function Dashboard() {
         title="Dashboard"
         actions={
           <>
-            <Link href="/admin/reports" className="font-medium text-teal-700 hover:underline">Reports</Link>
-            <Link href="/admin/analytics" className="font-medium text-teal-700 hover:underline">Analytics</Link>
-            <Link href="/admin/manage" className="font-medium text-teal-700 hover:underline">Manage</Link>
+            <Link href="/admin/reports" className="font-medium text-teal-700 hover:underline">
+              Reports
+            </Link>
+            <Link href="/admin/analytics" className="font-medium text-teal-700 hover:underline">
+              Analytics
+            </Link>
+            <Link href="/admin/manage" className="font-medium text-teal-700 hover:underline">
+              Manage
+            </Link>
           </>
         }
       />
@@ -63,10 +76,26 @@ function Dashboard() {
       <Card>
         <h2 className="mb-2 font-semibold text-slate-900">Quick links</h2>
         <ul className="flex flex-col gap-1 text-sm text-teal-700">
-          <li><Link href="/admin/reports?status=SUBMITTED" className="hover:underline">Reports awaiting review →</Link></li>
-          <li><Link href="/admin/reports" className="hover:underline">Moderate all reports →</Link></li>
-          <li><Link href="/admin/analytics" className="hover:underline">View analytics →</Link></li>
-          <li><Link href="/admin/manage" className="hover:underline">Manage users, categories, departments →</Link></li>
+          <li>
+            <Link href="/admin/reports?status=SUBMITTED" className="hover:underline">
+              Reports awaiting review →
+            </Link>
+          </li>
+          <li>
+            <Link href="/admin/reports" className="hover:underline">
+              Moderate all reports →
+            </Link>
+          </li>
+          <li>
+            <Link href="/admin/analytics" className="hover:underline">
+              View analytics →
+            </Link>
+          </li>
+          <li>
+            <Link href="/admin/manage" className="hover:underline">
+              Manage users, categories, departments →
+            </Link>
+          </li>
         </ul>
       </Card>
     </div>

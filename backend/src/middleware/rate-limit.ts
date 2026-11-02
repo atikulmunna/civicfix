@@ -28,9 +28,7 @@ export function makeLimiter(opts: LimiterOptions): RateLimitRequestHandler {
     legacyHeaders: false,
     skip: () => skipInTest && env.NODE_ENV === 'test',
     keyGenerator:
-      opts.by === 'user'
-        ? (req: Request) => req.user?.id ?? req.ip ?? 'anonymous'
-        : undefined, // default: client IP
+      opts.by === 'user' ? (req: Request) => req.user?.id ?? req.ip ?? 'anonymous' : undefined, // default: client IP
     handler: (_req, res) => {
       res.status(429).json({
         success: false,
@@ -44,6 +42,18 @@ export function makeLimiter(opts: LimiterOptions): RateLimitRequestHandler {
 const HOUR = 60 * 60 * 1000;
 const FIFTEEN_MIN = 15 * 60 * 1000;
 
-export const authLimiter = makeLimiter({ windowMs: FIFTEEN_MIN, max: env.RATE_LIMIT_AUTH_PER_15MIN, by: 'ip' });
-export const reportLimiter = makeLimiter({ windowMs: HOUR, max: env.RATE_LIMIT_REPORTS_PER_HOUR, by: 'user' });
-export const commentLimiter = makeLimiter({ windowMs: HOUR, max: env.RATE_LIMIT_COMMENTS_PER_HOUR, by: 'user' });
+export const authLimiter = makeLimiter({
+  windowMs: FIFTEEN_MIN,
+  max: env.RATE_LIMIT_AUTH_PER_15MIN,
+  by: 'ip',
+});
+export const reportLimiter = makeLimiter({
+  windowMs: HOUR,
+  max: env.RATE_LIMIT_REPORTS_PER_HOUR,
+  by: 'user',
+});
+export const commentLimiter = makeLimiter({
+  windowMs: HOUR,
+  max: env.RATE_LIMIT_COMMENTS_PER_HOUR,
+  by: 'user',
+});

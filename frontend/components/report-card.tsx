@@ -4,7 +4,13 @@ import { assetUrl } from '@/lib/api';
 import { formatDate } from '@/lib/format';
 import { SeverityBadge, StatusBadge } from './badges';
 
-export function ReportCard({ report, hrefBase = '/reports' }: { report: Report; hrefBase?: string }) {
+export function ReportCard({
+  report,
+  hrefBase = '/reports',
+}: {
+  report: Report;
+  hrefBase?: string;
+}) {
   const thumb = report.images?.[0]?.imageUrl;
   return (
     <Link
@@ -29,7 +35,9 @@ export function ReportCard({ report, hrefBase = '/reports' }: { report: Report; 
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge status={report.status} />
           <SeverityBadge severity={report.severity} />
-          {report.category && <span className="text-xs text-slate-500">{report.category.name}</span>}
+          {report.category && (
+            <span className="text-xs text-slate-500">{report.category.name}</span>
+          )}
         </div>
         <h3 className="mt-1 truncate font-semibold text-slate-900 transition group-hover:text-teal-700">
           {report.title}
@@ -38,10 +46,16 @@ export function ReportCard({ report, hrefBase = '/reports' }: { report: Report; 
         <div className="mt-2.5 flex items-center gap-2 text-xs text-slate-500">
           {report.counts && (
             <>
-              <span className="inline-flex items-center gap-1 rounded-md bg-teal-50 px-1.5 py-0.5 font-medium text-teal-700" title="Upvotes">
+              <span
+                className="inline-flex items-center gap-1 rounded-md bg-teal-50 px-1.5 py-0.5 font-medium text-teal-700"
+                title="Upvotes"
+              >
                 ▲ {report.counts.upvotes}
               </span>
-              <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 font-medium text-slate-700" title="Confirmations">
+              <span
+                className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 font-medium text-slate-700"
+                title="Confirmations"
+              >
                 ✓ {report.counts.confirms}
               </span>
             </>

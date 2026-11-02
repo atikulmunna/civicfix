@@ -4,7 +4,14 @@ import { BarChart } from './bar-chart';
 
 describe('BarChart', () => {
   it('renders a row per data point with its value', () => {
-    render(<BarChart data={[{ label: 'Submitted', value: 4 }, { label: 'Resolved', value: 2 }]} />);
+    render(
+      <BarChart
+        data={[
+          { label: 'Submitted', value: 4 },
+          { label: 'Resolved', value: 2 },
+        ]}
+      />,
+    );
     expect(screen.getByText('Submitted')).toBeInTheDocument();
     expect(screen.getByText('4')).toBeInTheDocument();
     expect(screen.getByText('Resolved')).toBeInTheDocument();

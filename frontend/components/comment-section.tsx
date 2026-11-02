@@ -18,7 +18,8 @@ export function CommentSection({ reportId }: { reportId: string }) {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    api.get<{ comments: Comment[] }>(`/reports/${reportId}/comments`)
+    api
+      .get<{ comments: Comment[] }>(`/reports/${reportId}/comments`)
       .then((d) => setComments(d.comments))
       .catch(() => setComments([]))
       .finally(() => setLoading(false));
@@ -29,7 +30,9 @@ export function CommentSection({ reportId }: { reportId: string }) {
     if (!content.trim()) return;
     setBusy(true);
     try {
-      const { comment } = await api.post<{ comment: Comment }>(`/reports/${reportId}/comments`, { content });
+      const { comment } = await api.post<{ comment: Comment }>(`/reports/${reportId}/comments`, {
+        content,
+      });
       setComments((c) => [...c, comment]);
       setContent('');
     } catch (err) {
@@ -95,7 +98,10 @@ export function CommentSection({ reportId }: { reportId: string }) {
         </form>
       ) : (
         <p className="text-sm text-slate-600">
-          <Link href="/login" className="font-medium text-teal-700 hover:underline">Sign in</Link> to comment.
+          <Link href="/login" className="font-medium text-teal-700 hover:underline">
+            Sign in
+          </Link>{' '}
+          to comment.
         </p>
       )}
     </div>

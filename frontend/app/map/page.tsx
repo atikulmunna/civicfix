@@ -12,7 +12,11 @@ const ReportsMap = dynamic(() => import('@/components/reports-map').then((m) => 
 export default function MapPage() {
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader eyebrow="Live map" title="Map" subtitle="Every reported issue, plotted by location." />
+      <PageHeader
+        eyebrow="Live map"
+        title="Map"
+        subtitle="Every reported issue, plotted by location."
+      />
       <div className="h-[calc(100vh-16rem)]">
         <ReportsMap />
       </div>

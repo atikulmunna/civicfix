@@ -109,7 +109,13 @@ export async function createReport(
 
     // Initial status record (BR-009): null -> SUBMITTED.
     await tx.statusHistory.create({
-      data: { reportId: created.id, oldStatus: null, newStatus: 'SUBMITTED', changedBy: userId, note: 'Report submitted.' },
+      data: {
+        reportId: created.id,
+        oldStatus: null,
+        newStatus: 'SUBMITTED',
+        changedBy: userId,
+        note: 'Report submitted.',
+      },
     });
 
     // Subscribe the reporter to their own report (§13.5, NOTIF-003).
@@ -240,8 +246,13 @@ export async function mapReports(input: MapInput) {
     where,
     take: input.limit,
     select: {
-      id: true, title: true, status: true, severity: true,
-      latitude: true, longitude: true, categoryId: true,
+      id: true,
+      title: true,
+      status: true,
+      severity: true,
+      latitude: true,
+      longitude: true,
+      categoryId: true,
     },
   });
 
@@ -300,8 +311,12 @@ export async function updateReport(id: string, actor: Actor, input: UpdateReport
       ...(input.severity !== undefined && { severity: input.severity }),
       ...(input.latitude !== undefined && { latitude: input.latitude }),
       ...(input.longitude !== undefined && { longitude: input.longitude }),
-      ...(input.address !== undefined && { address: input.address === null ? null : sanitizeText(input.address) }),
-      ...(input.landmark !== undefined && { landmark: input.landmark === null ? null : sanitizeText(input.landmark) }),
+      ...(input.address !== undefined && {
+        address: input.address === null ? null : sanitizeText(input.address),
+      }),
+      ...(input.landmark !== undefined && {
+        landmark: input.landmark === null ? null : sanitizeText(input.landmark),
+      }),
     },
   });
   return getReportById(id, actor);
@@ -329,7 +344,10 @@ async function loadForMutation(id: string, actor: Actor): Promise<Report> {
     throw new ApiError('FORBIDDEN', 'You can only modify your own reports.');
   }
   if (report.status !== 'SUBMITTED') {
-    throw new ApiError('FORBIDDEN', 'A report can only be edited or deleted while it is still under submission.');
+    throw new ApiError(
+      'FORBIDDEN',
+      'A report can only be edited or deleted while it is still under submission.',
+    );
   }
   return report;
 }

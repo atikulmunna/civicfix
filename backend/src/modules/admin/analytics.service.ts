@@ -7,8 +7,16 @@ import type { ReportStatus, Severity } from '@prisma/client';
 import { prisma } from '../../lib/prisma.js';
 
 const ALL_STATUSES: ReportStatus[] = [
-  'SUBMITTED', 'UNDER_REVIEW', 'VERIFIED', 'ASSIGNED', 'IN_PROGRESS',
-  'RESOLVED', 'REJECTED', 'DUPLICATE', 'NEEDS_MORE_INFO', 'ARCHIVED',
+  'SUBMITTED',
+  'UNDER_REVIEW',
+  'VERIFIED',
+  'ASSIGNED',
+  'IN_PROGRESS',
+  'RESOLVED',
+  'REJECTED',
+  'DUPLICATE',
+  'NEEDS_MORE_INFO',
+  'ARCHIVED',
 ];
 const ALL_SEVERITIES: Severity[] = ['low', 'medium', 'high', 'urgent'];
 const TERMINAL: ReportStatus[] = ['RESOLVED', 'REJECTED', 'DUPLICATE', 'ARCHIVED'];
@@ -26,21 +34,26 @@ interface MonthRow {
 }
 
 export async function getSummary() {
-  const [total, statusRows, severityRows, resolvedCount, highPriorityOpen] =
-    await Promise.all([
-      prisma.report.count(),
-      prisma.report.groupBy({ by: ['status'], _count: { _all: true } }),
-      prisma.report.groupBy({ by: ['severity'], _count: { _all: true } }),
-      prisma.report.count({ where: { status: 'RESOLVED' } }),
-      prisma.report.count({
-        where: { severity: { in: ['high', 'urgent'] }, status: { notIn: TERMINAL } },
-      }),
-    ]);
+  const [total, statusRows, severityRows, resolvedCount, highPriorityOpen] = await Promise.all([
+    prisma.report.count(),
+    prisma.report.groupBy({ by: ['status'], _count: { _all: true } }),
+    prisma.report.groupBy({ by: ['severity'], _count: { _all: true } }),
+    prisma.report.count({ where: { status: 'RESOLVED' } }),
+    prisma.report.count({
+      where: { severity: { in: ['high', 'urgent'] }, status: { notIn: TERMINAL } },
+    }),
+  ]);
 
-  const byStatus = Object.fromEntries(ALL_STATUSES.map((s) => [s, 0])) as Record<ReportStatus, number>;
+  const byStatus = Object.fromEntries(ALL_STATUSES.map((s) => [s, 0])) as Record<
+    ReportStatus,
+    number
+  >;
   for (const r of statusRows) byStatus[r.status] = r._count._all;
 
-  const bySeverity = Object.fromEntries(ALL_SEVERITIES.map((s) => [s, 0])) as Record<Severity, number>;
+  const bySeverity = Object.fromEntries(ALL_SEVERITIES.map((s) => [s, 0])) as Record<
+    Severity,
+    number
+  >;
   for (const r of severityRows) bySeverity[r.severity] = r._count._all;
 
   const [{ seconds }] = await prisma.$queryRaw<AvgRow[]>`

@@ -28,7 +28,9 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
         setReport(r.report);
         setHistory(h.history);
       })
-      .catch((e) => active && setError(e instanceof ApiError ? e.message : 'Failed to load report.'))
+      .catch(
+        (e) => active && setError(e instanceof ApiError ? e.message : 'Failed to load report.'),
+      )
       .finally(() => active && setLoading(false));
     return () => {
       active = false;
@@ -36,7 +38,8 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
   }, [id]);
 
   if (loading) return <Spinner />;
-  if (error || !report) return <p className="py-10 text-center text-sm text-red-700">{error ?? 'Not found.'}</p>;
+  if (error || !report)
+    return <p className="py-10 text-center text-sm text-red-700">{error ?? 'Not found.'}</p>;
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
@@ -45,7 +48,9 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge status={report.status} />
             <SeverityBadge severity={report.severity} />
-            {report.category && <span className="text-sm text-slate-500">{report.category.name}</span>}
+            {report.category && (
+              <span className="text-sm text-slate-500">{report.category.name}</span>
+            )}
           </div>
           <h1 className="mt-2 text-2xl font-bold text-slate-900">{report.title}</h1>
           <p className="mt-1 text-xs text-slate-400">Reported {formatDateTime(report.createdAt)}</p>
@@ -74,7 +79,10 @@ export default function ReportDetailPage({ params }: { params: Promise<{ id: str
           </p>
         )}
 
-        <VoteBar reportId={report.id} initialCounts={report.counts ?? { upvotes: 0, confirms: 0, falseReports: 0 }} />
+        <VoteBar
+          reportId={report.id}
+          initialCounts={report.counts ?? { upvotes: 0, confirms: 0, falseReports: 0 }}
+        />
 
         <hr className="border-slate-200" />
         <CommentSection reportId={report.id} />

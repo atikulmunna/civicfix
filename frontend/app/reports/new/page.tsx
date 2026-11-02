@@ -8,7 +8,17 @@ import type { Category, Report } from '@/lib/types';
 import { SEVERITY_OPTIONS, severityLabel } from '@/lib/format';
 import { RequireAuth } from '@/components/require-auth';
 import { useToast } from '@/components/toast';
-import { Button, Card, FieldError, Input, Label, PageHeader, Select, Spinner, Textarea } from '@/components/ui';
+import {
+  Button,
+  Card,
+  FieldError,
+  Input,
+  Label,
+  PageHeader,
+  Select,
+  Spinner,
+  Textarea,
+} from '@/components/ui';
 import type { LatLng } from '@/components/location-picker';
 import Link from 'next/link';
 
@@ -36,7 +46,10 @@ function NewReportForm() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    api.get<{ categories: Category[] }>('/categories').then((d) => setCategories(d.categories)).catch(() => {});
+    api
+      .get<{ categories: Category[] }>('/categories')
+      .then((d) => setCategories(d.categories))
+      .catch(() => {});
   }, []);
 
   // Check for possible duplicates when category + location are set (REP-009).
@@ -59,7 +72,10 @@ function NewReportForm() {
     }, 400);
   }, [location, form.categoryId]);
 
-  const previews = useMemo(() => files.map((f) => ({ name: f.name, url: URL.createObjectURL(f) })), [files]);
+  const previews = useMemo(
+    () => files.map((f) => ({ name: f.name, url: URL.createObjectURL(f) })),
+    [files],
+  );
   useEffect(() => () => previews.forEach((p) => URL.revokeObjectURL(p.url)), [previews]);
 
   function update(key: keyof typeof form) {
@@ -108,19 +124,38 @@ function NewReportForm() {
         <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
           <div>
             <Label htmlFor="title">Title</Label>
-            <Input id="title" value={form.title} onChange={update('title')} required minLength={3} />
+            <Input
+              id="title"
+              value={form.title}
+              onChange={update('title')}
+              required
+              minLength={3}
+            />
           </div>
           <div>
             <Label htmlFor="description">Description</Label>
-            <Textarea id="description" rows={4} value={form.description} onChange={update('description')} required />
+            <Textarea
+              id="description"
+              rows={4}
+              value={form.description}
+              onChange={update('description')}
+              required
+            />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <Label htmlFor="category">Category</Label>
-              <Select id="category" value={form.categoryId} onChange={update('categoryId')} required>
+              <Select
+                id="category"
+                value={form.categoryId}
+                onChange={update('categoryId')}
+                required
+              >
                 <option value="">Select…</option>
                 {categories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
                 ))}
               </Select>
             </div>
@@ -128,7 +163,9 @@ function NewReportForm() {
               <Label htmlFor="severity">Severity</Label>
               <Select id="severity" value={form.severity} onChange={update('severity')}>
                 {SEVERITY_OPTIONS.map((s) => (
-                  <option key={s} value={s}>{severityLabel(s)}</option>
+                  <option key={s} value={s}>
+                    {severityLabel(s)}
+                  </option>
                 ))}
               </Select>
             </div>
@@ -141,7 +178,9 @@ function NewReportForm() {
 
           {duplicates.length > 0 && (
             <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm">
-              <p className="font-medium text-amber-800">Possible duplicate{duplicates.length > 1 ? 's' : ''} nearby:</p>
+              <p className="font-medium text-amber-800">
+                Possible duplicate{duplicates.length > 1 ? 's' : ''} nearby:
+              </p>
               <ul className="mt-1 list-disc pl-5 text-amber-900">
                 {duplicates.slice(0, 3).map((d) => (
                   <li key={d.id}>
@@ -180,7 +219,12 @@ function NewReportForm() {
               <div className="mt-2 flex flex-wrap gap-2">
                 {previews.map((p) => (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img key={p.url} src={p.url} alt={p.name} className="h-16 w-16 rounded object-cover" />
+                  <img
+                    key={p.url}
+                    src={p.url}
+                    alt={p.name}
+                    className="h-16 w-16 rounded object-cover"
+                  />
                 ))}
               </div>
             )}

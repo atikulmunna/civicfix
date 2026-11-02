@@ -28,7 +28,10 @@ const loginSchema = z.object({
 function parseBody<T>(schema: z.ZodSchema<T>, body: unknown): T {
   const result = schema.safeParse(body);
   if (!result.success) {
-    const details = result.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message }));
+    const details = result.error.issues.map((i) => ({
+      path: i.path.join('.'),
+      message: i.message,
+    }));
     throw new ApiError('VALIDATION_ERROR', 'Invalid request data.', details);
   }
   return result.data;

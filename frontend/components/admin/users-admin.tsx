@@ -29,7 +29,8 @@ export function UsersAdmin() {
 
   function load() {
     setLoading(true);
-    api.get<Paginated<AdminUser>>('/admin/users', { search: search || undefined, page, limit: 20 })
+    api
+      .get<Paginated<AdminUser>>('/admin/users', { search: search || undefined, page, limit: 20 })
       .then(setData)
       .catch(() => setData(null))
       .finally(() => setLoading(false));
@@ -57,7 +58,15 @@ export function UsersAdmin() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Input placeholder="Search name or email…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} aria-label="Search users" />
+      <Input
+        placeholder="Search name or email…"
+        value={search}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setPage(1);
+        }}
+        aria-label="Search users"
+      />
       {loading && !data ? (
         <Spinner />
       ) : (
@@ -65,7 +74,11 @@ export function UsersAdmin() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-left text-slate-500">
-                <th className="py-2">Name</th><th>Email</th><th>Role</th><th>Active</th><th></th>
+                <th className="py-2">Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Active</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -75,14 +88,28 @@ export function UsersAdmin() {
                   <td className="text-slate-600">{u.email}</td>
                   <td>
                     {isSuper && u.id !== user?.id ? (
-                      <Select value={u.role} onChange={(e) => changeRole(u, e.target.value as Role)} aria-label={`Role for ${u.email}`}>
-                        {ROLES.map((r) => <option key={r} value={r}>{r.replace('_', ' ')}</option>)}
+                      <Select
+                        value={u.role}
+                        onChange={(e) => changeRole(u, e.target.value as Role)}
+                        aria-label={`Role for ${u.email}`}
+                      >
+                        {ROLES.map((r) => (
+                          <option key={r} value={r}>
+                            {r.replace('_', ' ')}
+                          </option>
+                        ))}
                       </Select>
                     ) : (
                       <span className="capitalize text-slate-700">{u.role.replace('_', ' ')}</span>
                     )}
                   </td>
-                  <td>{u.isActive ? <span className="text-green-700">Yes</span> : <span className="text-red-600">No</span>}</td>
+                  <td>
+                    {u.isActive ? (
+                      <span className="text-green-700">Yes</span>
+                    ) : (
+                      <span className="text-red-600">No</span>
+                    )}
+                  </td>
                   <td className="text-right">
                     {u.id !== user?.id && (
                       <Button variant="secondary" onClick={() => toggleActive(u)}>
@@ -98,8 +125,16 @@ export function UsersAdmin() {
       )}
       {data && data.totalPages > 1 && (
         <div className="flex justify-end gap-2">
-          <Button variant="secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>
-          <Button variant="secondary" disabled={page >= data.totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
+          <Button variant="secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+            Previous
+          </Button>
+          <Button
+            variant="secondary"
+            disabled={page >= data.totalPages}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next
+          </Button>
         </div>
       )}
     </div>

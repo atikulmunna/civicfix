@@ -6,8 +6,16 @@ import { z } from 'zod';
 
 const severity = z.enum(['low', 'medium', 'high', 'urgent']);
 const status = z.enum([
-  'SUBMITTED', 'UNDER_REVIEW', 'VERIFIED', 'ASSIGNED', 'IN_PROGRESS',
-  'RESOLVED', 'REJECTED', 'DUPLICATE', 'NEEDS_MORE_INFO', 'ARCHIVED',
+  'SUBMITTED',
+  'UNDER_REVIEW',
+  'VERIFIED',
+  'ASSIGNED',
+  'IN_PROGRESS',
+  'RESOLVED',
+  'REJECTED',
+  'DUPLICATE',
+  'NEEDS_MORE_INFO',
+  'ARCHIVED',
 ]);
 
 const latitude = z.coerce.number().min(-90).max(90);
@@ -62,17 +70,18 @@ export type NearbyInput = z.infer<typeof nearbySchema>;
 
 // bbox=minLng,minLat,maxLng,maxLat
 export const mapSchema = z.object({
-  bbox: z
-    .string()
-    .transform((s, ctx) => {
-      const parts = s.split(',').map(Number);
-      if (parts.length !== 4 || parts.some(Number.isNaN)) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'bbox must be minLng,minLat,maxLng,maxLat.' });
-        return z.NEVER;
-      }
-      const [minLng, minLat, maxLng, maxLat] = parts;
-      return { minLng, minLat, maxLng, maxLat };
-    }),
+  bbox: z.string().transform((s, ctx) => {
+    const parts = s.split(',').map(Number);
+    if (parts.length !== 4 || parts.some(Number.isNaN)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'bbox must be minLng,minLat,maxLng,maxLat.',
+      });
+      return z.NEVER;
+    }
+    const [minLng, minLat, maxLng, maxLat] = parts;
+    return { minLng, minLat, maxLng, maxLat };
+  }),
   status: status.optional(),
   categoryId: z.string().uuid().optional(),
   limit: z.coerce.number().int().positive().max(2000).default(1000),

@@ -12,20 +12,29 @@ import { ToastProvider } from '@/components/toast';
 import { CatalogAdmin } from './catalog-admin';
 
 const config = {
-  listPath: '/categories', adminPath: '/admin/categories', responseKey: 'categories', itemKey: 'category',
+  listPath: '/categories',
+  adminPath: '/admin/categories',
+  responseKey: 'categories',
+  itemKey: 'category',
   secondary: { key: 'icon', label: 'Icon (optional)' },
 };
 
 describe('CatalogAdmin', () => {
   beforeEach(() => {
-    get.mockReset().mockResolvedValue({ categories: [{ id: 'c1', name: 'Roads', isActive: true }] });
+    get
+      .mockReset()
+      .mockResolvedValue({ categories: [{ id: 'c1', name: 'Roads', isActive: true }] });
     post.mockReset().mockResolvedValue({});
     del.mockReset().mockResolvedValue({});
   });
 
   it('creates an item', async () => {
     const user = userEvent.setup();
-    render(<ToastProvider><CatalogAdmin config={config} /></ToastProvider>);
+    render(
+      <ToastProvider>
+        <CatalogAdmin config={config} />
+      </ToastProvider>,
+    );
     await screen.findByText('Roads');
 
     await user.type(screen.getByLabelText('New category name'), 'Parks');
@@ -35,7 +44,11 @@ describe('CatalogAdmin', () => {
 
   it('disables an active item', async () => {
     const user = userEvent.setup();
-    render(<ToastProvider><CatalogAdmin config={config} /></ToastProvider>);
+    render(
+      <ToastProvider>
+        <CatalogAdmin config={config} />
+      </ToastProvider>,
+    );
     await screen.findByText('Roads');
 
     await user.click(screen.getByRole('button', { name: 'Disable' }));

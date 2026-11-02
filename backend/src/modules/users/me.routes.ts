@@ -38,7 +38,10 @@ usersRouter.patch(
   asyncHandler(async (req, res) => {
     const result = updateSchema.safeParse(req.body);
     if (!result.success) {
-      const details = result.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message }));
+      const details = result.error.issues.map((i) => ({
+        path: i.path.join('.'),
+        message: i.message,
+      }));
       throw new ApiError('VALIDATION_ERROR', 'Invalid request data.', details);
     }
     sendSuccess(res, { user: await me.updateMyProfile(req.user!.id, result.data) });

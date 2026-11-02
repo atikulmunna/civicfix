@@ -12,11 +12,7 @@ import { ApiError } from '../../lib/errors.js';
 import { assertReportExists } from '../community/shared.js';
 import { getVoteCounts } from '../community/votes.service.js';
 import { createStatusChangeNotifications } from '../notifications/notifications.service.js';
-import {
-  getReportById,
-  toPublicReport,
-  type Actor,
-} from '../reports/reports.service.js';
+import { getReportById, toPublicReport, type Actor } from '../reports/reports.service.js';
 import {
   assertTransition,
   InvalidStatusTransitionError,

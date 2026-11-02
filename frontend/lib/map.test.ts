@@ -3,7 +3,9 @@ import { bboxString, statusColor } from './map';
 
 describe('map helpers', () => {
   it('formats bbox as minLng,minLat,maxLng,maxLat', () => {
-    expect(bboxString({ west: 90.1, south: 23.7, east: 90.5, north: 23.9 })).toBe('90.1,23.7,90.5,23.9');
+    expect(bboxString({ west: 90.1, south: 23.7, east: 90.5, north: 23.9 })).toBe(
+      '90.1,23.7,90.5,23.9',
+    );
   });
 
   it('colours resolved green and submitted slate', () => {

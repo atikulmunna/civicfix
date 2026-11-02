@@ -15,7 +15,8 @@ function MyReports() {
 
   useEffect(() => {
     setLoading(true);
-    api.get<Paginated<Report>>('/users/me/reports', { page, limit: 10 })
+    api
+      .get<Paginated<Report>>('/users/me/reports', { page, limit: 10 })
       .then(setData)
       .catch(() => setData(null))
       .finally(() => setLoading(false));
@@ -27,7 +28,10 @@ function MyReports() {
         eyebrow="Account"
         title="My reports"
         actions={
-          <Link href="/reports/new" className="rounded-lg bg-teal-600 px-4 py-2 font-medium text-white transition hover:bg-teal-700">
+          <Link
+            href="/reports/new"
+            className="rounded-lg bg-teal-600 px-4 py-2 font-medium text-white transition hover:bg-teal-700"
+          >
             Report an issue
           </Link>
         }
@@ -47,15 +51,30 @@ function MyReports() {
               Page {data.page} of {Math.max(data.totalPages, 1)} · {data.total} total
             </span>
             <div className="flex gap-2">
-              <Button variant="secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>
-              <Button variant="secondary" disabled={page >= data.totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
+              <Button
+                variant="secondary"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={page >= data.totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Next
+              </Button>
             </div>
           </div>
         </>
       ) : (
         <p className="py-10 text-center text-sm text-slate-500">
           You haven’t reported anything yet.{' '}
-          <Link href="/reports/new" className="font-medium text-teal-700 hover:underline">Report an issue</Link>.
+          <Link href="/reports/new" className="font-medium text-teal-700 hover:underline">
+            Report an issue
+          </Link>
+          .
         </p>
       )}
     </div>

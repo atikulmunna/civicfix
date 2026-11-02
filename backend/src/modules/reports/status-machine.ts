@@ -64,12 +64,32 @@ const DEPT_OR_ADMIN: ReadonlyArray<UserRole> = ['department_worker', 'admin', 's
 /** The full transition table from SRS v1.1 §26. */
 export const TRANSITIONS: ReadonlyArray<TransitionRule> = [
   { from: 'SUBMITTED', to: 'UNDER_REVIEW', allowedRoles: ADMINS },
-  { from: 'SUBMITTED', to: 'REJECTED', allowedRoles: ADMINS, effects: { requiresInternalNote: true } },
-  { from: 'SUBMITTED', to: 'DUPLICATE', allowedRoles: ADMINS, effects: { requiresDuplicateTarget: true } },
+  {
+    from: 'SUBMITTED',
+    to: 'REJECTED',
+    allowedRoles: ADMINS,
+    effects: { requiresInternalNote: true },
+  },
+  {
+    from: 'SUBMITTED',
+    to: 'DUPLICATE',
+    allowedRoles: ADMINS,
+    effects: { requiresDuplicateTarget: true },
+  },
 
   { from: 'UNDER_REVIEW', to: 'VERIFIED', allowedRoles: ADMINS },
-  { from: 'UNDER_REVIEW', to: 'REJECTED', allowedRoles: ADMINS, effects: { requiresInternalNote: true } },
-  { from: 'UNDER_REVIEW', to: 'DUPLICATE', allowedRoles: ADMINS, effects: { requiresDuplicateTarget: true } },
+  {
+    from: 'UNDER_REVIEW',
+    to: 'REJECTED',
+    allowedRoles: ADMINS,
+    effects: { requiresInternalNote: true },
+  },
+  {
+    from: 'UNDER_REVIEW',
+    to: 'DUPLICATE',
+    allowedRoles: ADMINS,
+    effects: { requiresDuplicateTarget: true },
+  },
   { from: 'UNDER_REVIEW', to: 'NEEDS_MORE_INFO', allowedRoles: ADMINS },
 
   { from: 'NEEDS_MORE_INFO', to: 'UNDER_REVIEW', allowedRoles: ADMINS },
@@ -79,7 +99,12 @@ export const TRANSITIONS: ReadonlyArray<TransitionRule> = [
   { from: 'ASSIGNED', to: 'IN_PROGRESS', allowedRoles: DEPT_OR_ADMIN },
   { from: 'ASSIGNED', to: 'VERIFIED', allowedRoles: ADMINS }, // un-assign / reassign path
 
-  { from: 'IN_PROGRESS', to: 'RESOLVED', allowedRoles: DEPT_OR_ADMIN, effects: { setsResolvedAt: true } },
+  {
+    from: 'IN_PROGRESS',
+    to: 'RESOLVED',
+    allowedRoles: DEPT_OR_ADMIN,
+    effects: { setsResolvedAt: true },
+  },
   { from: 'IN_PROGRESS', to: 'NEEDS_MORE_INFO', allowedRoles: DEPT_OR_ADMIN },
 
   { from: 'RESOLVED', to: 'ARCHIVED', allowedRoles: ADMINS },
@@ -176,8 +201,16 @@ export function assertTransition(
 /** Convenience: all statuses reachable from `from` for `role` (e.g. to build UI menus). */
 export function allowedNextStatuses(from: ReportStatus, role: UserRole): ReportStatus[] {
   const all: ReportStatus[] = [
-    'SUBMITTED', 'UNDER_REVIEW', 'VERIFIED', 'ASSIGNED', 'IN_PROGRESS',
-    'RESOLVED', 'REJECTED', 'DUPLICATE', 'NEEDS_MORE_INFO', 'ARCHIVED',
+    'SUBMITTED',
+    'UNDER_REVIEW',
+    'VERIFIED',
+    'ASSIGNED',
+    'IN_PROGRESS',
+    'RESOLVED',
+    'REJECTED',
+    'DUPLICATE',
+    'NEEDS_MORE_INFO',
+    'ARCHIVED',
   ];
   return all.filter((to) => canTransition(from, to, role).allowed);
 }

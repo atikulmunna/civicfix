@@ -21,7 +21,11 @@ const schema = z.object({
   // Uploads (Module 4)
   UPLOAD_PROVIDER: z.enum(['local']).default('local'),
   LOCAL_UPLOAD_DIR: z.string().default('uploads'),
-  MAX_UPLOAD_BYTES: z.coerce.number().int().positive().default(5 * 1024 * 1024),
+  MAX_UPLOAD_BYTES: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(5 * 1024 * 1024),
 
   // Geospatial defaults (metres).
   NEARBY_DEFAULT_RADIUS_M: z.coerce.number().int().positive().default(1000),

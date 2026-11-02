@@ -36,7 +36,12 @@ export function Moderation({ id }: { id: string }) {
   }, [id]);
 
   useEffect(() => {
-    Promise.all([load(), api.get<{ departments: Department[] }>('/departments').then((d) => setDepartments(d.departments))])
+    Promise.all([
+      load(),
+      api
+        .get<{ departments: Department[] }>('/departments')
+        .then((d) => setDepartments(d.departments)),
+    ])
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [load]);
@@ -62,12 +67,16 @@ export function Moderation({ id }: { id: string }) {
   return (
     <div className="grid gap-6 lg:grid-cols-3">
       <div className="flex flex-col gap-4 lg:col-span-2">
-        <Link href="/admin/reports" className="text-sm text-teal-700 hover:underline">← Back to reports</Link>
+        <Link href="/admin/reports" className="text-sm text-teal-700 hover:underline">
+          ← Back to reports
+        </Link>
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge status={report.status} />
             <SeverityBadge severity={report.severity} />
-            {report.category && <span className="text-sm text-slate-500">{report.category.name}</span>}
+            {report.category && (
+              <span className="text-sm text-slate-500">{report.category.name}</span>
+            )}
           </div>
           <h1 className="mt-2 text-2xl font-bold text-slate-900">{report.title}</h1>
           <p className="text-xs text-slate-400">Reported {formatDateTime(report.createdAt)}</p>
@@ -77,7 +86,13 @@ export function Moderation({ id }: { id: string }) {
           <div className="grid grid-cols-3 gap-2">
             {report.images.map((img) => (
               // eslint-disable-next-line @next/next/no-img-element
-              <img key={img.id} src={assetUrl(img.imageUrl)} alt="" className="aspect-square rounded object-cover" loading="lazy" />
+              <img
+                key={img.id}
+                src={assetUrl(img.imageUrl)}
+                alt=""
+                className="aspect-square rounded object-cover"
+                loading="lazy"
+              />
             ))}
           </div>
         )}
@@ -85,7 +100,9 @@ export function Moderation({ id }: { id: string }) {
         <p className="whitespace-pre-line text-slate-700">{report.description}</p>
         {report.address && <p className="text-sm text-slate-500">📍 {report.address}</p>}
         <p className="text-sm">
-          <Link href={`/reports/${report.id}`} className="text-teal-700 hover:underline">View public page →</Link>
+          <Link href={`/reports/${report.id}`} className="text-teal-700 hover:underline">
+            View public page →
+          </Link>
         </p>
 
         {report.internalNote && (
@@ -105,23 +122,42 @@ export function Moderation({ id }: { id: string }) {
         <Card>
           <h2 className="mb-3 font-semibold text-slate-900">Update status</h2>
           <div className="flex flex-col gap-2">
-            <Select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="New status">
+            <Select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              aria-label="New status"
+            >
               <option value="">Select status…</option>
               {STATUS_OPTIONS.filter((s) => s !== report.status).map((s) => (
-                <option key={s} value={s}>{statusLabel(s)}</option>
+                <option key={s} value={s}>
+                  {statusLabel(s)}
+                </option>
               ))}
             </Select>
-            <Textarea rows={2} placeholder="Note (optional)" value={note} onChange={(e) => setNote(e.target.value)} aria-label="Status note" />
-            <Textarea rows={2} placeholder="Internal note (required to reject)" value={internalNote} onChange={(e) => setInternalNote(e.target.value)} aria-label="Internal note" />
+            <Textarea
+              rows={2}
+              placeholder="Note (optional)"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              aria-label="Status note"
+            />
+            <Textarea
+              rows={2}
+              placeholder="Internal note (required to reject)"
+              value={internalNote}
+              onChange={(e) => setInternalNote(e.target.value)}
+              aria-label="Internal note"
+            />
             <Button
               disabled={busy || !status}
               onClick={() =>
                 run(
-                  () => api.patch(`/admin/reports/${id}/status`, {
-                    status,
-                    note: note || undefined,
-                    internalNote: internalNote || undefined,
-                  }),
+                  () =>
+                    api.patch(`/admin/reports/${id}/status`, {
+                      status,
+                      note: note || undefined,
+                      internalNote: internalNote || undefined,
+                    }),
                   'Status updated.',
                 )
               }
@@ -134,14 +170,31 @@ export function Moderation({ id }: { id: string }) {
         <Card>
           <h2 className="mb-3 font-semibold text-slate-900">Assign department</h2>
           <div className="flex flex-col gap-2">
-            <Select value={departmentId} onChange={(e) => setDepartmentId(e.target.value)} aria-label="Department">
+            <Select
+              value={departmentId}
+              onChange={(e) => setDepartmentId(e.target.value)}
+              aria-label="Department"
+            >
               <option value="">Select department…</option>
-              {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+              {departments.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                </option>
+              ))}
             </Select>
             <Button
               variant="secondary"
               disabled={busy || !departmentId}
-              onClick={() => run(() => api.patch(`/admin/reports/${id}/assign`, { departmentId, note: note || undefined }), 'Report assigned.')}
+              onClick={() =>
+                run(
+                  () =>
+                    api.patch(`/admin/reports/${id}/assign`, {
+                      departmentId,
+                      note: note || undefined,
+                    }),
+                  'Report assigned.',
+                )
+              }
             >
               Assign (sets Assigned)
             </Button>
@@ -154,17 +207,35 @@ export function Moderation({ id }: { id: string }) {
             <Button
               variant="secondary"
               disabled={busy}
-              onClick={() => run(() => api.post(`/admin/reports/${id}/resolve`, { note: note || undefined }), 'Marked resolved.')}
+              onClick={() =>
+                run(
+                  () => api.post(`/admin/reports/${id}/resolve`, { note: note || undefined }),
+                  'Marked resolved.',
+                )
+              }
             >
               Resolve
             </Button>
             <div className="flex flex-col gap-2">
               <Label htmlFor="dup">Mark as duplicate of</Label>
-              <Input id="dup" placeholder="Original report ID" value={duplicateOf} onChange={(e) => setDuplicateOf(e.target.value)} />
+              <Input
+                id="dup"
+                placeholder="Original report ID"
+                value={duplicateOf}
+                onChange={(e) => setDuplicateOf(e.target.value)}
+              />
               <Button
                 variant="danger"
                 disabled={busy || !duplicateOf}
-                onClick={() => run(() => api.post(`/admin/reports/${id}/duplicate`, { duplicateOfReportId: duplicateOf }), 'Marked duplicate.')}
+                onClick={() =>
+                  run(
+                    () =>
+                      api.post(`/admin/reports/${id}/duplicate`, {
+                        duplicateOfReportId: duplicateOf,
+                      }),
+                    'Marked duplicate.',
+                  )
+                }
               >
                 Mark duplicate
               </Button>

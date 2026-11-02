@@ -19,8 +19,14 @@ import NotificationsPage from './page';
 
 const ME = { id: 'u1', name: 'Me', email: 'me@e.com', role: 'citizen' };
 const notif = (over = {}) => ({
-  id: 'n1', reportId: 'r1', title: 'Report status updated', message: 'now resolved',
-  type: 'status_change', isRead: false, createdAt: new Date().toISOString(), ...over,
+  id: 'n1',
+  reportId: 'r1',
+  title: 'Report status updated',
+  message: 'now resolved',
+  type: 'status_change',
+  isRead: false,
+  createdAt: new Date().toISOString(),
+  ...over,
 });
 
 describe('NotificationsPage', () => {
@@ -32,7 +38,14 @@ describe('NotificationsPage', () => {
     get.mockImplementation((path: string) => {
       if (path === '/auth/me') return Promise.resolve({ user: ME });
       if (path === '/notifications')
-        return Promise.resolve({ items: [notif({ isRead: unread === 0 })], unreadCount: unread, page: 1, limit: 50, total: 1, totalPages: 1 });
+        return Promise.resolve({
+          items: [notif({ isRead: unread === 0 })],
+          unreadCount: unread,
+          page: 1,
+          limit: 50,
+          total: 1,
+          totalPages: 1,
+        });
       return Promise.resolve({});
     });
     // After mark-all, subsequent loads report zero unread.

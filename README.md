@@ -17,12 +17,12 @@ through an explicit status lifecycle with in-app notifications.
 The live demo is seeded with data. Sign in with any of these accounts (all use
 the password **`Password123!`**):
 
-| Role | Email | What they can do |
-|---|---|---|
-| Super admin | `super@civicfix.local` | Everything, plus assign user roles |
-| Admin | `admin@civicfix.local` | Verify, assign, moderate, view analytics |
+| Role              | Email                               | What they can do                            |
+| ----------------- | ----------------------------------- | ------------------------------------------- |
+| Super admin       | `super@civicfix.local`              | Everything, plus assign user roles          |
+| Admin             | `admin@civicfix.local`              | Verify, assign, moderate, view analytics    |
 | Department worker | `worker.publicworks@civicfix.local` | Act on reports assigned to their department |
-| Citizen | `citizen1@civicfix.local` | Report issues, confirm, upvote, comment |
+| Citizen           | `citizen1@civicfix.local`           | Report issues, confirm, upvote, comment     |
 
 ## Features
 
@@ -162,6 +162,7 @@ Recommended free hosts: **Neon** (DB), **Fly.io** (API), **Vercel** (web).
 Fly keeps one machine always on, so there are no cold starts.
 
 ### 1. Database: Neon
+
 1. Create a project at [console.neon.tech](https://console.neon.tech) in the
    region closest to the API. This deployment uses AWS Singapore
    (`aws-ap-southeast-1`), next to Fly's `sin` region.
@@ -173,6 +174,7 @@ Fly keeps one machine always on, so there are no cold starts.
    and the extra time lets the first query wake it instead of timing out.
    With the [Neon CLI](https://neon.com/docs/reference/neon-cli), `neon link`
    then `neon env pull` writes both into `.env.local` at the repo root.
+
 3. From your machine, apply the schema once (the migration enables PostGIS itself):
    ```bash
    cd backend
@@ -182,7 +184,9 @@ Fly keeps one machine always on, so there are no cold starts.
    ```
 
 ### 2. API: Fly.io
+
 Install [`flyctl`](https://fly.io/docs/flyctl/install/) and `fly auth login`, then:
+
 ```bash
 cd backend
 fly launch --no-deploy --copy-config   # uses fly.toml; pick a unique app name if taken
@@ -193,10 +197,12 @@ fly secrets set \
   CORS_ORIGIN="https://<your-app>.vercel.app"   # fill in after step 3
 fly deploy
 ```
+
 `Dockerfile` builds the image and `fly.toml` keeps one 512 MB machine always on
 with a `/health` check. You get a URL like `https://civicfix-api.fly.dev`.
 
 ### 3. Web: Vercel
+
 - Add New, Project, import this repo, **Root Directory: `frontend`**.
 - Environment variables:
   - `BACKEND_URL` = your Fly URL (e.g. `https://civicfix-api.fly.dev`)
@@ -207,15 +213,15 @@ with a `/health` check. You get a URL like `https://civicfix-api.fly.dev`.
 Vercel redeploys automatically on every push to `main`; redeploy the API with
 `fly deploy`.
 
-| Where | Variable | Value |
-|---|---|---|
-| Fly | `DATABASE_URL` | Neon pooled connection URI (`fly secrets set`) |
-| Fly | `DATABASE_URL_UNPOOLED` | Neon direct connection URI (`fly secrets set`) |
-| Fly | `JWT_ACCESS_SECRET` | long random string (`fly secrets set`) |
-| Fly | `CORS_ORIGIN` | your Vercel URL (`fly secrets set`) |
-| Fly | `NODE_ENV` / `PORT` | `production` / `8080` (preset in `fly.toml`) |
-| Vercel | `BACKEND_URL` | your Fly URL |
-| Vercel | `NEXT_PUBLIC_API_URL` | `/api/v1` |
+| Where  | Variable                | Value                                          |
+| ------ | ----------------------- | ---------------------------------------------- |
+| Fly    | `DATABASE_URL`          | Neon pooled connection URI (`fly secrets set`) |
+| Fly    | `DATABASE_URL_UNPOOLED` | Neon direct connection URI (`fly secrets set`) |
+| Fly    | `JWT_ACCESS_SECRET`     | long random string (`fly secrets set`)         |
+| Fly    | `CORS_ORIGIN`           | your Vercel URL (`fly secrets set`)            |
+| Fly    | `NODE_ENV` / `PORT`     | `production` / `8080` (preset in `fly.toml`)   |
+| Vercel | `BACKEND_URL`           | your Fly URL                                   |
+| Vercel | `NEXT_PUBLIC_API_URL`   | `/api/v1`                                      |
 
 > **Free-tier notes:** Fly requires a card on file but keeps a single small
 > machine effectively free; `min_machines_running = 1` avoids cold starts.

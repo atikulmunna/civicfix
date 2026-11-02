@@ -22,7 +22,9 @@ function Manage() {
             key={t}
             onClick={() => setTab(t)}
             className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium ${
-              tab === t ? 'border-teal-600 text-teal-700' : 'border-transparent text-slate-500 hover:text-slate-700'
+              tab === t
+                ? 'border-teal-600 text-teal-700'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
             {t}
@@ -34,12 +36,24 @@ function Manage() {
         {tab === 'Users' && <UsersAdmin />}
         {tab === 'Categories' && (
           <CatalogAdmin
-            config={{ listPath: '/categories', adminPath: '/admin/categories', responseKey: 'categories', itemKey: 'category', secondary: { key: 'icon', label: 'Icon (optional)' } }}
+            config={{
+              listPath: '/categories',
+              adminPath: '/admin/categories',
+              responseKey: 'categories',
+              itemKey: 'category',
+              secondary: { key: 'icon', label: 'Icon (optional)' },
+            }}
           />
         )}
         {tab === 'Departments' && (
           <CatalogAdmin
-            config={{ listPath: '/departments', adminPath: '/admin/departments', responseKey: 'departments', itemKey: 'department', secondary: { key: 'contactEmail', label: 'Contact email (optional)' } }}
+            config={{
+              listPath: '/departments',
+              adminPath: '/admin/departments',
+              responseKey: 'departments',
+              itemKey: 'department',
+              secondary: { key: 'contactEmail', label: 'Contact email (optional)' },
+            }}
           />
         )}
       </Card>

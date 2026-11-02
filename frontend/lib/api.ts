@@ -83,8 +83,7 @@ export const api = {
   del: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
 
   /** Multipart POST (e.g. report creation with images). No JSON content-type. */
-  postForm: <T>(path: string, form: FormData) =>
-    request<T>(path, { method: 'POST', body: form }),
+  postForm: <T>(path: string, form: FormData) => request<T>(path, { method: 'POST', body: form }),
 };
 
 /** Absolute URL for a backend-served upload path like /uploads/abc.png. */

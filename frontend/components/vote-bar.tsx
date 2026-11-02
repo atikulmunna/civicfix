@@ -11,7 +11,13 @@ import { useToast } from './toast';
  * Vote + follow actions. The API is idempotent and doesn't expose per-user
  * state, so toggles are tracked optimistically within this session.
  */
-export function VoteBar({ reportId, initialCounts }: { reportId: string; initialCounts: VoteCounts }) {
+export function VoteBar({
+  reportId,
+  initialCounts,
+}: {
+  reportId: string;
+  initialCounts: VoteCounts;
+}) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [counts, setCounts] = useState(initialCounts);
@@ -67,7 +73,9 @@ export function VoteBar({ reportId, initialCounts }: { reportId: string; initial
 
   const flagFalse = () =>
     act(async () => {
-      const { counts: c } = await api.post<{ counts: VoteCounts }>(`/reports/${reportId}/false-report`);
+      const { counts: c } = await api.post<{ counts: VoteCounts }>(
+        `/reports/${reportId}/false-report`,
+      );
       setCounts(c);
       toast('Flagged as possibly false. Thanks.', 'success');
     }, 'flag');
@@ -104,7 +112,11 @@ export function VoteBar({ reportId, initialCounts }: { reportId: string; initial
       >
         {following ? 'Following' : 'Follow'}
       </button>
-      <button onClick={flagFalse} disabled={busy} className={`${btn} border-slate-300 text-slate-500 hover:bg-slate-50`}>
+      <button
+        onClick={flagFalse}
+        disabled={busy}
+        className={`${btn} border-slate-300 text-slate-500 hover:bg-slate-50`}
+      >
         Flag as false
       </button>
     </div>

@@ -235,20 +235,28 @@ describe('GET /reports (list, filter, paginate)', () => {
     expect(res.body.data.items.length).toBeGreaterThan(0);
     expect(res.body.data).toMatchObject({ page: 1, limit: 5 });
     expect(res.body.data.total).toBeGreaterThan(0);
-    expect(res.body.data.items.every((r: { categoryId: string }) => r.categoryId === categoryId)).toBe(true);
+    expect(
+      res.body.data.items.every((r: { categoryId: string }) => r.categoryId === categoryId),
+    ).toBe(true);
   });
 
   it('filters by severity', async () => {
-    await createReport({ token: ownerToken, severity: 'urgent', title: 'Urgent gas leak smell' }).then(
-      (r) => storedUrls.push(r.body.data.report.images[0].imageUrl),
-    );
+    await createReport({
+      token: ownerToken,
+      severity: 'urgent',
+      title: 'Urgent gas leak smell',
+    }).then((r) => storedUrls.push(r.body.data.report.images[0].imageUrl));
     const res = await request(app).get('/api/v1/reports').query({ categoryId, severity: 'urgent' });
-    expect(res.body.data.items.every((r: { severity: string }) => r.severity === 'urgent')).toBe(true);
+    expect(res.body.data.items.every((r: { severity: string }) => r.severity === 'urgent')).toBe(
+      true,
+    );
   });
 
   it('searches by title text', async () => {
     const res = await request(app).get('/api/v1/reports').query({ search: 'gas leak' });
-    expect(res.body.data.items.some((r: { title: string }) => /gas leak/i.test(r.title))).toBe(true);
+    expect(res.body.data.items.some((r: { title: string }) => /gas leak/i.test(r.title))).toBe(
+      true,
+    );
   });
 
   it('sorts by most_confirmed (LIST-005)', async () => {
@@ -256,8 +264,12 @@ describe('GET /reports (list, filter, paginate)', () => {
     const top = await createReport({ token: ownerToken, title: 'Most confirmed candidate' });
     const topId = top.body.data.report.id;
     storedUrls.push(top.body.data.report.images[0].imageUrl);
-    await request(app).post(`/api/v1/reports/${topId}/confirm`).set('Authorization', `Bearer ${ownerToken}`);
-    await request(app).post(`/api/v1/reports/${topId}/confirm`).set('Authorization', `Bearer ${otherToken}`);
+    await request(app)
+      .post(`/api/v1/reports/${topId}/confirm`)
+      .set('Authorization', `Bearer ${ownerToken}`);
+    await request(app)
+      .post(`/api/v1/reports/${topId}/confirm`)
+      .set('Authorization', `Bearer ${otherToken}`);
 
     const res = await request(app)
       .get('/api/v1/reports')
@@ -282,7 +294,11 @@ describe('GET /reports/nearby (ST_DWithin)', () => {
       .get('/api/v1/reports/nearby')
       .query({ lat: BASE.lat, lng: BASE.lng, radius: 1000 });
     expect(res.status).toBe(200);
-    const items = res.body.data.items as Array<{ latitude: number; distanceM: number; title: string }>;
+    const items = res.body.data.items as Array<{
+      latitude: number;
+      distanceM: number;
+      title: string;
+    }>;
     expect(items.length).toBeGreaterThan(0);
     expect(items.every((r) => r.distanceM <= 1000)).toBe(true);
     expect(items.some((r) => /far away/i.test(r.title))).toBe(false);

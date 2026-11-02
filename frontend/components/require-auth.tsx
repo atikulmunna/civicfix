@@ -32,8 +32,7 @@ export function RequireAuth({
   if (loading) return <Spinner label="Checking your session…" />;
   if (!user) return null;
 
-  const allowed =
-    require === 'auth' || (require === 'admin' ? isAdmin(user) : isStaff(user));
+  const allowed = require === 'auth' || (require === 'admin' ? isAdmin(user) : isStaff(user));
   if (!allowed) {
     return (
       <div className="py-16 text-center">

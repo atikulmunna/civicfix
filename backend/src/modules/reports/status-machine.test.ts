@@ -11,15 +11,26 @@ import {
 } from './status-machine.js';
 
 const ALL_STATUSES: ReportStatus[] = [
-  'SUBMITTED', 'UNDER_REVIEW', 'VERIFIED', 'ASSIGNED', 'IN_PROGRESS',
-  'RESOLVED', 'REJECTED', 'DUPLICATE', 'NEEDS_MORE_INFO', 'ARCHIVED',
+  'SUBMITTED',
+  'UNDER_REVIEW',
+  'VERIFIED',
+  'ASSIGNED',
+  'IN_PROGRESS',
+  'RESOLVED',
+  'REJECTED',
+  'DUPLICATE',
+  'NEEDS_MORE_INFO',
+  'ARCHIVED',
 ];
 
 describe('terminal statuses', () => {
   it('marks exactly RESOLVED, REJECTED, DUPLICATE, ARCHIVED as terminal', () => {
-    expect([...TERMINAL_STATUSES].sort()).toEqual(
-      ['ARCHIVED', 'DUPLICATE', 'REJECTED', 'RESOLVED'],
-    );
+    expect([...TERMINAL_STATUSES].sort()).toEqual([
+      'ARCHIVED',
+      'DUPLICATE',
+      'REJECTED',
+      'RESOLVED',
+    ]);
   });
 
   it('isTerminal agrees with the set', () => {
@@ -168,9 +179,11 @@ describe('assertTransition', () => {
 
 describe('allowedNextStatuses', () => {
   it('lists admin options from SUBMITTED', () => {
-    expect(allowedNextStatuses('SUBMITTED', 'admin').sort()).toEqual(
-      ['DUPLICATE', 'REJECTED', 'UNDER_REVIEW'],
-    );
+    expect(allowedNextStatuses('SUBMITTED', 'admin').sort()).toEqual([
+      'DUPLICATE',
+      'REJECTED',
+      'UNDER_REVIEW',
+    ]);
   });
 
   it('returns empty for citizens everywhere', () => {

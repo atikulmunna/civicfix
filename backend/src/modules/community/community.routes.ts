@@ -13,12 +13,17 @@ import * as comments from './comments.service.js';
 import * as votes from './votes.service.js';
 import * as subscriptions from './subscriptions.service.js';
 
-const commentSchema = z.object({ content: z.string().min(1, 'Comment cannot be empty.').max(2000) });
+const commentSchema = z.object({
+  content: z.string().min(1, 'Comment cannot be empty.').max(2000),
+});
 
 function parseComment(body: unknown): { content: string } {
   const result = commentSchema.safeParse(body);
   if (!result.success) {
-    const details = result.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message }));
+    const details = result.error.issues.map((i) => ({
+      path: i.path.join('.'),
+      message: i.message,
+    }));
     throw new ApiError('VALIDATION_ERROR', 'Invalid request data.', details);
   }
   return result.data;
