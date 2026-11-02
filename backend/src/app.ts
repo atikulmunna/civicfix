@@ -9,7 +9,8 @@ import helmet from 'helmet';
 import multer from 'multer';
 import { env } from './config/env.js';
 import { ApiError } from './lib/errors.js';
-import { routeParam } from './lib/http.js';
+import { checkDatabase } from './lib/health.js';
+import { asyncHandler, routeParam, sendSuccess } from './lib/http.js';
 import { LocalStore, objectStore, STORAGE_KEY_PATTERN } from './lib/storage.js';
 import { authRouter } from './modules/auth/auth.routes.js';
 import { reportsRouter } from './modules/reports/reports.routes.js';
@@ -43,7 +44,26 @@ export function buildApp() {
   app.use(cookieParser());
   app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
 
-  app.get('/health', (_req, res) => res.json({ success: true, data: { status: 'ok' } }));
+  // Liveness (Fly's machine check): never touches the database. See lib/health.ts.
+  app.get('/health', (_req, res) => {
+    res.set('Cache-Control', 'no-store');
+    sendSuccess(res, { status: 'ok' });
+  });
+
+  // Readiness (uptime monitor): the database answers.
+  app.get(
+    '/health/ready',
+    asyncHandler(async (_req, res) => {
+      res.set('Cache-Control', 'no-store');
+      try {
+        await checkDatabase();
+      } catch (err) {
+        console.error('[health] database check failed', err);
+        throw new ApiError('SERVICE_UNAVAILABLE', 'Database unavailable.');
+      }
+      sendSuccess(res, { status: 'ready', checks: { database: 'ok' } });
+    }),
+  );
 
   if (objectStore instanceof LocalStore) {
     // Serve uploaded images read-only; nosniff prevents content-type confusion.
