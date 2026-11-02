@@ -15,9 +15,9 @@ import { uploadDir } from '../../lib/uploads.js';
 const app = buildApp();
 const stamp = Date.now();
 
-// A real 1x1 PNG (valid magic bytes) for upload tests.
+// A real, fully decodable 1x1 PNG for upload tests (uploads are re-encoded).
 const PNG = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAADElEQVQImWPgL8sDAAGLAPRp2A2cAAAAAElFTkSuQmCC',
   'base64',
 );
 
@@ -122,7 +122,8 @@ describe('POST /reports (create)', () => {
     const report = res.body.data.report;
     expect(report.status).toBe('SUBMITTED');
     expect(report.images).toHaveLength(1);
-    expect(report.images[0].imageUrl).toMatch(/^\/uploads\/.+\.png$/);
+    // Uploads are normalized (metadata stripped) and stored as WebP.
+    expect(report.images[0].imageUrl).toMatch(/^\/uploads\/.+\.webp$/);
     storedUrls.push(report.images[0].imageUrl);
 
     const history = await prisma.statusHistory.findMany({ where: { reportId: report.id } });
