@@ -8,7 +8,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
-import { PROXY_SECRET_HEADER } from '../lib/client-ip.js';
+import { CLIENT_IP_HEADER, PROXY_SECRET_HEADER } from '../lib/client-ip.js';
 import { makeLimiter } from './rate-limit.js';
 
 const { SECRET } = vi.hoisted(() => ({ SECRET: 'p'.repeat(40) }));
@@ -22,8 +22,6 @@ vi.mock('../config/env.js', async (importOriginal) => {
     env: { ...actual.env, TRUST_PROXY_HOPS: 1, PROXY_SHARED_SECRET: SECRET },
   };
 });
-
-const VERCEL = '76.76.21.21';
 
 function appWithLimit(max: number, trustProxyHops = 0) {
   const app = express();
@@ -56,34 +54,46 @@ describe('makeLimiter', () => {
 });
 
 describe('IP limits behind the proxy chain', () => {
-  const viaWebProxy = (client: string) => ({
-    'X-Forwarded-For': `${client}, ${VERCEL}`,
+  const status = async (app: express.Express, headers: Record<string, string>) =>
+    (await request(app).get('/ping').set(headers)).status;
+
+  // Vercel reaches Fly from a pool of addresses and its X-Forwarded-For shape
+  // towards an external origin is undocumented (here: an extra internal hop).
+  // Neither may affect the key: the client IP header is what counts.
+  const viaWebProxy = (client: string, internal: string, egress: string) => ({
+    'X-Forwarded-For': `${client}, ${internal}, ${egress}`,
     [PROXY_SECRET_HEADER]: SECRET,
+    [CLIENT_IP_HEADER]: client,
   });
 
-  it('gives each client its own bucket when traffic comes through the web proxy', async () => {
+  it('keys web traffic on the client, whichever Vercel addresses it arrives through', async () => {
     const app = appWithLimit(1, 1);
-    expect((await request(app).get('/ping').set(viaWebProxy('203.0.113.1'))).status).toBe(200);
-    expect((await request(app).get('/ping').set(viaWebProxy('203.0.113.1'))).status).toBe(429);
-    // A different user behind the same Vercel egress IP is unaffected.
-    expect((await request(app).get('/ping').set(viaWebProxy('203.0.113.2'))).status).toBe(200);
+    expect(await status(app, viaWebProxy('203.0.113.1', '10.1.0.1', '76.76.21.21'))).toBe(200);
+    // Same visitor, different Vercel hops: still limited (the live bug was a fresh bucket).
+    expect(await status(app, viaWebProxy('203.0.113.1', '10.1.0.2', '76.76.21.22'))).toBe(429);
+    // A different visitor behind the same Vercel addresses is unaffected.
+    expect(await status(app, viaWebProxy('203.0.113.2', '10.1.0.1', '76.76.21.21'))).toBe(200);
   });
 
-  it('cannot be bypassed by spoofing X-Forwarded-For without the secret', async () => {
+  it('cannot be bypassed by forging the client IP header without the secret', async () => {
     const app = appWithLimit(1, 1);
-    const spoofed = (fake: string) => ({ 'X-Forwarded-For': `${fake}, 198.51.100.9` });
-    expect((await request(app).get('/ping').set(spoofed('10.0.0.1'))).status).toBe(200);
+    const forged = (fake: string) => ({
+      [CLIENT_IP_HEADER]: fake,
+      'X-Forwarded-For': `${fake}, 198.51.100.9`,
+    });
+    expect(await status(app, forged('10.0.0.1'))).toBe(200);
     // New fake address, same real connecting IP (198.51.100.9): still limited.
-    expect((await request(app).get('/ping').set(spoofed('10.0.0.2'))).status).toBe(429);
+    expect(await status(app, forged('10.0.0.2'))).toBe(429);
   });
 
   it('ignores a wrong secret', async () => {
     const app = appWithLimit(1, 1);
     const forged = (fake: string) => ({
+      [CLIENT_IP_HEADER]: fake,
       'X-Forwarded-For': `${fake}, 198.51.100.10`,
       [PROXY_SECRET_HEADER]: 'w'.repeat(40),
     });
-    expect((await request(app).get('/ping').set(forged('10.0.0.3'))).status).toBe(200);
-    expect((await request(app).get('/ping').set(forged('10.0.0.4'))).status).toBe(429);
+    expect(await status(app, forged('10.0.0.3'))).toBe(200);
+    expect(await status(app, forged('10.0.0.4'))).toBe(429);
   });
 });
