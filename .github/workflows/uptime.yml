@@ -1,0 +1,34 @@
+# Uptime monitor for the live deployment. A failed run emails the account that
+# last changed this workflow's schedule (GitHub's default for scheduled runs).
+#
+# Every 30 minutes, not more often: each readiness check queries the database,
+# which wakes Neon's scaled-to-zero compute for about 5 minutes. A tighter
+# interval would keep it awake around the clock and spend the free plan's
+# compute hours; 30 minutes costs roughly 30 compute hours a month.
+name: Uptime
+
+on:
+  schedule:
+    - cron: '17,47 * * * *' # off the hour, when GitHub's scheduler is busiest
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Live site and API
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      # Retries absorb a cold start (Neon waking up, a machine restarting).
+      CURL: curl --fail --silent --show-error --max-time 20 --retry 2 --retry-delay 15 --retry-all-errors
+    steps:
+      - name: API readiness (database reachable)
+        run: $CURL https://civicfix-api.fly.dev/health/ready
+
+      - name: Web app
+        run: $CURL --output /dev/null https://civicfix-mu.vercel.app/
+
+      - name: API through the web app proxy
+        run: $CURL --output /dev/null https://civicfix-mu.vercel.app/api/v1/categories
