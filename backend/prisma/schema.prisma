@@ -2,18 +2,18 @@
 // Source of truth: community_problem_reporting_platform_srs_v1.1.md (§8 Data Requirements, §26 State Machine)
 //
 // Notes:
-// - Postgres + PostGIS. The `location` geography column on Report is managed
-//   outside Prisma (Prisma has no native geography type). It is created and
-//   indexed via the migration in prisma/migrations and kept in sync with
-//   latitude/longitude on write (see backend/src/modules/reports). The
+// - Postgres + PostGIS. The PostGIS extension is created by the 0_init SQL
+//   migration (not via Prisma's preview postgresqlExtensions, which reports
+//   false drift). The `location` geography column on Report is kept in sync
+//   with latitude/longitude by a DB trigger (1_postgis migration). The
 //   `Unsupported("geography(Point, 4326)")` mapping lets Prisma round-trip the
-//   column without trying to manage its type.
+//   column without managing its type; its GiST index is declared below so the
+//   schema matches the migrations exactly (CI drift check).
 // - All status-transition rules live in code (backend/src/modules/reports/status-machine.ts),
 //   not in the DB, so they can return INVALID_STATUS_TRANSITION with context.
 
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["postgresqlExtensions"]
+  provider = "prisma-client-js"
 }
 
 // url: the app's runtime connection. On Neon this is the pooled (-pooler) URL.
@@ -21,10 +21,9 @@ generator client {
 // because migrations need session state that a transaction pooler drops.
 // Locally both point at the same docker-compose database.
 datasource db {
-  provider   = "postgresql"
-  url        = env("DATABASE_URL")
-  directUrl  = env("DATABASE_URL_UNPOOLED")
-  extensions = [postgis]
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 // ---------------------------------------------------------------------------
@@ -187,6 +186,7 @@ model Report {
   @@index([categoryId])
   @@index([createdAt])
   @@index([assignedDepartmentId])
+  @@index([location], map: "idx_reports_location_gist", type: Gist)
   @@map("reports")
 }
 
