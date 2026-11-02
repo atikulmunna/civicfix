@@ -24,7 +24,7 @@ const longitude = z.coerce.number().min(-180).max(180);
 export const createReportSchema = z.object({
   title: z.string().trim().min(3, 'Title must be at least 3 characters.').max(180),
   description: z.string().trim().min(10, 'Description must be at least 10 characters.'),
-  categoryId: z.string().uuid('A valid category is required.'),
+  categoryId: z.uuid('A valid category is required.'),
   severity,
   latitude,
   longitude,
@@ -38,7 +38,7 @@ export const updateReportSchema = z
   .object({
     title: z.string().trim().min(3).max(180),
     description: z.string().trim().min(10),
-    categoryId: z.string().uuid(),
+    categoryId: z.uuid(),
     severity,
     latitude,
     longitude,
@@ -50,7 +50,7 @@ export const updateReportSchema = z
 export type UpdateReportInput = z.infer<typeof updateReportSchema>;
 
 export const listReportsSchema = z.object({
-  categoryId: z.string().uuid().optional(),
+  categoryId: z.uuid().optional(),
   status: status.optional(),
   severity: severity.optional(),
   search: z.string().trim().min(1).max(200).optional(),
@@ -74,7 +74,7 @@ export const mapSchema = z.object({
     const parts = s.split(',').map(Number);
     if (parts.length !== 4 || parts.some(Number.isNaN)) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: 'custom',
         message: 'bbox must be minLng,minLat,maxLng,maxLat.',
       });
       return z.NEVER;
@@ -83,13 +83,13 @@ export const mapSchema = z.object({
     return { minLng, minLat, maxLng, maxLat };
   }),
   status: status.optional(),
-  categoryId: z.string().uuid().optional(),
+  categoryId: z.uuid().optional(),
   limit: z.coerce.number().int().positive().max(2000).default(1000),
 });
 export type MapInput = z.infer<typeof mapSchema>;
 
 export const checkDuplicatesSchema = z.object({
-  categoryId: z.string().uuid('A valid category is required.'),
+  categoryId: z.uuid('A valid category is required.'),
   latitude,
   longitude,
   radius: z.coerce.number().positive().max(2000).optional(),

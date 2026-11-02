@@ -24,13 +24,13 @@ export const statusSchema = z.object({
   status,
   note,
   internalNote: z.string().trim().max(2000).optional(),
-  duplicateOfReportId: z.string().uuid().optional(),
-  departmentId: z.string().uuid().optional(),
+  duplicateOfReportId: z.uuid().optional(),
+  departmentId: z.uuid().optional(),
 });
 export type StatusInput = z.infer<typeof statusSchema>;
 
 export const assignSchema = z.object({
-  departmentId: z.string().uuid('A valid department is required.'),
+  departmentId: z.uuid('A valid department is required.'),
   note,
 });
 export type AssignInput = z.infer<typeof assignSchema>;
@@ -39,16 +39,16 @@ export const resolveSchema = z.object({ note });
 export type ResolveInput = z.infer<typeof resolveSchema>;
 
 export const duplicateSchema = z.object({
-  duplicateOfReportId: z.string().uuid('A valid original report is required.'),
+  duplicateOfReportId: z.uuid('A valid original report is required.'),
   note,
 });
 export type DuplicateInput = z.infer<typeof duplicateSchema>;
 
 export const adminListSchema = z.object({
   status: status.optional(),
-  categoryId: z.string().uuid().optional(),
+  categoryId: z.uuid().optional(),
   severity: severity.optional(),
-  assignedDepartmentId: z.string().uuid().optional(),
+  assignedDepartmentId: z.uuid().optional(),
   dateFrom: z.coerce.date().optional(),
   dateTo: z.coerce.date().optional(),
   sort: z.enum(['newest', 'oldest', 'priority']).default('newest'),

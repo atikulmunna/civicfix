@@ -24,11 +24,12 @@ export function asyncHandler(fn: AsyncHandler) {
  * Validate request input against a Zod schema, raising VALIDATION_ERROR with
  * per-field details on failure. Returns the schema's parsed output type.
  */
-export function parseInput<T>(schema: z.ZodType<T, z.ZodTypeDef, unknown>, data: unknown): T {
+export function parseInput<S extends z.ZodType>(schema: S, data: unknown): z.output<S> {
   const result = schema.safeParse(data);
   if (!result.success) {
     const details = result.error.issues.map((i) => ({
-      path: i.path.join('.'),
+      // Zod 4 paths are PropertyKey[]; String() keeps symbol keys from throwing.
+      path: i.path.map(String).join('.'),
       message: i.message,
     }));
     throw new ApiError('VALIDATION_ERROR', 'Invalid request data.', details);

@@ -14,13 +14,13 @@ import * as authService from './auth.service.js';
 
 const registerSchema = z.object({
   name: z.string().trim().min(1, 'Name is required.').max(120),
-  email: z.string().trim().email('A valid email is required.').max(255),
+  email: z.string().trim().max(255).pipe(z.email('A valid email is required.')),
   password: z.string().min(1, 'Password is required.'),
   phone: z.string().trim().max(30).optional(),
 });
 
 const loginSchema = z.object({
-  email: z.string().trim().email('A valid email is required.'),
+  email: z.string().trim().pipe(z.email('A valid email is required.')),
   password: z.string().min(1, 'Password is required.'),
 });
 

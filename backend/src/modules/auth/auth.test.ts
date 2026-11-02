@@ -101,6 +101,16 @@ describe('POST /auth/login', () => {
     expect(getCookie(res, 'refresh_token')).toBeDefined();
   });
 
+  it('trims and case-folds the email before validating it', async () => {
+    // Regression guard for the zod 4 migration: the email is trimmed first,
+    // then validated, so padded input from mobile keyboards still logs in.
+    const res = await request(app)
+      .post('/api/v1/auth/login')
+      .send({ email: `  ${citizen.email.toUpperCase()}  `, password: citizen.password });
+    expect(res.status).toBe(200);
+    expect(res.body.data.user.email).toBe(citizen.email);
+  });
+
   it('rejects a wrong password with a generic message (anti-enumeration)', async () => {
     const res = await request(app)
       .post('/api/v1/auth/login')

@@ -23,7 +23,7 @@ export type UserStatusInput = z.infer<typeof userStatusSchema>;
 
 export const userRoleSchema = z.object({
   role,
-  departmentId: z.string().uuid().nullable().optional(),
+  departmentId: z.uuid().nullable().optional(),
 });
 export type UserRoleInput = z.infer<typeof userRoleSchema>;
 
@@ -52,7 +52,7 @@ export type CategoryUpdateInput = z.infer<typeof categoryUpdateSchema>;
 export const departmentCreateSchema = z.object({
   name: z.string().trim().min(2).max(120),
   description: z.string().trim().max(1000).optional(),
-  contactEmail: z.string().trim().email().max(255).optional(),
+  contactEmail: z.string().trim().max(255).pipe(z.email()).optional(),
   phone: z.string().trim().max(30).optional(),
 });
 export type DepartmentCreateInput = z.infer<typeof departmentCreateSchema>;
@@ -61,7 +61,7 @@ export const departmentUpdateSchema = z
   .object({
     name: z.string().trim().min(2).max(120),
     description: z.string().trim().max(1000).nullable(),
-    contactEmail: z.string().trim().email().max(255).nullable(),
+    contactEmail: z.string().trim().max(255).pipe(z.email()).nullable(),
     phone: z.string().trim().max(30).nullable(),
     isActive: z.boolean(),
   })
