@@ -8,6 +8,14 @@ primary_region = 'sin'
 
 [build]
 
+# Apply pending database migrations before the new version takes traffic.
+# Runs once per deploy in a temporary machine with the new image and the app's
+# secrets (Prisma Migrate uses DATABASE_URL_UNPOOLED, the direct connection).
+# A failed migration stops the deploy, so old code never meets a new schema
+# half-applied.
+[deploy]
+  release_command = 'npx prisma migrate deploy'
+
 [env]
   NODE_ENV = 'production'
   PORT = '8080'
