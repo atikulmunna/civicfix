@@ -236,6 +236,18 @@ with a `/health` check. You get a URL like `https://civicfix-api.fly.dev`.
 Vercel redeploys automatically on every push to `main`; redeploy the API with
 `fly deploy`.
 
+### 4. Health and monitoring
+
+- `GET /health` is liveness: the process is up. Fly's machine check uses it and
+  it never touches the database, so a database outage cannot take the API out
+  of rotation.
+- `GET /health/ready` is readiness: `200` when the database answers, `503`
+  otherwise.
+- `.github/workflows/uptime.yml` checks readiness, the web app and the API
+  through the web app every 30 minutes; a failed run emails you. The interval is
+  deliberate: each check wakes Neon's scaled-to-zero compute, so checking more
+  often would use up the free plan's compute hours.
+
 | Where  | Variable                        | Value                                          |
 | ------ | ------------------------------- | ---------------------------------------------- |
 | Fly    | `DATABASE_URL`                  | Neon pooled connection URI (`fly secrets set`) |

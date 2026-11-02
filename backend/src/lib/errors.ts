@@ -13,6 +13,7 @@ export type ErrorCode =
   | 'INVALID_STATUS_TRANSITION'
   | 'RATE_LIMITED'
   | 'UPLOAD_FAILED'
+  | 'SERVICE_UNAVAILABLE'
   | 'INTERNAL_ERROR';
 
 const STATUS_BY_CODE: Record<ErrorCode, number> = {
@@ -24,6 +25,7 @@ const STATUS_BY_CODE: Record<ErrorCode, number> = {
   INVALID_STATUS_TRANSITION: 422,
   RATE_LIMITED: 429,
   UPLOAD_FAILED: 400,
+  SERVICE_UNAVAILABLE: 503,
   INTERNAL_ERROR: 500,
 };
 
