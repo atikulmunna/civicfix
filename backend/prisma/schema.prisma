@@ -162,6 +162,9 @@ model Report {
   assignedDepartmentId   String?                                @map("assigned_department_id") @db.Uuid
   priorityScore          Int                                    @default(0) @map("priority_score")
   priorityScoreUpdatedAt DateTime?                              @map("priority_score_updated_at")
+  // Number of `confirm` votes. Maintained by a trigger on votes (migration
+  // *_report_confirm_count), never written by application code.
+  confirmCount           Int                                    @default(0) @map("confirm_count")
   duplicateOfReportId    String?                                @map("duplicate_of_report_id") @db.Uuid
   internalNote           String?                                @map("internal_note")
   createdAt              DateTime                               @default(now()) @map("created_at")
@@ -189,6 +192,8 @@ model Report {
   @@index([location], map: "idx_reports_location_gist", type: Gist)
   // "My reports" filters by reporter.
   @@index([userId])
+  // "Most confirmed" sort.
+  @@index([confirmCount(sort: Desc), createdAt(sort: Desc)])
   // Map viewport filters by a latitude range, then a longitude range.
   @@index([latitude, longitude])
   // Text search uses ILIKE '%term%'; trigram GIN indexes serve it (pg_trgm is

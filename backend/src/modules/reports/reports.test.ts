@@ -283,6 +283,10 @@ describe('GET /reports (list, filter, paginate)', () => {
     await request(app)
       .post(`/api/v1/reports/${topId}/confirm`)
       .set('Authorization', `Bearer ${otherToken}`);
+    // A newer report without confirms: "newest first" would put it on top,
+    // so the assertion below only passes if confirms really drive the order.
+    const newer = await createReport({ token: ownerToken, title: 'Newer but unconfirmed' });
+    storedUrls.push(newer.body.data.report.images[0].imageUrl);
 
     const res = await request(app)
       .get('/api/v1/reports')
@@ -295,6 +299,27 @@ describe('GET /reports (list, filter, paginate)', () => {
     for (let i = 1; i < items.length; i++) {
       expect(items[i - 1]!.counts.confirms).toBeGreaterThanOrEqual(items[i]!.counts.confirms);
     }
+  });
+
+  it('keeps the stored confirm count in sync as confirmations come and go', async () => {
+    const created = await createReport({ token: ownerToken, title: 'Confirm count sync check' });
+    const id = created.body.data.report.id as string;
+    storedUrls.push(created.body.data.report.images[0].imageUrl);
+    const stored = async () =>
+      (await prisma.report.findUniqueOrThrow({ where: { id } })).confirmCount;
+    const confirm = (token: string, method: 'post' | 'delete') =>
+      request(app)[method](`/api/v1/reports/${id}/confirm`).set('Authorization', `Bearer ${token}`);
+
+    await confirm(ownerToken, 'post');
+    await confirm(otherToken, 'post');
+    expect(await stored()).toBe(2);
+    await confirm(otherToken, 'delete');
+    expect(await stored()).toBe(1);
+    // An upvote is not a confirmation.
+    await request(app)
+      .post(`/api/v1/reports/${id}/upvote`)
+      .set('Authorization', `Bearer ${otherToken}`);
+    expect(await stored()).toBe(1);
   });
 });
 
