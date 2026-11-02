@@ -9,6 +9,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import request from 'supertest';
 import { buildApp } from '../../app.js';
 import { prisma } from '../../lib/prisma.js';
+import { register, rotateRefreshToken } from './auth.service.js';
+import { hashRefreshToken } from './tokens.js';
 
 const app = buildApp();
 
@@ -63,6 +65,21 @@ describe('POST /auth/register', () => {
     const res = await request(app).post('/api/v1/auth/register').send(citizen);
     expect(res.status).toBe(409);
     expect(res.body.code).toBe('DUPLICATE_RESOURCE');
+  });
+
+  it('resolves two simultaneous sign-ups with one email as one success and one conflict', async () => {
+    // Called at the service level, where both calls pass the duplicate check
+    // and race to the insert (password hashing sits in between). The unique
+    // index decides; the loser must get the friendly conflict, not a 500.
+    const racer = { ...citizen, email: `race_${String(stamp)}@example.com` };
+    createdEmails.push(racer.email);
+    const outcomes = await Promise.allSettled([register(racer), register(racer)]);
+    expect(outcomes.filter((o) => o.status === 'fulfilled')).toHaveLength(1);
+    const lost = outcomes.find((o) => o.status === 'rejected');
+    expect(lost?.reason).toMatchObject({
+      code: 'DUPLICATE_RESOURCE',
+      message: 'An account with this email already exists.',
+    });
   });
 
   it('rejects a weak password (AUTH-013)', async () => {
@@ -185,6 +202,72 @@ describe('POST /auth/refresh (rotation, AUTH-012)', () => {
   it('returns 401 when no refresh cookie is present', async () => {
     const res = await request(app).post('/api/v1/auth/refresh');
     expect(res.status).toBe(401);
+  });
+
+  async function freshRefreshCookie(): Promise<string> {
+    const login = await request(app)
+      .post('/api/v1/auth/login')
+      .send({ email: citizen.email, password: citizen.password });
+    return getCookie(login, 'refresh_token')!;
+  }
+  const refreshWith = (cookie: string) =>
+    request(app).post('/api/v1/auth/refresh').set('Cookie', cookie);
+
+  it('lets exactly one of two simultaneous refreshes win, without ending the session', async () => {
+    const cookie = await freshRefreshCookie();
+    const results = await Promise.all([refreshWith(cookie), refreshWith(cookie)]);
+    expect(results.map((r) => r.status).sort()).toEqual([200, 401]);
+
+    // The winner's new token keeps working: a benign race is not treated as theft.
+    const winner = results.find((r) => r.status === 200)!;
+    expect((await refreshWith(getCookie(winner, 'refresh_token')!)).status).toBe(200);
+  });
+
+  it('never rotates a token that another request revoked after it was read', async () => {
+    // Deterministic version of the race: this request read the token while it
+    // was still valid, then a concurrent request revoked it before rotation.
+    const cookie = await freshRefreshCookie();
+    const tokenHash = hashRefreshToken(cookieValue(cookie));
+    const staleRead = await prisma.refreshToken.findUniqueOrThrow({ where: { tokenHash } });
+    await prisma.refreshToken.update({ where: { tokenHash }, data: { revokedAt: new Date() } });
+    const tokensBefore = await prisma.refreshToken.count({ where: { userId: staleRead.userId } });
+
+    expect(await rotateRefreshToken(staleRead, new Date())).toBeNull();
+    // No successor was issued for the losing request.
+    expect(await prisma.refreshToken.count({ where: { userId: staleRead.userId } })).toBe(
+      tokensBefore,
+    );
+  });
+
+  it('revokes every session when a rotated token is replayed after the grace window', async () => {
+    const stolen = await freshRefreshCookie();
+    const rotated = await refreshWith(stolen);
+    const current = getCookie(rotated, 'refresh_token')!;
+
+    // Pretend the rotation happened two minutes ago, beyond the grace window.
+    await prisma.refreshToken.update({
+      where: { tokenHash: hashRefreshToken(cookieValue(stolen)) },
+      data: { revokedAt: new Date(Date.now() - 2 * 60_000) },
+    });
+
+    expect((await refreshWith(stolen)).status).toBe(401);
+    // The legitimate holder's current token is revoked too: sign out everywhere.
+    const after = await refreshWith(current);
+    expect(after.status).toBe(401);
+    expect(after.body.code).toBe('AUTH_REQUIRED');
+  });
+
+  it('prunes expired refresh tokens when the user signs in', async () => {
+    const user = await prisma.user.findUniqueOrThrow({ where: { email: citizen.email } });
+    const expired = await prisma.refreshToken.create({
+      data: {
+        userId: user.id,
+        tokenHash: hashRefreshToken(`expired-${String(Date.now())}`),
+        expiresAt: new Date(Date.now() - 60_000),
+      },
+    });
+    await freshRefreshCookie();
+    expect(await prisma.refreshToken.findUnique({ where: { id: expired.id } })).toBeNull();
   });
 });
 

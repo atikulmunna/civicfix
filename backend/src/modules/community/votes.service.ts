@@ -6,7 +6,8 @@
  */
 import type { VoteType } from '@prisma/client';
 import { prisma } from '../../lib/prisma.js';
-import { assertReportExists, isUniqueViolation } from './shared.js';
+import { isUniqueViolation } from '../../lib/prisma-errors.js';
+import { assertReportExists } from './shared.js';
 
 export interface VoteCounts {
   upvotes: number;

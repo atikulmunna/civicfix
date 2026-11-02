@@ -4,7 +4,7 @@
  */
 import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../lib/errors.js';
-import { isUniqueViolation } from '../community/shared.js';
+import { isUniqueViolation } from '../../lib/prisma-errors.js';
 import type {
   CategoryCreateInput,
   CategoryUpdateInput,

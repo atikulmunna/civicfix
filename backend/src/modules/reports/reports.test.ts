@@ -233,6 +233,12 @@ describe('GET /reports/:id (detail) + internal note hiding (BR-012)', () => {
     const res = await request(app).get('/api/v1/reports/00000000-0000-0000-0000-000000000000');
     expect(res.status).toBe(404);
   });
+
+  it('returns 400 for a malformed report id instead of a server error', async () => {
+    const res = await request(app).get('/api/v1/reports/not-a-uuid');
+    expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({ code: 'VALIDATION_ERROR', message: 'Invalid identifier.' });
+  });
 });
 
 describe('GET /reports (list, filter, paginate)', () => {

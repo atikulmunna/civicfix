@@ -6,6 +6,7 @@
 import type { User, UserRole } from '@prisma/client';
 import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../lib/errors.js';
+import { isUniqueViolation } from '../../lib/prisma-errors.js';
 import { assertPasswordPolicy, hashPassword, verifyPassword } from './password.js';
 import { generateRefreshToken, hashRefreshToken, signAccessToken } from './tokens.js';
 
@@ -45,6 +46,7 @@ export interface IssuedSession {
 
 /** Create a refresh-token record and the matching access token for a user. */
 async function issueSession(userId: string, role: UserRole): Promise<IssuedSession> {
+  await pruneExpiredSessions(userId);
   const { raw, hash, expiresAt } = generateRefreshToken();
   await prisma.refreshToken.create({
     data: { userId, tokenHash: hash, expiresAt },
@@ -69,22 +71,30 @@ export async function register(
   assertPasswordPolicy(input.password);
 
   const email = input.email.toLowerCase().trim();
+  const duplicate = () =>
+    new ApiError('DUPLICATE_RESOURCE', 'An account with this email already exists.');
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
-    throw new ApiError('DUPLICATE_RESOURCE', 'An account with this email already exists.');
+    throw duplicate();
   }
 
   const passwordHash = await hashPassword(input.password);
   // A blank or whitespace-only phone is stored as null, not ''.
   const phone = input.phone?.trim();
-  const user = await prisma.user.create({
-    data: {
-      name: input.name.trim(),
-      email,
-      passwordHash,
-      phone: phone === undefined || phone === '' ? null : phone,
-    },
-  });
+  // The check above is a fast path; the unique index decides a race between
+  // two sign-ups (hashing between check and insert makes the race real).
+  const user = await prisma.user
+    .create({
+      data: {
+        name: input.name.trim(),
+        email,
+        passwordHash,
+        phone: phone === undefined || phone === '' ? null : phone,
+      },
+    })
+    .catch((err: unknown) => {
+      throw isUniqueViolation(err) ? duplicate() : err;
+    });
 
   const session = await issueSession(user.id, user.role);
   return { user: toPublicUser(user), session };
@@ -119,29 +129,37 @@ export async function login(
  */
 export async function refresh(rawToken: string): Promise<IssuedSession> {
   const tokenHash = hashRefreshToken(rawToken);
-  const record = await prisma.refreshToken.findFirst({
+  const record = await prisma.refreshToken.findUnique({
     where: { tokenHash },
     include: { user: true },
   });
+  const now = new Date();
 
-  if (!record || record.revokedAt || record.expiresAt <= new Date()) {
-    throw new ApiError('AUTH_REQUIRED', 'Invalid or expired session. Please log in again.');
+  if (!record || record.expiresAt <= now) {
+    throw invalidSession();
+  }
+  if (record.revokedAt) {
+    // Reuse detection: a rotated token presented again well after rotation
+    // means it was copied and replayed, so end every session of that user.
+    // Within the grace window it is two tabs refreshing at once; the loser
+    // simply fails.
+    if (now.getTime() - record.revokedAt.getTime() > REUSE_GRACE_MS) {
+      await revokeAllSessions(record.userId);
+      console.warn('[auth] refresh token reuse detected; revoked all sessions', {
+        userId: record.userId,
+      });
+    }
+    throw invalidSession();
   }
   if (!record.user.isActive) {
     throw new ApiError('FORBIDDEN', 'This account has been deactivated.');
   }
 
-  // Rotate: revoke the presented token and issue a new one atomically.
-  const next = generateRefreshToken();
-  await prisma.$transaction([
-    prisma.refreshToken.update({
-      where: { id: record.id },
-      data: { revokedAt: new Date() },
-    }),
-    prisma.refreshToken.create({
-      data: { userId: record.userId, tokenHash: next.hash, expiresAt: next.expiresAt },
-    }),
-  ]);
+  const next = await rotateRefreshToken(record, now);
+  if (!next) {
+    throw invalidSession();
+  }
+  await pruneExpiredSessions(record.userId);
 
   return {
     accessToken: signAccessToken({ sub: record.userId, role: record.user.role }),
@@ -166,6 +184,58 @@ export async function getUserById(id: string): Promise<PublicUser | null> {
 }
 
 // --- internals ------------------------------------------------------------
+
+/**
+ * How long after rotation a reused refresh token counts as a benign race
+ * (two tabs refreshing together) rather than a replayed, stolen token.
+ */
+export const REUSE_GRACE_MS = 60_000;
+
+function invalidSession(): ApiError {
+  return new ApiError('AUTH_REQUIRED', 'Invalid or expired session. Please log in again.');
+}
+
+/**
+ * Rotate a refresh token that was read as valid: revoke it and issue its
+ * successor in one transaction. The revoke is conditional, so when requests
+ * race with the same token Postgres lets exactly one win; the others get
+ * null. Exported for a deterministic test of that race.
+ */
+export async function rotateRefreshToken(
+  record: { id: string; userId: string },
+  now: Date,
+): Promise<ReturnType<typeof generateRefreshToken> | null> {
+  const next = generateRefreshToken();
+  const rotated = await prisma.$transaction(async (tx) => {
+    const { count } = await tx.refreshToken.updateMany({
+      where: { id: record.id, revokedAt: null },
+      data: { revokedAt: now },
+    });
+    if (count === 0) return false;
+    await tx.refreshToken.create({
+      data: { userId: record.userId, tokenHash: next.hash, expiresAt: next.expiresAt },
+    });
+    return true;
+  });
+  return rotated ? next : null;
+}
+
+/** Revoke every active refresh token of a user (sign out everywhere). */
+async function revokeAllSessions(userId: string): Promise<void> {
+  await prisma.refreshToken.updateMany({
+    where: { userId, revokedAt: null },
+    data: { revokedAt: new Date() },
+  });
+}
+
+/**
+ * Delete a user's expired refresh tokens so the table stays bounded without a
+ * scheduled job. Revoked but unexpired tokens are kept: reuse detection needs
+ * them for as long as they could still be presented.
+ */
+async function pruneExpiredSessions(userId: string): Promise<void> {
+  await prisma.refreshToken.deleteMany({ where: { userId, expiresAt: { lt: new Date() } } });
+}
 
 // A precomputed argon2id hash of a random string, used for the no-such-user
 // timing path in login(). Value is irrelevant; it only needs to be valid.

@@ -220,6 +220,8 @@ fly deploy
 
 `Dockerfile` builds the image and `fly.toml` keeps one 512 MB machine always on
 with a `/health` check. You get a URL like `https://civicfix-api.fly.dev`.
+Every `fly deploy` first runs `prisma migrate deploy` as a release command, so
+schema changes ship with the code; a failed migration stops the deploy.
 
 ### 3. Web: Vercel
 
