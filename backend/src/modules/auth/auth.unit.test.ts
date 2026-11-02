@@ -13,6 +13,8 @@ import {
 } from './tokens.js';
 import { requireRole } from '../../middleware/require-auth.js';
 import { ApiError } from '../../lib/errors.js';
+import jwt from 'jsonwebtoken';
+import { env } from '../../config/env.js';
 
 describe('password policy (AUTH-013)', () => {
   it('accepts a strong password', () => {
@@ -51,6 +53,30 @@ describe('access tokens', () => {
   it('rejects a tampered token', () => {
     const token = signAccessToken({ sub: 'user-1', role: 'citizen' });
     expect(() => verifyAccessToken(token + 'x')).toThrow();
+  });
+
+  it('signs with HS256', () => {
+    const token = signAccessToken({ sub: 'user-1', role: 'citizen' });
+    expect(jwt.decode(token, { complete: true })?.header.alg).toBe('HS256');
+  });
+
+  it('rejects a token signed with another algorithm, even with the right secret', () => {
+    const forged = jwt.sign({ sub: 'user-1', role: 'admin' }, env.JWT_ACCESS_SECRET, {
+      algorithm: 'HS512',
+    });
+    expect(() => verifyAccessToken(forged)).toThrow(/invalid algorithm/);
+  });
+
+  it('rejects an unsigned (alg: none) token', () => {
+    const unsigned = jwt.sign({ sub: 'user-1', role: 'super_admin' }, '', { algorithm: 'none' });
+    expect(() => verifyAccessToken(unsigned)).toThrow();
+  });
+
+  it('rejects a validly signed token whose payload is not a known role', () => {
+    const odd = jwt.sign({ sub: 'user-1', role: 'root' }, env.JWT_ACCESS_SECRET, {
+      algorithm: 'HS256',
+    });
+    expect(() => verifyAccessToken(odd)).toThrow(/Malformed access token payload/);
   });
 });
 

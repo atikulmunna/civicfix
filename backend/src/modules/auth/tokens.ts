@@ -16,16 +16,30 @@ export interface AccessTokenPayload {
   role: UserRole;
 }
 
+/**
+ * The only algorithm we sign with and the only one verification accepts.
+ * Pinning it rules out algorithm-confusion attacks (e.g. `none`, or a token
+ * signed with a different algorithm) regardless of library defaults.
+ */
+const JWT_ALGORITHM = 'HS256';
+
+const ROLES: readonly UserRole[] = ['citizen', 'department_worker', 'admin', 'super_admin'];
+const isRole = (value: unknown): value is UserRole => ROLES.includes(value as UserRole);
+
 export function signAccessToken(payload: AccessTokenPayload): string {
   return jwt.sign(payload, env.JWT_ACCESS_SECRET, {
+    algorithm: JWT_ALGORITHM,
     expiresIn: env.JWT_ACCESS_EXPIRES_IN,
   } as jwt.SignOptions);
 }
 
-/** Verifies + decodes an access token. Throws if invalid/expired. */
+/** Verifies + decodes an access token. Throws if invalid, expired or malformed. */
 export function verifyAccessToken(token: string): AccessTokenPayload {
-  const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as jwt.JwtPayload;
-  return { sub: String(decoded.sub), role: decoded.role as UserRole };
+  const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET, { algorithms: [JWT_ALGORITHM] });
+  if (typeof decoded === 'string' || typeof decoded.sub !== 'string' || !isRole(decoded.role)) {
+    throw new jwt.JsonWebTokenError('Malformed access token payload.');
+  }
+  return { sub: decoded.sub, role: decoded.role };
 }
 
 /** A fresh opaque refresh token (raw value) plus its storage hash + expiry. */
