@@ -1,6 +1,10 @@
 # Automated dependency updates. Minor and patch bumps are grouped into one
 # PR per ecosystem and directory; major versions arrive as individual PRs so
 # each breaking upgrade gets its own review and CI run.
+#
+# The Node.js major is a deliberate choice (Node 24 LTS, see .nvmrc), so
+# Node majors are ignored for the runtime image and @types/node; they move
+# together in a planned upgrade instead.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -11,6 +15,9 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       prefix: 'build(deps)'
+    ignore:
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
     groups:
       backend-minor-patch:
         update-types: [minor, patch]
@@ -23,6 +30,9 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       prefix: 'build(deps)'
+    ignore:
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
     groups:
       frontend-minor-patch:
         update-types: [minor, patch]
@@ -57,3 +67,6 @@ updates:
       day: monday
     commit-message:
       prefix: 'build(deps)'
+    ignore:
+      - dependency-name: 'node'
+        update-types: ['version-update:semver-major']
