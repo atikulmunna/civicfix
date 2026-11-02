@@ -286,3 +286,71 @@ describe('POST /auth/logout (AUTH-006)', () => {
     expect(after.status).toBe(401);
   });
 });
+
+describe('POST /auth/change-password (R19)', () => {
+  const owner = { name: 'Changer', email: `changer_${String(stamp)}@example.com` };
+  const NEW_PASSWORD = 'BrandNewHorse42';
+
+  async function signIn(password: string) {
+    return request(app).post('/api/v1/auth/login').send({ email: owner.email, password });
+  }
+  const access = (res: request.Response) => getCookie(res, 'access_token')!;
+  const change = (accessCookie: string | undefined, body: object) => {
+    const req = request(app).post('/api/v1/auth/change-password').send(body);
+    return accessCookie ? req.set('Cookie', accessCookie) : req;
+  };
+
+  beforeAll(async () => {
+    createdEmails.push(owner.email);
+    await request(app)
+      .post('/api/v1/auth/register')
+      .send({ ...owner, password: citizen.password });
+  });
+
+  it('requires a signed-in user', async () => {
+    const res = await change(undefined, { currentPassword: 'x', newPassword: NEW_PASSWORD });
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects a wrong current password, the same password, and a weak one', async () => {
+    const session = access(await signIn(citizen.password));
+    const wrong = await change(session, { currentPassword: 'nope', newPassword: NEW_PASSWORD });
+    expect(wrong.status).toBe(400);
+    expect(wrong.body.message).toBe('Your current password is incorrect.');
+
+    const same = await change(session, {
+      currentPassword: citizen.password,
+      newPassword: citizen.password,
+    });
+    expect(same.status).toBe(400);
+    expect(same.body.message).toMatch(/different/);
+
+    const weak = await change(session, { currentPassword: citizen.password, newPassword: 'short' });
+    expect(weak.status).toBe(400);
+  });
+
+  it('changes the password, ends other sessions and keeps this device signed in', async () => {
+    const thisDevice = await signIn(citizen.password);
+    const otherDevice = await signIn(citizen.password);
+
+    const res = await change(access(thisDevice), {
+      currentPassword: citizen.password,
+      newPassword: NEW_PASSWORD,
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.data.user.mustChangePassword).toBe(false);
+
+    // The other device's session is gone; this device continues on fresh cookies.
+    const other = await request(app)
+      .post('/api/v1/auth/refresh')
+      .set('Cookie', getCookie(otherDevice, 'refresh_token')!);
+    expect(other.status).toBe(401);
+    const mine = await request(app)
+      .post('/api/v1/auth/refresh')
+      .set('Cookie', getCookie(res, 'refresh_token')!);
+    expect(mine.status).toBe(200);
+
+    expect((await signIn(citizen.password)).status).toBe(400);
+    expect((await signIn(NEW_PASSWORD)).status).toBe(200);
+  });
+});

@@ -73,6 +73,16 @@ adminUsersRouter.patch(
   }),
 );
 
+// One-time temporary password (R19). Same hierarchy as status changes.
+adminUsersRouter.post(
+  '/:id/reset-password',
+  requireAuth,
+  requireRole(...ADMIN),
+  asyncHandler(async (req, res) => {
+    sendSuccess(res, await users.resetUserPassword(routeParam(req, 'id'), authUser(req)));
+  }),
+);
+
 adminUsersRouter.patch(
   '/:id/role',
   requireAuth,

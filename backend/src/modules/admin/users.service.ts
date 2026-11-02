@@ -3,9 +3,12 @@
  * Admins may view and activate/deactivate users; only super admins may change
  * roles (route-enforced). Self-modification is blocked to avoid lockout.
  */
+import { randomBytes } from 'node:crypto';
 import type { Prisma, User } from '@prisma/client';
 import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
+import { hashPassword } from '../auth/password.js';
 import type { Actor } from '../reports/reports.service.js';
 import type { ListUsersInput, UserRoleInput } from './admin-crud.schemas.js';
 
@@ -20,6 +23,7 @@ function toAdminUser(u: User) {
     trustScore: u.trustScore,
     phone: u.phone,
     phoneIsPublic: u.phoneIsPublic,
+    mustChangePassword: u.mustChangePassword,
     createdAt: u.createdAt,
     updatedAt: u.updatedAt,
   };
@@ -85,6 +89,31 @@ export async function setUserStatus(userId: string, isActive: boolean, actor: Ac
   await loadManageableUser(userId, actor);
   const updated = await prisma.user.update({ where: { id: userId }, data: { isActive } });
   return toAdminUser(updated);
+}
+
+/**
+ * Admin password reset (R19). Without email delivery there is no self-service
+ * reset, so an admin issues a one-time temporary password, shown to them once
+ * and never stored in plain text. The user is signed out everywhere and asked
+ * to choose a new password at next sign-in (mustChangePassword).
+ */
+export async function resetUserPassword(userId: string, actor: Actor) {
+  if (userId === actor.id) {
+    throw new ApiError('VALIDATION_ERROR', 'Use Change password to change your own password.');
+  }
+  await loadManageableUser(userId, actor);
+  // 16 URL-safe characters (96 bits): satisfies the password policy.
+  const temporaryPassword = randomBytes(12).toString('base64url');
+  const passwordHash = await hashPassword(temporaryPassword);
+  const [updated] = await prisma.$transaction([
+    prisma.user.update({ where: { id: userId }, data: { passwordHash, mustChangePassword: true } }),
+    prisma.refreshToken.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    }),
+  ]);
+  logger.info({ actorId: actor.id, userId }, 'admin reset a user password');
+  return { user: toAdminUser(updated), temporaryPassword };
 }
 
 export async function setUserRole(userId: string, input: UserRoleInput, actor: Actor) {

@@ -24,6 +24,13 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Password is required.'),
 });
 
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Current password is required.'),
+  // Length cap guards the password hasher; the policy itself is enforced by
+  // assertPasswordPolicy in the service.
+  newPassword: z.string().min(1, 'New password is required.').max(200),
+});
+
 export const authRouter = Router();
 
 authRouter.post(
@@ -78,6 +85,24 @@ authRouter.get(
     if (!user) {
       throw new ApiError('NOT_FOUND', 'User not found.');
     }
+    sendSuccess(res, { user });
+  }),
+);
+
+// Change password (R19). Rate-limited like sign-in, since it checks a password.
+authRouter.post(
+  '/change-password',
+  requireAuth,
+  authLimiter,
+  asyncHandler(async (req, res) => {
+    const { currentPassword, newPassword } = parseInput(changePasswordSchema, req.body);
+    const { user, session } = await authService.changePassword(
+      authUser(req).id,
+      currentPassword,
+      newPassword,
+    );
+    // Every other session was revoked; this device continues with fresh cookies.
+    setAuthCookies(res, session.accessToken, session.refreshToken, session.refreshExpiresAt);
     sendSuccess(res, { user });
   }),
 );
