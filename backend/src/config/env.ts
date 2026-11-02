@@ -18,6 +18,17 @@ const schema = z.object({
 
   CORS_ORIGIN: z.string().default('http://localhost:3000'),
 
+  // Reverse proxies in front of the API whose X-Forwarded-For entries Express
+  // trusts (Express `trust proxy`). 0 locally; 1 on Fly (its edge proxy).
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(0),
+  // Shared with the web app's proxy (frontend/proxy.ts). When a request
+  // carries it, the client IP forwarded by the web proxy is trusted for rate
+  // limiting (see lib/client-ip.ts). Unset or empty disables that hop.
+  PROXY_SHARED_SECRET: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.string().min(32, 'PROXY_SHARED_SECRET must be at least 32 chars').optional(),
+  ),
+
   // Uploads (Module 4)
   UPLOAD_PROVIDER: z.enum(['local']).default('local'),
   LOCAL_UPLOAD_DIR: z.string().default('uploads'),

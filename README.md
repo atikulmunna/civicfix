@@ -147,6 +147,9 @@ frontend/
 - `JWT_ACCESS_SECRET`: long random string (required)
 - `JWT_ACCESS_EXPIRES_IN` (default `15m`), `REFRESH_TOKEN_TTL_DAYS` (default `7`)
 - `CORS_ORIGIN` (default `http://localhost:3000`)
+- `TRUST_PROXY_HOPS`: reverse proxies in front of the API (default `0`; `1` on Fly)
+- `PROXY_SHARED_SECRET`: optional, 32+ chars, same value as the web app's; lets
+  IP rate limits see the real client behind the web proxy
 - `MAX_UPLOAD_BYTES` (default 5 MB), `LOCAL_UPLOAD_DIR` (default `uploads`)
 - Rate limits: `RATE_LIMIT_REPORTS_PER_HOUR`, `RATE_LIMIT_COMMENTS_PER_HOUR`,
   `RATE_LIMIT_AUTH_PER_15MIN`
@@ -154,6 +157,8 @@ frontend/
 **Frontend (`frontend/.env.local`)**, see `frontend/.env.example`:
 
 - `NEXT_PUBLIC_API_URL`: backend base URL (default `http://localhost:5000/api/v1`)
+- `PROXY_SHARED_SECRET` (production): same value as the API's; sent by
+  `proxy.ts` on auth routes
 
 ## Deployment (free tier)
 
@@ -194,7 +199,7 @@ fly secrets set \
   DATABASE_URL="<neon-pooled-uri>" \
   DATABASE_URL_UNPOOLED="<neon-direct-uri>" \
   JWT_ACCESS_SECRET="$(openssl rand -hex 32)" \
-  CORS_ORIGIN="https://<your-app>.vercel.app"   # fill in after step 3
+  PROXY_SHARED_SECRET="$(openssl rand -hex 32)" \n  CORS_ORIGIN="https://<your-app>.vercel.app"   # fill in after step 3
 fly deploy
 ```
 
@@ -207,6 +212,7 @@ with a `/health` check. You get a URL like `https://civicfix-api.fly.dev`.
 - Environment variables:
   - `BACKEND_URL` = your Fly URL (e.g. `https://civicfix-api.fly.dev`)
   - `NEXT_PUBLIC_API_URL` = `/api/v1`
+  - `PROXY_SHARED_SECRET` = the same value you set on Fly
 - Deploy. `next.config.ts` proxies `/api/*` and `/uploads/*` to the backend, so
   the browser stays same-origin and the httpOnly auth cookies work.
 
@@ -220,6 +226,9 @@ Vercel redeploys automatically on every push to `main`; redeploy the API with
 | Fly    | `JWT_ACCESS_SECRET`     | long random string (`fly secrets set`)         |
 | Fly    | `CORS_ORIGIN`           | your Vercel URL (`fly secrets set`)            |
 | Fly    | `NODE_ENV` / `PORT`     | `production` / `8080` (preset in `fly.toml`)   |
+| Fly    | `TRUST_PROXY_HOPS`      | `1` (preset in `fly.toml`)                     |
+| Fly    | `PROXY_SHARED_SECRET`   | random 32+ chars (`fly secrets set`)           |
+| Vercel | `PROXY_SHARED_SECRET`   | same value as on Fly                           |
 | Vercel | `BACKEND_URL`           | your Fly URL                                   |
 | Vercel | `NEXT_PUBLIC_API_URL`   | `/api/v1`                                      |
 

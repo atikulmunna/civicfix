@@ -6,9 +6,10 @@
  * Limiters are disabled under NODE_ENV=test by default so the integration
  * suites aren't throttled; the dedicated rate-limit test opts back in.
  */
-import rateLimit, { type RateLimitRequestHandler } from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator, type RateLimitRequestHandler } from 'express-rate-limit';
 import type { Request } from 'express';
 import { env } from '../config/env.js';
+import { clientIp } from '../lib/client-ip.js';
 
 interface LimiterOptions {
   windowMs: number;
@@ -27,8 +28,12 @@ export function makeLimiter(opts: LimiterOptions): RateLimitRequestHandler {
     standardHeaders: true,
     legacyHeaders: false,
     skip: () => skipInTest && env.NODE_ENV === 'test',
+    // IP keys go through ipKeyGenerator so an IPv6 client cannot dodge the
+    // limit by rotating addresses within its own /56 prefix.
     keyGenerator:
-      opts.by === 'user' ? (req: Request) => req.user?.id ?? req.ip ?? 'anonymous' : undefined, // default: client IP
+      opts.by === 'user'
+        ? (req: Request) => req.user?.id ?? ipKeyGenerator(clientIp(req))
+        : (req: Request) => ipKeyGenerator(clientIp(req)),
     handler: (_req, res) => {
       res.status(429).json({
         success: false,

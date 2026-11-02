@@ -32,6 +32,11 @@ import { analyticsRouter } from './modules/admin/analytics.routes.js';
 export function buildApp() {
   const app = express();
 
+  // Trust exactly the reverse proxies we deploy behind (Fly's edge: 1), so
+  // req.ip is the address that connected to them, never a client-supplied
+  // X-Forwarded-For value. See lib/client-ip.ts for the web-proxy hop.
+  app.set('trust proxy', env.TRUST_PROXY_HOPS);
+
   app.use(helmet()); // baseline security headers (SEC-013)
   app.use(express.json());
   app.use(cookieParser());
