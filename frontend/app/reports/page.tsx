@@ -1,11 +1,14 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { api, ApiError } from '@/lib/api';
+import { useState } from 'react';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { api, errorMessage } from '@/lib/api';
 import type { Category, Paginated, Report } from '@/lib/types';
 import { SEVERITY_OPTIONS, STATUS_OPTIONS, severityLabel, statusLabel } from '@/lib/format';
+import { queryKeys } from '@/lib/query-keys';
+import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { ReportCard } from '@/components/report-card';
-import { Button, Card, Input, PageHeader, Select, Spinner } from '@/components/ui';
+import { Button, Card, Input, LoadError, PageHeader, Select, Spinner } from '@/components/ui';
 
 const SORTS = [
   { value: 'newest', label: 'Newest' },
@@ -15,7 +18,6 @@ const SORTS = [
 ];
 
 export default function ReportsPage() {
-  const [categories, setCategories] = useState<Category[]>([]);
   const [filters, setFilters] = useState({
     categoryId: '',
     status: '',
@@ -24,63 +26,32 @@ export default function ReportsPage() {
     page: 1,
   });
   const [searchInput, setSearchInput] = useState('');
-  const [search, setSearch] = useState('');
-  const [data, setData] = useState<Paginated<Report> | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Debounce the search box into the applied search term.
+  const search = useDebouncedValue(searchInput, 350);
 
-  useEffect(() => {
-    api
-      .get<{ categories: Category[] }>('/categories')
-      .then((d) => setCategories(d.categories))
-      .catch(() => setCategories([]));
-  }, []);
+  const categories = useQuery({
+    queryKey: queryKeys.categories,
+    queryFn: ({ signal }) =>
+      api.get<{ categories: Category[] }>('/categories', undefined, { signal }),
+    select: (d) => d.categories,
+  });
 
-  // Debounce the search box into the applied `search` value.
-  const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    if (debounce.current) clearTimeout(debounce.current);
-    debounce.current = setTimeout(() => {
-      setSearch(searchInput);
-      setFilters((f) => ({ ...f, page: 1 }));
-    }, 350);
-    return () => {
-      if (debounce.current) clearTimeout(debounce.current);
-    };
-  }, [searchInput]);
-
-  const query = useMemo(
-    () => ({
-      categoryId: filters.categoryId || undefined,
-      status: filters.status || undefined,
-      severity: filters.severity || undefined,
-      search: search || undefined,
-      sort: filters.sort,
-      page: filters.page,
-      limit: 10,
-    }),
-    [filters, search],
-  );
-
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    api
-      .get<Paginated<Report>>('/reports', query)
-      .then((d) => {
-        if (active) {
-          setData(d);
-          setError(null);
-        }
-      })
-      .catch(
-        (e) => active && setError(e instanceof ApiError ? e.message : 'Failed to load reports.'),
-      )
-      .finally(() => active && setLoading(false));
-    return () => {
-      active = false;
-    };
-  }, [query]);
+  const params = {
+    categoryId: filters.categoryId || undefined,
+    status: filters.status || undefined,
+    severity: filters.severity || undefined,
+    search: search || undefined,
+    sort: filters.sort,
+    page: filters.page,
+    limit: 10,
+  };
+  const reports = useQuery({
+    queryKey: queryKeys.reports(params),
+    queryFn: ({ signal }) => api.get<Paginated<Report>>('/reports', params, { signal }),
+    // Keep the current page on screen while the next one loads.
+    placeholderData: keepPreviousData,
+  });
+  const data = reports.data;
 
   function setFilter(key: keyof typeof filters, value: string) {
     setFilters((f) => ({ ...f, [key]: value, page: 1 }));
@@ -98,7 +69,10 @@ export default function ReportsPage() {
         <Input
           placeholder="Search title or description…"
           value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
+          onChange={(e) => {
+            setSearchInput(e.target.value);
+            setFilters((f) => ({ ...f, page: 1 }));
+          }}
           aria-label="Search"
         />
         <Select
@@ -107,7 +81,7 @@ export default function ReportsPage() {
           aria-label="Category"
         >
           <option value="">All categories</option>
-          {categories.map((c) => (
+          {(categories.data ?? []).map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
             </option>
@@ -150,10 +124,10 @@ export default function ReportsPage() {
         </Select>
       </Card>
 
-      {loading && !data ? (
+      {reports.isPending ? (
         <Spinner />
-      ) : error ? (
-        <p className="py-10 text-center text-sm text-red-700">{error}</p>
+      ) : reports.isError ? (
+        <LoadError>{errorMessage(reports.error, 'Failed to load reports.')}</LoadError>
       ) : data && data.items.length > 0 ? (
         <>
           <div className="grid gap-4 md:grid-cols-2">

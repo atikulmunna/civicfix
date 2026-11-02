@@ -111,3 +111,12 @@ export function FieldError({ children }: { children?: ReactNode }) {
 export function Spinner({ label = 'Loading…' }: { label?: string }) {
   return <p className="py-10 text-center text-sm text-slate-500">{label}</p>;
 }
+
+/** Full-width message shown when a page's data failed to load. */
+export function LoadError({ children }: { children: ReactNode }) {
+  return (
+    <p role="alert" className="py-10 text-center text-sm text-red-700">
+      {children}
+    </p>
+  );
+}

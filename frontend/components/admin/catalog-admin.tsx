@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useState, type FormEvent } from 'react';
-import { api, ApiError } from '@/lib/api';
+import { useState, type FormEvent } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { api, errorMessage } from '@/lib/api';
+import { queryKeys } from '@/lib/query-keys';
 import { useToast } from '@/components/toast';
-import { Button, Input, Spinner } from '@/components/ui';
+import { Button, Input, LoadError, Spinner } from '@/components/ui';
 
 interface CatalogItem {
   id: string;
@@ -23,53 +25,59 @@ export interface CatalogConfig {
 /** Generic CRUD admin for categories & departments (name + optional field). */
 export function CatalogAdmin({ config }: { config: CatalogConfig }) {
   const { toast } = useToast();
-  const [items, setItems] = useState<CatalogItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [name, setName] = useState('');
   const [secondary, setSecondary] = useState('');
-  const [busy, setBusy] = useState(false);
 
-  function load() {
-    setLoading(true);
-    api
-      .get<Record<string, CatalogItem[]>>(config.listPath, { includeInactive: 'true' })
-      .then((d) => setItems(d[config.responseKey] ?? []))
-      .catch(() => setItems([]))
-      .finally(() => setLoading(false));
+  const items = useQuery({
+    queryKey: queryKeys.catalog(config.listPath),
+    queryFn: ({ signal }) =>
+      api.get<Record<string, CatalogItem[] | undefined>>(
+        config.listPath,
+        { includeInactive: 'true' },
+        { signal },
+      ),
+    select: (d) => d[config.responseKey] ?? [],
+  });
+
+  /** Refresh this admin list and the public list it mirrors (e.g. /categories). */
+  function invalidate() {
+    return Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.catalog(config.listPath) }),
+      queryClient.invalidateQueries({ queryKey: [config.responseKey] }),
+    ]);
   }
-  useEffect(load, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function create(e: FormEvent) {
-    e.preventDefault();
-    if (!name.trim()) return;
-    setBusy(true);
-    try {
-      const payload: Record<string, string> = { name };
-      if (config.secondary && secondary) payload[config.secondary.key] = secondary;
-      await api.post(config.adminPath, payload);
+  const create = useMutation({
+    mutationFn: (payload: Record<string, string>) => api.post(config.adminPath, payload),
+    onSuccess: async () => {
       setName('');
       setSecondary('');
-      load();
-    } catch (err) {
-      toast(err instanceof ApiError ? err.message : 'Failed to create.', 'error');
-    } finally {
-      setBusy(false);
-    }
-  }
+      await invalidate();
+    },
+    onError: (err) => toast(errorMessage(err, 'Failed to create.'), 'error'),
+  });
 
-  async function setActive(item: CatalogItem, isActive: boolean) {
-    try {
-      if (isActive) await api.patch(`${config.adminPath}/${item.id}`, { isActive: true });
-      else await api.del(`${config.adminPath}/${item.id}`);
-      load();
-    } catch (err) {
-      toast(err instanceof ApiError ? err.message : 'Failed.', 'error');
-    }
+  const setActive = useMutation({
+    mutationFn: ({ item, isActive }: { item: CatalogItem; isActive: boolean }) =>
+      isActive
+        ? api.patch(`${config.adminPath}/${item.id}`, { isActive: true })
+        : api.del(`${config.adminPath}/${item.id}`),
+    onSuccess: () => invalidate(),
+    onError: (err) => toast(errorMessage(err, 'Failed.'), 'error'),
+  });
+
+  function onCreate(e: FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) return;
+    const payload: Record<string, string> = { name };
+    if (config.secondary && secondary) payload[config.secondary.key] = secondary;
+    create.mutate(payload);
   }
 
   return (
     <div className="flex flex-col gap-4">
-      <form onSubmit={create} className="flex flex-wrap items-end gap-2">
+      <form onSubmit={onCreate} className="flex flex-wrap items-end gap-2">
         <div className="flex-1">
           <Input
             placeholder="Name"
@@ -88,16 +96,18 @@ export function CatalogAdmin({ config }: { config: CatalogConfig }) {
             />
           </div>
         )}
-        <Button type="submit" disabled={busy || !name.trim()}>
+        <Button type="submit" disabled={create.isPending || !name.trim()}>
           Add
         </Button>
       </form>
 
-      {loading ? (
+      {items.isPending ? (
         <Spinner />
+      ) : items.isError ? (
+        <LoadError>{errorMessage(items.error, 'Failed to load items.')}</LoadError>
       ) : (
         <ul className="divide-y divide-slate-100">
-          {items.map((item) => (
+          {items.data.map((item) => (
             <li key={item.id} className="flex items-center justify-between py-2 text-sm">
               <div>
                 <span
@@ -110,11 +120,17 @@ export function CatalogAdmin({ config }: { config: CatalogConfig }) {
                 ) : null}
               </div>
               {item.isActive === false ? (
-                <Button variant="secondary" onClick={() => setActive(item, true)}>
+                <Button
+                  variant="secondary"
+                  onClick={() => setActive.mutate({ item, isActive: true })}
+                >
                   Enable
                 </Button>
               ) : (
-                <Button variant="secondary" onClick={() => setActive(item, false)}>
+                <Button
+                  variant="secondary"
+                  onClick={() => setActive.mutate({ item, isActive: false })}
+                >
                   Disable
                 </Button>
               )}

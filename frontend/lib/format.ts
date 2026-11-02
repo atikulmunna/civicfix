@@ -18,16 +18,17 @@ export function formatDateTime(iso: string): string {
   });
 }
 
+/** "hello" -> "Hello" (empty string stays empty). */
+function capitalize(word: string): string {
+  return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
 export function statusLabel(status: ReportStatus): string {
-  return status
-    .toLowerCase()
-    .split('_')
-    .map((w) => w[0].toUpperCase() + w.slice(1))
-    .join(' ');
+  return status.toLowerCase().split('_').map(capitalize).join(' ');
 }
 
 export function severityLabel(severity: Severity): string {
-  return severity[0].toUpperCase() + severity.slice(1);
+  return capitalize(severity);
 }
 
 export const STATUS_OPTIONS: ReportStatus[] = [

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
+import { renderWithQuery } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 
 const { get } = vi.hoisted(() => ({ get: vi.fn() }));
@@ -54,14 +55,14 @@ describe('ReportsPage', () => {
   });
 
   it('renders reports from the API', async () => {
-    render(<ReportsPage />);
+    renderWithQuery(<ReportsPage />);
     expect(await screen.findByText('Pothole on 5th')).toBeInTheDocument();
     expect(screen.getByText('A big pothole.')).toBeInTheDocument();
   });
 
   it('refetches with a status filter when changed', async () => {
     const user = userEvent.setup();
-    render(<ReportsPage />);
+    renderWithQuery(<ReportsPage />);
     await screen.findByText('Pothole on 5th');
 
     await user.selectOptions(screen.getByLabelText('Status'), 'RESOLVED');

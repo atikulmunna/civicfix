@@ -26,11 +26,19 @@ interface Envelope<T> {
   details?: unknown;
 }
 
+/** Per-call options. `signal` lets callers (e.g. TanStack Query) cancel stale requests. */
+export interface RequestOptions {
+  signal?: AbortSignal;
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   let res: Response;
   try {
     res = await fetch(`${API_URL}${path}`, { credentials: 'include', ...options });
-  } catch {
+  } catch (err) {
+    // A cancelled request is not a network failure: rethrow the abort as-is so
+    // the caller (or TanStack Query) can recognise and ignore it.
+    if (options.signal?.aborted) throw err;
     throw new ApiError('Network error. Is the API running?', 'NETWORK_ERROR', 0);
   }
 
@@ -52,6 +60,11 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return body.data as T;
 }
 
+/** User-facing message for a failed call: the API's message, or `fallback`. */
+export function errorMessage(error: unknown, fallback: string): string {
+  return error instanceof ApiError ? error.message : fallback;
+}
+
 function toQuery(params?: Record<string, unknown>): string {
   if (!params) return '';
   const q = new URLSearchParams();
@@ -63,14 +76,15 @@ function toQuery(params?: Record<string, unknown>): string {
 }
 
 export const api = {
-  get: <T>(path: string, params?: Record<string, unknown>) =>
-    request<T>(`${path}${toQuery(params)}`, { method: 'GET' }),
+  get: <T>(path: string, params?: Record<string, unknown>, opts: RequestOptions = {}) =>
+    request<T>(`${path}${toQuery(params)}`, { method: 'GET', signal: opts.signal }),
 
-  post: <T>(path: string, data?: unknown) =>
+  post: <T>(path: string, data?: unknown, opts: RequestOptions = {}) =>
     request<T>(path, {
       method: 'POST',
       headers: data !== undefined ? { 'Content-Type': 'application/json' } : undefined,
       body: data !== undefined ? JSON.stringify(data) : undefined,
+      signal: opts.signal,
     }),
 
   patch: <T>(path: string, data?: unknown) =>

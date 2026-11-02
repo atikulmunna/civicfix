@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
+import { renderWithQuery } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 
 const { get, post, del } = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), del: vi.fn() }));
@@ -30,7 +31,7 @@ describe('CatalogAdmin', () => {
 
   it('creates an item', async () => {
     const user = userEvent.setup();
-    render(
+    renderWithQuery(
       <ToastProvider>
         <CatalogAdmin config={config} />
       </ToastProvider>,
@@ -44,7 +45,7 @@ describe('CatalogAdmin', () => {
 
   it('disables an active item', async () => {
     const user = userEvent.setup();
-    render(
+    renderWithQuery(
       <ToastProvider>
         <CatalogAdmin config={config} />
       </ToastProvider>,

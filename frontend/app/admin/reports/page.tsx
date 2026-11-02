@@ -1,47 +1,45 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { api } from '@/lib/api';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { api, errorMessage } from '@/lib/api';
 import type { Category, Paginated, Report } from '@/lib/types';
 import { SEVERITY_OPTIONS, STATUS_OPTIONS, severityLabel, statusLabel } from '@/lib/format';
+import { queryKeys } from '@/lib/query-keys';
 import { RequireAuth } from '@/components/require-auth';
 import { ReportCard } from '@/components/report-card';
-import { Button, Card, PageHeader, Select, Spinner } from '@/components/ui';
+import { Button, Card, LoadError, PageHeader, Select, Spinner } from '@/components/ui';
 
 function AdminReportsList() {
-  const params = useSearchParams();
-  const [categories, setCategories] = useState<Category[]>([]);
+  const searchParams = useSearchParams();
   const [filters, setFilters] = useState({
-    status: params.get('status') ?? '',
+    status: searchParams.get('status') ?? '',
     categoryId: '',
     severity: '',
     page: 1,
   });
-  const [data, setData] = useState<Paginated<Report> | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    api
-      .get<{ categories: Category[] }>('/categories')
-      .then((d) => setCategories(d.categories))
-      .catch(() => {});
-  }, []);
+  const categories = useQuery({
+    queryKey: queryKeys.categories,
+    queryFn: ({ signal }) =>
+      api.get<{ categories: Category[] }>('/categories', undefined, { signal }),
+    select: (d) => d.categories,
+  });
 
-  useEffect(() => {
-    setLoading(true);
-    api
-      .get<Paginated<Report>>('/admin/reports', {
-        status: filters.status || undefined,
-        categoryId: filters.categoryId || undefined,
-        severity: filters.severity || undefined,
-        page: filters.page,
-        limit: 10,
-      })
-      .then(setData)
-      .catch(() => setData(null))
-      .finally(() => setLoading(false));
-  }, [filters]);
+  const params = {
+    status: filters.status || undefined,
+    categoryId: filters.categoryId || undefined,
+    severity: filters.severity || undefined,
+    page: filters.page,
+    limit: 10,
+  };
+  const reports = useQuery({
+    queryKey: queryKeys.adminReports(params),
+    queryFn: ({ signal }) => api.get<Paginated<Report>>('/admin/reports', params, { signal }),
+    placeholderData: keepPreviousData,
+  });
+  const data = reports.data;
 
   function setFilter(key: keyof typeof filters, value: string) {
     setFilters((f) => ({ ...f, [key]: value, page: 1 }));
@@ -74,7 +72,7 @@ function AdminReportsList() {
           aria-label="Category"
         >
           <option value="">All categories</option>
-          {categories.map((c) => (
+          {(categories.data ?? []).map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
             </option>
@@ -94,8 +92,10 @@ function AdminReportsList() {
         </Select>
       </Card>
 
-      {loading && !data ? (
+      {reports.isPending ? (
         <Spinner />
+      ) : reports.isError ? (
+        <LoadError>{errorMessage(reports.error, 'Failed to load reports.')}</LoadError>
       ) : data && data.items.length > 0 ? (
         <>
           <div className="grid gap-4 md:grid-cols-2">

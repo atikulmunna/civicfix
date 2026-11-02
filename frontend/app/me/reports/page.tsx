@@ -1,26 +1,24 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { useState } from 'react';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { api, errorMessage } from '@/lib/api';
 import type { Paginated, Report } from '@/lib/types';
+import { queryKeys } from '@/lib/query-keys';
 import { RequireAuth } from '@/components/require-auth';
 import { ReportCard } from '@/components/report-card';
-import { Button, PageHeader, Spinner } from '@/components/ui';
+import { Button, LoadError, PageHeader, Spinner } from '@/components/ui';
 
 function MyReports() {
-  const [data, setData] = useState<Paginated<Report> | null>(null);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    setLoading(true);
-    api
-      .get<Paginated<Report>>('/users/me/reports', { page, limit: 10 })
-      .then(setData)
-      .catch(() => setData(null))
-      .finally(() => setLoading(false));
-  }, [page]);
+  const reports = useQuery({
+    queryKey: queryKeys.myReports(page),
+    queryFn: ({ signal }) =>
+      api.get<Paginated<Report>>('/users/me/reports', { page, limit: 10 }, { signal }),
+    placeholderData: keepPreviousData,
+  });
+  const data = reports.data;
 
   return (
     <div className="flex flex-col gap-6">
@@ -37,8 +35,10 @@ function MyReports() {
         }
       />
 
-      {loading && !data ? (
+      {reports.isPending ? (
         <Spinner />
+      ) : reports.isError ? (
+        <LoadError>{errorMessage(reports.error, 'Failed to load your reports.')}</LoadError>
       ) : data && data.items.length > 0 ? (
         <>
           <div className="grid gap-4 md:grid-cols-2">

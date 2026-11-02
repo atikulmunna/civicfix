@@ -1,11 +1,14 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { api, ApiError } from '@/lib/api';
 import type { Category, Report } from '@/lib/types';
 import { SEVERITY_OPTIONS, severityLabel } from '@/lib/format';
+import { queryKeys } from '@/lib/query-keys';
+import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { RequireAuth } from '@/components/require-auth';
 import { useToast } from '@/components/toast';
 import {
@@ -30,7 +33,6 @@ const LocationPicker = dynamic(
 function NewReportForm() {
   const router = useRouter();
   const { toast } = useToast();
-  const [categories, setCategories] = useState<Category[]>([]);
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -41,36 +43,38 @@ function NewReportForm() {
   });
   const [location, setLocation] = useState<LatLng | null>(null);
   const [files, setFiles] = useState<File[]>([]);
-  const [duplicates, setDuplicates] = useState<Report[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    api
-      .get<{ categories: Category[] }>('/categories')
-      .then((d) => setCategories(d.categories))
-      .catch(() => {});
-  }, []);
+  const categoriesQuery = useQuery({
+    queryKey: queryKeys.categories,
+    queryFn: ({ signal }) =>
+      api.get<{ categories: Category[] }>('/categories', undefined, { signal }),
+    select: (d) => d.categories,
+  });
+  const categories = categoriesQuery.data ?? [];
 
-  // Check for possible duplicates when category + location are set (REP-009).
-  const dupTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    if (!location || !form.categoryId) {
-      setDuplicates([]);
-      return;
-    }
-    if (dupTimer.current) clearTimeout(dupTimer.current);
-    dupTimer.current = setTimeout(() => {
-      api
-        .post<{ possibleDuplicates: Report[] }>('/reports/check-duplicates', {
-          categoryId: form.categoryId,
-          latitude: location.lat,
-          longitude: location.lng,
-        })
-        .then((d) => setDuplicates(d.possibleDuplicates))
-        .catch(() => setDuplicates([]));
-    }, 400);
-  }, [location, form.categoryId]);
+  // Check for possible duplicates when category + location are set (REP-009),
+  // debounced so dragging the pin does not fire a request per move.
+  const dupParams = useMemo(
+    () =>
+      location && form.categoryId
+        ? { categoryId: form.categoryId, latitude: location.lat, longitude: location.lng }
+        : null,
+    [location, form.categoryId],
+  );
+  const debouncedDupParams = useDebouncedValue(dupParams, 400);
+  const duplicatesQuery = useQuery({
+    queryKey: queryKeys.duplicates(debouncedDupParams),
+    queryFn: ({ signal }) =>
+      api.post<{ possibleDuplicates: Report[] }>('/reports/check-duplicates', debouncedDupParams, {
+        signal,
+      }),
+    enabled: debouncedDupParams !== null,
+    select: (d) => d.possibleDuplicates,
+  });
+  // Advisory only: hide the hint when the inputs are cleared or the check fails.
+  const duplicates: Report[] = dupParams && debouncedDupParams ? (duplicatesQuery.data ?? []) : [];
 
   const previews = useMemo(
     () => files.map((f) => ({ name: f.name, url: URL.createObjectURL(f) })),

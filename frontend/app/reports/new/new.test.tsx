@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
+import { renderWithQuery } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 
 const { get, post, postForm, push } = vi.hoisted(() => ({
@@ -53,7 +54,7 @@ describe('NewReportPage', () => {
 
   it('submits a multipart report and redirects to the new report', async () => {
     const user = userEvent.setup();
-    render(
+    renderWithQuery(
       <ToastProvider>
         <AuthProvider>
           <NewReportPage />

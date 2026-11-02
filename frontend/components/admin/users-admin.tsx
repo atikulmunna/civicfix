@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { api, ApiError } from '@/lib/api';
+import { useState } from 'react';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { api, errorMessage } from '@/lib/api';
 import type { Paginated, Role } from '@/lib/types';
+import { queryKeys } from '@/lib/query-keys';
 import { useAuth } from '@/components/auth-context';
 import { useToast } from '@/components/toast';
-import { Button, Input, Select, Spinner } from '@/components/ui';
+import { Button, Input, LoadError, Select, Spinner } from '@/components/ui';
 
 interface AdminUser {
   id: string;
@@ -21,40 +23,37 @@ const ROLES: Role[] = ['citizen', 'department_worker', 'admin', 'super_admin'];
 export function UsersAdmin() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const isSuper = user?.role === 'super_admin';
-  const [data, setData] = useState<Paginated<AdminUser> | null>(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
 
-  function load() {
-    setLoading(true);
-    api
-      .get<Paginated<AdminUser>>('/admin/users', { search: search || undefined, page, limit: 20 })
-      .then(setData)
-      .catch(() => setData(null))
-      .finally(() => setLoading(false));
-  }
-  useEffect(load, [page, search]); // eslint-disable-line react-hooks/exhaustive-deps
+  const params = { search: search || undefined, page, limit: 20 };
+  const users = useQuery({
+    queryKey: queryKeys.adminUsers(params),
+    queryFn: ({ signal }) => api.get<Paginated<AdminUser>>('/admin/users', params, { signal }),
+    placeholderData: keepPreviousData,
+  });
+  const data = users.data;
 
-  async function toggleActive(u: AdminUser) {
-    try {
-      await api.patch(`/admin/users/${u.id}/status`, { isActive: !u.isActive });
-      load();
-    } catch (err) {
-      toast(err instanceof ApiError ? err.message : 'Failed.', 'error');
-    }
-  }
+  const refreshUsers = () => queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
 
-  async function changeRole(u: AdminUser, role: Role) {
-    try {
-      await api.patch(`/admin/users/${u.id}/role`, { role });
+  const toggleActive = useMutation({
+    mutationFn: (u: AdminUser) =>
+      api.patch(`/admin/users/${u.id}/status`, { isActive: !u.isActive }),
+    onSuccess: () => refreshUsers(),
+    onError: (err) => toast(errorMessage(err, 'Failed.'), 'error'),
+  });
+
+  const changeRole = useMutation({
+    mutationFn: ({ u, role }: { u: AdminUser; role: Role }) =>
+      api.patch(`/admin/users/${u.id}/role`, { role }),
+    onSuccess: () => {
       toast('Role updated.', 'success');
-      load();
-    } catch (err) {
-      toast(err instanceof ApiError ? err.message : 'Failed.', 'error');
-    }
-  }
+      return refreshUsers();
+    },
+    onError: (err) => toast(errorMessage(err, 'Failed.'), 'error'),
+  });
 
   return (
     <div className="flex flex-col gap-4">
@@ -67,8 +66,10 @@ export function UsersAdmin() {
         }}
         aria-label="Search users"
       />
-      {loading && !data ? (
+      {users.isPending ? (
         <Spinner />
+      ) : users.isError ? (
+        <LoadError>{errorMessage(users.error, 'Failed to load users.')}</LoadError>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -82,7 +83,7 @@ export function UsersAdmin() {
               </tr>
             </thead>
             <tbody>
-              {data?.items.map((u) => (
+              {users.data.items.map((u) => (
                 <tr key={u.id} className="border-b border-slate-100">
                   <td className="py-2 font-medium text-slate-900">{u.name}</td>
                   <td className="text-slate-600">{u.email}</td>
@@ -90,7 +91,7 @@ export function UsersAdmin() {
                     {isSuper && u.id !== user?.id ? (
                       <Select
                         value={u.role}
-                        onChange={(e) => changeRole(u, e.target.value as Role)}
+                        onChange={(e) => changeRole.mutate({ u, role: e.target.value as Role })}
                         aria-label={`Role for ${u.email}`}
                       >
                         {ROLES.map((r) => (
@@ -112,7 +113,7 @@ export function UsersAdmin() {
                   </td>
                   <td className="text-right">
                     {u.id !== user?.id && (
-                      <Button variant="secondary" onClick={() => toggleActive(u)}>
+                      <Button variant="secondary" onClick={() => toggleActive.mutate(u)}>
                         {u.isActive ? 'Deactivate' : 'Activate'}
                       </Button>
                     )}

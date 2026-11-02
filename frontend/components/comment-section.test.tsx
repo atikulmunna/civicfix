@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
+import { renderWithQuery } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 
 const { get, post, del } = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), del: vi.fn() }));
@@ -15,7 +16,7 @@ import { CommentSection } from './comment-section';
 const ME = { id: 'u1', name: 'Me', email: 'me@e.com', role: 'citizen' };
 
 function setup() {
-  return render(
+  return renderWithQuery(
     <ToastProvider>
       <AuthProvider>
         <CommentSection reportId="r1" />

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
+import { renderWithQuery } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 
 const { get, patch } = vi.hoisted(() => ({ get: vi.fn(), patch: vi.fn() }));
@@ -49,7 +50,7 @@ describe('Moderation panel', () => {
 
   it('applies a status transition via PATCH', async () => {
     const user = userEvent.setup();
-    render(
+    renderWithQuery(
       <ToastProvider>
         <Moderation id="r1" />
       </ToastProvider>,

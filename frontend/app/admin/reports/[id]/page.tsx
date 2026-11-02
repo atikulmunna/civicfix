@@ -1,23 +1,26 @@
 'use client';
 
-import { use, useCallback, useEffect, useState } from 'react';
+import { use, useState } from 'react';
 import Link from 'next/link';
-import { api, ApiError, assetUrl } from '@/lib/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { api, ApiError, assetUrl, errorMessage } from '@/lib/api';
 import type { Department, Report, StatusHistoryEntry } from '@/lib/types';
 import { STATUS_OPTIONS, formatDateTime, statusLabel } from '@/lib/format';
+import { queryKeys } from '@/lib/query-keys';
 import { SeverityBadge, StatusBadge } from '@/components/badges';
 import { StatusTimeline } from '@/components/status-timeline';
 import { RequireAuth } from '@/components/require-auth';
 import { useToast } from '@/components/toast';
-import { Button, Card, Input, Label, Select, Spinner, Textarea } from '@/components/ui';
+import { Button, Card, Input, Label, LoadError, Select, Spinner, Textarea } from '@/components/ui';
+
+interface ModerationAction {
+  action: () => Promise<unknown>;
+  ok: string;
+}
 
 export function Moderation({ id }: { id: string }) {
   const { toast } = useToast();
-  const [report, setReport] = useState<Report | null>(null);
-  const [history, setHistory] = useState<StatusHistoryEntry[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
+  const queryClient = useQueryClient();
 
   // action form state
   const [status, setStatus] = useState('');
@@ -26,43 +29,54 @@ export function Moderation({ id }: { id: string }) {
   const [departmentId, setDepartmentId] = useState('');
   const [duplicateOf, setDuplicateOf] = useState('');
 
-  const load = useCallback(async () => {
-    const [r, h] = await Promise.all([
-      api.get<{ report: Report }>(`/reports/${id}`),
-      api.get<{ history: StatusHistoryEntry[] }>(`/reports/${id}/history`),
-    ]);
-    setReport(r.report);
-    setHistory(h.history);
-  }, [id]);
+  const reportQuery = useQuery({
+    queryKey: queryKeys.report(id),
+    queryFn: ({ signal }) => api.get<{ report: Report }>(`/reports/${id}`, undefined, { signal }),
+    select: (d) => d.report,
+  });
+  const historyQuery = useQuery({
+    queryKey: queryKeys.reportHistory(id),
+    queryFn: ({ signal }) =>
+      api.get<{ history: StatusHistoryEntry[] }>(`/reports/${id}/history`, undefined, { signal }),
+    select: (d) => d.history,
+  });
+  const departmentsQuery = useQuery({
+    queryKey: queryKeys.departments,
+    queryFn: ({ signal }) =>
+      api.get<{ departments: Department[] }>('/departments', undefined, { signal }),
+    select: (d) => d.departments,
+  });
+  const history = historyQuery.data ?? [];
+  const departments = departmentsQuery.data ?? [];
 
-  useEffect(() => {
-    Promise.all([
-      load(),
-      api
-        .get<{ departments: Department[] }>('/departments')
-        .then((d) => setDepartments(d.departments)),
-    ])
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [load]);
-
-  async function run(action: () => Promise<unknown>, ok: string) {
-    setBusy(true);
-    try {
-      await action();
-      await load();
+  const moderate = useMutation({
+    mutationFn: ({ action }: ModerationAction) => action(),
+    onSuccess: async (_data, { ok }) => {
+      // Refetch before confirming so the panel shows the new state.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.report(id) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.reportHistory(id) }),
+        queryClient.invalidateQueries({ queryKey: ['admin', 'reports'] }),
+      ]);
       toast(ok, 'success');
       setNote('');
       setInternalNote('');
-    } catch (err) {
-      toast(err instanceof ApiError ? err.message : 'Action failed.', 'error');
-    } finally {
-      setBusy(false);
-    }
-  }
+    },
+    onError: (err) => toast(errorMessage(err, 'Action failed.'), 'error'),
+  });
+  const busy = moderate.isPending;
+  const run = (action: () => Promise<unknown>, ok: string) => moderate.mutate({ action, ok });
 
-  if (loading) return <Spinner />;
-  if (!report) return <p className="py-10 text-center text-sm text-red-700">Report not found.</p>;
+  if (reportQuery.isPending || historyQuery.isPending) return <Spinner />;
+  if (reportQuery.isError) {
+    const notFound = reportQuery.error instanceof ApiError && reportQuery.error.status === 404;
+    return (
+      <LoadError>
+        {notFound ? 'Report not found.' : errorMessage(reportQuery.error, 'Failed to load report.')}
+      </LoadError>
+    );
+  }
+  const report = reportQuery.data;
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">

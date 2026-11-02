@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
+import { renderWithQuery } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 
 const { get, patch, push } = vi.hoisted(() => ({ get: vi.fn(), patch: vi.fn(), push: vi.fn() }));
@@ -57,7 +58,7 @@ describe('NotificationsPage', () => {
 
   it('shows notifications and marks all read', async () => {
     const user = userEvent.setup();
-    render(
+    renderWithQuery(
       <ToastProvider>
         <AuthProvider>
           <NotificationsPage />
