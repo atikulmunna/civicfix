@@ -84,7 +84,7 @@ analytics, and moderation) is in **[`docs/screenshots/`](docs/screenshots)**.
 ## Quick start
 
 ```bash
-# 1. Database (PostgreSQL + PostGIS on host port 5433)
+# 1. Database (PostgreSQL + PostGIS on host port 5434)
 docker compose up -d
 
 # 2. Backend
@@ -141,7 +141,7 @@ frontend/
 
 **Backend (`backend/.env`)**, see `backend/.env.example`:
 
-- `DATABASE_URL`: Postgres connection (matches docker-compose, port 5433)
+- `DATABASE_URL`: Postgres connection (matches docker-compose, port 5434)
 - `DATABASE_URL_UNPOOLED`: connection used by Prisma Migrate. Locally the same
   as `DATABASE_URL`; on Neon, the direct (non `-pooler`) connection string
 - `JWT_ACCESS_SECRET`: long random string (required)

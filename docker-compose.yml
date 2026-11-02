@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: civicfix
       POSTGRES_DB: civicfix
     ports:
-      - "5433:5432"
+      - "5434:5432"
     volumes:
       - civicfix_pgdata:/var/lib/postgresql/data
     healthcheck:
