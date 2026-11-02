@@ -6,6 +6,7 @@
 import type { User, UserRole } from '@prisma/client';
 import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../lib/errors.js';
+import { isUniqueViolation } from '../../lib/prisma-errors.js';
 import { assertPasswordPolicy, hashPassword, verifyPassword } from './password.js';
 import { generateRefreshToken, hashRefreshToken, signAccessToken } from './tokens.js';
 
@@ -70,22 +71,30 @@ export async function register(
   assertPasswordPolicy(input.password);
 
   const email = input.email.toLowerCase().trim();
+  const duplicate = () =>
+    new ApiError('DUPLICATE_RESOURCE', 'An account with this email already exists.');
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
-    throw new ApiError('DUPLICATE_RESOURCE', 'An account with this email already exists.');
+    throw duplicate();
   }
 
   const passwordHash = await hashPassword(input.password);
   // A blank or whitespace-only phone is stored as null, not ''.
   const phone = input.phone?.trim();
-  const user = await prisma.user.create({
-    data: {
-      name: input.name.trim(),
-      email,
-      passwordHash,
-      phone: phone === undefined || phone === '' ? null : phone,
-    },
-  });
+  // The check above is a fast path; the unique index decides a race between
+  // two sign-ups (hashing between check and insert makes the race real).
+  const user = await prisma.user
+    .create({
+      data: {
+        name: input.name.trim(),
+        email,
+        passwordHash,
+        phone: phone === undefined || phone === '' ? null : phone,
+      },
+    })
+    .catch((err: unknown) => {
+      throw isUniqueViolation(err) ? duplicate() : err;
+    });
 
   const session = await issueSession(user.id, user.role);
   return { user: toPublicUser(user), session };

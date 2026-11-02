@@ -10,6 +10,7 @@ import multer from 'multer';
 import { env } from './config/env.js';
 import { ApiError } from './lib/errors.js';
 import { checkDatabase } from './lib/health.js';
+import { apiErrorFromPrisma } from './lib/prisma-errors.js';
 import { asyncHandler, routeParam, sendSuccess } from './lib/http.js';
 import { LocalStore, objectStore, STORAGE_KEY_PATTERN } from './lib/storage.js';
 import { authRouter } from './modules/auth/auth.routes.js';
@@ -110,12 +111,15 @@ export function buildApp() {
   // Central error handler → standard error envelope (§22.1).
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
-    if (err instanceof ApiError) {
-      res.status(err.status).json({
+    // Known database outcomes (duplicate, missing record, malformed id) are
+    // client or concurrency errors, not server faults: see lib/prisma-errors.ts.
+    const apiError = err instanceof ApiError ? err : apiErrorFromPrisma(err);
+    if (apiError) {
+      res.status(apiError.status).json({
         success: false,
-        message: err.message,
-        code: err.code,
-        ...(err.details ? { details: err.details } : {}),
+        message: apiError.message,
+        code: apiError.code,
+        ...(apiError.details ? { details: apiError.details } : {}),
       });
       return;
     }

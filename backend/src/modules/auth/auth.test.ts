@@ -9,7 +9,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import request from 'supertest';
 import { buildApp } from '../../app.js';
 import { prisma } from '../../lib/prisma.js';
-import { rotateRefreshToken } from './auth.service.js';
+import { register, rotateRefreshToken } from './auth.service.js';
 import { hashRefreshToken } from './tokens.js';
 
 const app = buildApp();
@@ -65,6 +65,21 @@ describe('POST /auth/register', () => {
     const res = await request(app).post('/api/v1/auth/register').send(citizen);
     expect(res.status).toBe(409);
     expect(res.body.code).toBe('DUPLICATE_RESOURCE');
+  });
+
+  it('resolves two simultaneous sign-ups with one email as one success and one conflict', async () => {
+    // Called at the service level, where both calls pass the duplicate check
+    // and race to the insert (password hashing sits in between). The unique
+    // index decides; the loser must get the friendly conflict, not a 500.
+    const racer = { ...citizen, email: `race_${String(stamp)}@example.com` };
+    createdEmails.push(racer.email);
+    const outcomes = await Promise.allSettled([register(racer), register(racer)]);
+    expect(outcomes.filter((o) => o.status === 'fulfilled')).toHaveLength(1);
+    const lost = outcomes.find((o) => o.status === 'rejected');
+    expect(lost?.reason).toMatchObject({
+      code: 'DUPLICATE_RESOURCE',
+      message: 'An account with this email already exists.',
+    });
   });
 
   it('rejects a weak password (AUTH-013)', async () => {
