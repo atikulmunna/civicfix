@@ -31,7 +31,46 @@ export interface RequestOptions {
   signal?: AbortSignal;
 }
 
+/** Auth endpoints establish or end the session themselves, so they never trigger a refresh. */
+const NO_REFRESH_PATHS = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/logout'];
+
+let refreshInFlight: Promise<boolean> | null = null;
+
+/**
+ * Exchange the refresh cookie for a new access cookie. Single-flight: callers
+ * that hit an expired session at the same time share one request, because the
+ * API rotates (and so invalidates) the refresh token on every use.
+ */
+function refreshSession(): Promise<boolean> {
+  refreshInFlight ??= fetch(`${API_URL}/auth/refresh`, { method: 'POST', credentials: 'include' })
+    .then((res) => res.ok)
+    .catch(() => false)
+    .finally(() => {
+      refreshInFlight = null;
+    });
+  return refreshInFlight;
+}
+
+/**
+ * Send a request; if the access token has expired (AUTH_REQUIRED), refresh the
+ * session once and retry. The access cookie lives 15 minutes while the refresh
+ * cookie lives days, so without this users were silently signed out.
+ */
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  try {
+    return await send<T>(path, options);
+  } catch (err) {
+    const canRefresh =
+      err instanceof ApiError &&
+      err.code === 'AUTH_REQUIRED' &&
+      !options.signal?.aborted &&
+      !NO_REFRESH_PATHS.some((p) => path.startsWith(p));
+    if (!canRefresh || !(await refreshSession())) throw err;
+    return send<T>(path, options);
+  }
+}
+
+async function send<T>(path: string, options: RequestInit): Promise<T> {
   let res: Response;
   try {
     res = await fetch(`${API_URL}${path}`, { credentials: 'include', ...options });
