@@ -53,7 +53,7 @@ analytics, and moderation) is in **[`docs/screenshots/`](docs/screenshots)**.
   hashing, Multer + magic-byte upload validation, Zod, Vitest + supertest.
 - **Frontend:** Next.js 16 (App Router) + React 19 + TypeScript + Tailwind v4,
   React-Leaflet + OpenStreetMap, Vitest + React Testing Library.
-- **Hosting (free tier):** Supabase (Postgres + PostGIS), Fly.io (API), Vercel (web).
+- **Hosting (free tier):** Neon (Postgres + PostGIS), Fly.io (API), Vercel (web).
 
 ## Architecture notes
 
@@ -142,6 +142,8 @@ frontend/
 **Backend (`backend/.env`)**, see `backend/.env.example`:
 
 - `DATABASE_URL`: Postgres connection (matches docker-compose, port 5433)
+- `DATABASE_URL_UNPOOLED`: connection used by Prisma Migrate. Locally the same
+  as `DATABASE_URL`; on Neon, the direct (non `-pooler`) connection string
 - `JWT_ACCESS_SECRET`: long random string (required)
 - `JWT_ACCESS_EXPIRES_IN` (default `15m`), `REFRESH_TOKEN_TTL_DAYS` (default `7`)
 - `CORS_ORIGIN` (default `http://localhost:3000`)
@@ -156,17 +158,27 @@ frontend/
 ## Deployment (free tier)
 
 Three services: a managed Postgres + PostGIS database, the API, and the web app.
-Recommended free hosts: **Supabase** (DB), **Fly.io** (API), **Vercel** (web).
+Recommended free hosts: **Neon** (DB), **Fly.io** (API), **Vercel** (web).
 Fly keeps one machine always on, so there are no cold starts.
 
-### 1. Database: Supabase
-1. Create a project, then in the SQL editor run: `create extension if not exists postgis;`
-2. Settings, Database, copy the connection string (**URI**); this is `DATABASE_URL`.
-3. From your machine, apply the schema once:
+### 1. Database: Neon
+1. Create a project at [console.neon.tech](https://console.neon.tech) in the
+   region closest to the API. This deployment uses AWS Singapore
+   (`aws-ap-southeast-1`), next to Fly's `sin` region.
+2. Copy two connection strings from **Connect**:
+   - **Pooled** (host contains `-pooler`): this is `DATABASE_URL`, used by the app.
+   - **Direct** (no `-pooler`): this is `DATABASE_URL_UNPOOLED`, used by Prisma Migrate.
+
+   Append `&connect_timeout=15` to both. Neon scales an idle database to zero,
+   and the extra time lets the first query wake it instead of timing out.
+   With the [Neon CLI](https://neon.com/docs/reference/neon-cli), `neon link`
+   then `neon env pull` writes both into `.env.local` at the repo root.
+3. From your machine, apply the schema once (the migration enables PostGIS itself):
    ```bash
    cd backend
-   DATABASE_URL="<supabase-uri>" npx prisma migrate deploy
-   DATABASE_URL="<supabase-uri>" npm run seed   # optional demo data
+   export DATABASE_URL="<pooled-uri>" DATABASE_URL_UNPOOLED="<direct-uri>"
+   npx prisma migrate deploy
+   npm run seed   # optional demo data
    ```
 
 ### 2. API: Fly.io
@@ -175,7 +187,8 @@ Install [`flyctl`](https://fly.io/docs/flyctl/install/) and `fly auth login`, th
 cd backend
 fly launch --no-deploy --copy-config   # uses fly.toml; pick a unique app name if taken
 fly secrets set \
-  DATABASE_URL="<supabase-uri>" \
+  DATABASE_URL="<neon-pooled-uri>" \
+  DATABASE_URL_UNPOOLED="<neon-direct-uri>" \
   JWT_ACCESS_SECRET="$(openssl rand -hex 32)" \
   CORS_ORIGIN="https://<your-app>.vercel.app"   # fill in after step 3
 fly deploy
@@ -196,7 +209,8 @@ Vercel redeploys automatically on every push to `main`; redeploy the API with
 
 | Where | Variable | Value |
 |---|---|---|
-| Fly | `DATABASE_URL` | Supabase connection URI (`fly secrets set`) |
+| Fly | `DATABASE_URL` | Neon pooled connection URI (`fly secrets set`) |
+| Fly | `DATABASE_URL_UNPOOLED` | Neon direct connection URI (`fly secrets set`) |
 | Fly | `JWT_ACCESS_SECRET` | long random string (`fly secrets set`) |
 | Fly | `CORS_ORIGIN` | your Vercel URL (`fly secrets set`) |
 | Fly | `NODE_ENV` / `PORT` | `production` / `8080` (preset in `fly.toml`) |
@@ -205,7 +219,9 @@ Vercel redeploys automatically on every push to `main`; redeploy the API with
 
 > **Free-tier notes:** Fly requires a card on file but keeps a single small
 > machine effectively free; `min_machines_running = 1` avoids cold starts.
-> Supabase free projects pause after about 7 days idle (resume from the
-> dashboard). Uploaded images live on the machine's ephemeral disk, so they are
-> cleared on redeploy. Attach a Fly volume, or wire up Supabase Storage or
-> Cloudinary in `backend/src/lib/uploads.ts`, if you need them to persist.
+> Neon's free plan suspends the database compute after 5 minutes idle and
+> wakes it automatically on the next connection, so the first request after a
+> quiet spell takes a moment longer. Uploaded images
+> live on the machine's ephemeral disk, so they are cleared on redeploy. Attach
+> a Fly volume, or wire up Cloudinary or another object store in
+> `backend/src/lib/uploads.ts`, if you need them to persist.

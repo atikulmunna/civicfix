@@ -16,9 +16,14 @@ generator client {
   previewFeatures = ["postgresqlExtensions"]
 }
 
+// url: the app's runtime connection. On Neon this is the pooled (-pooler) URL.
+// directUrl: used by Prisma Migrate. On Neon this is the direct (unpooled) URL,
+// because migrations need session state that a transaction pooler drops.
+// Locally both point at the same docker-compose database.
 datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
+  directUrl  = env("DATABASE_URL_UNPOOLED")
   extensions = [postgis]
 }
 
