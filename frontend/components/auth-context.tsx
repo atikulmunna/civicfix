@@ -9,7 +9,8 @@ import type { User } from '@/lib/types';
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  /** Resolves with the signed-in user (e.g. to check mustChangePassword). */
+  login: (email: string, password: string) => Promise<User>;
   register: (input: {
     name: string;
     email: string;
@@ -53,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { user } = await api.post<{ user: User }>('/auth/login', { email, password });
       resetOtherQueries();
       queryClient.setQueryData(queryKeys.me, user);
+      return user;
     },
     [queryClient, resetOtherQueries],
   );

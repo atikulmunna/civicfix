@@ -69,4 +69,18 @@ describe('LoginPage', () => {
     expect(await screen.findByText('Invalid email or password.')).toBeInTheDocument();
     expect(push).not.toHaveBeenCalled();
   });
+
+  it('sends a user on a temporary password to change it first', async () => {
+    post.mockResolvedValue({
+      user: { id: '1', name: 'Test', email: 't@e.com', role: 'citizen', mustChangePassword: true },
+    });
+    const user = userEvent.setup();
+    renderLogin();
+
+    await user.type(screen.getByLabelText('Email'), 't@e.com');
+    await user.type(screen.getByLabelText('Password'), 'Tmp-pass_1234567');
+    await user.click(screen.getByRole('button', { name: /sign in/i }));
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/me#change-password'));
+  });
 });

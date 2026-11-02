@@ -7,6 +7,7 @@ import type { User } from '@/lib/types';
 import { RequireAuth } from '@/components/require-auth';
 import { useAuth } from '@/components/auth-context';
 import { useToast } from '@/components/toast';
+import { ChangePasswordForm } from '@/components/change-password-form';
 import { Button, Card, FieldError, Input, Label, PageHeader } from '@/components/ui';
 
 function ProfileForm() {
@@ -81,6 +82,10 @@ function ProfileForm() {
           </div>
         </form>
       </Card>
+
+      <div className="mt-6">
+        <ChangePasswordForm />
+      </div>
     </div>
   );
 }

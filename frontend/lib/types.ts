@@ -25,6 +25,8 @@ export interface User {
   trustScore: number;
   phone: string | null;
   phoneIsPublic: boolean;
+  /** Set after an admin password reset; the user must choose a new password. */
+  mustChangePassword: boolean;
   createdAt: string;
 }
 
