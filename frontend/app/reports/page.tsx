@@ -3,8 +3,14 @@
 import { useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api, errorMessage } from '@/lib/api';
-import type { Category, Paginated, Report } from '@/lib/types';
-import { SEVERITY_OPTIONS, STATUS_OPTIONS, severityLabel, statusLabel } from '@/lib/format';
+import {
+  asSeverity,
+  asStatus,
+  SEVERITY_OPTIONS,
+  STATUS_OPTIONS,
+  severityLabel,
+  statusLabel,
+} from '@/lib/format';
 import { queryKeys } from '@/lib/query-keys';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { ReportCard } from '@/components/report-card';
@@ -15,7 +21,12 @@ const SORTS = [
   { value: 'oldest', label: 'Oldest' },
   { value: 'priority', label: 'Highest priority' },
   { value: 'most_confirmed', label: 'Most confirmed' },
-];
+] as const;
+
+/** The selected sort, or the default for anything unknown. */
+function asSort(value: string) {
+  return SORTS.find((s) => s.value === value)?.value ?? 'newest';
+}
 
 export default function ReportsPage() {
   const [filters, setFilters] = useState({
@@ -31,23 +42,22 @@ export default function ReportsPage() {
 
   const categories = useQuery({
     queryKey: queryKeys.categories,
-    queryFn: ({ signal }) =>
-      api.get<{ categories: Category[] }>('/categories', undefined, { signal }),
+    queryFn: ({ signal }) => api.get('/categories', undefined, { signal }),
     select: (d) => d.categories,
   });
 
   const params = {
     categoryId: filters.categoryId || undefined,
-    status: filters.status || undefined,
-    severity: filters.severity || undefined,
+    status: asStatus(filters.status),
+    severity: asSeverity(filters.severity),
     search: search || undefined,
-    sort: filters.sort,
+    sort: asSort(filters.sort),
     page: filters.page,
     limit: 10,
   };
   const reports = useQuery({
     queryKey: queryKeys.reports(params),
-    queryFn: ({ signal }) => api.get<Paginated<Report>>('/reports', params, { signal }),
+    queryFn: ({ signal }) => api.get('/reports', params, { signal }),
     // Keep the current page on screen while the next one loads.
     placeholderData: keepPreviousData,
   });

@@ -18,11 +18,11 @@ describe('api client', () => {
     vi.stubGlobal('fetch', fetchMock);
     const controller = new AbortController();
 
-    await expect(api.get('/x', { a: 1 }, { signal: controller.signal })).resolves.toEqual({
+    await expect(api.get('/reports', { page: 2 }, { signal: controller.signal })).resolves.toEqual({
       ok: 1,
     });
     expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining('/x?a=1'),
+      expect.stringContaining('/reports?page=2'),
       expect.objectContaining({ signal: controller.signal, credentials: 'include' }),
     );
   });
@@ -33,13 +33,15 @@ describe('api client', () => {
     const controller = new AbortController();
     controller.abort();
 
-    await expect(api.get('/x', undefined, { signal: controller.signal })).rejects.toBe(abortError);
+    await expect(api.get('/auth/me', undefined, { signal: controller.signal })).rejects.toBe(
+      abortError,
+    );
   });
 
   it('reports a real network failure as NETWORK_ERROR', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
 
-    const err = await api.get('/x').catch((e: unknown) => e);
+    const err = await api.get('/auth/me').catch((e: unknown) => e);
     expect(err).toBeInstanceOf(ApiError);
     expect((err as ApiError).code).toBe('NETWORK_ERROR');
   });
@@ -54,7 +56,7 @@ describe('api client', () => {
         ),
     );
 
-    const err = await api.get('/x').catch((e: unknown) => e);
+    const err = await api.get('/auth/me').catch((e: unknown) => e);
     expect(err).toMatchObject({ code: 'NOT_FOUND', status: 404, message: 'Not found.' });
   });
 });
@@ -94,7 +96,7 @@ describe('session refresh', () => {
       [() => ok({ refreshed: true })],
       [expired, expired, () => ok('a'), () => ok('b')],
     );
-    await Promise.all([api.get('/a'), api.get('/b')]);
+    await Promise.all([api.get('/auth/me'), api.get('/notifications')]);
     expect(urls().filter((u) => u === '/auth/refresh')).toHaveLength(1);
   });
 
@@ -106,8 +108,8 @@ describe('session refresh', () => {
 
   it('retries at most once', async () => {
     const urls = mockFetch([() => ok({ refreshed: true })], [expired, expired]);
-    await expect(api.get('/x')).rejects.toMatchObject({ code: 'AUTH_REQUIRED' });
-    expect(urls()).toEqual(['/x', '/auth/refresh', '/x']);
+    await expect(api.get('/notifications')).rejects.toMatchObject({ code: 'AUTH_REQUIRED' });
+    expect(urls()).toEqual(['/notifications', '/auth/refresh', '/notifications']);
   });
 
   it('never refreshes for the auth endpoints themselves', async () => {

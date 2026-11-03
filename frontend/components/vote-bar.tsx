@@ -55,8 +55,8 @@ export function VoteBar({
   const toggleUpvote = () =>
     act(async () => {
       const { counts: c } = upvoted
-        ? await api.del<{ counts: VoteCounts }>(`/reports/${reportId}/upvote`)
-        : await api.post<{ counts: VoteCounts }>(`/reports/${reportId}/upvote`);
+        ? await api.del(`/reports/${reportId}/upvote`)
+        : await api.post(`/reports/${reportId}/upvote`);
       setCounts(c);
       setUpvoted((v) => !v);
     }, 'upvote');
@@ -64,8 +64,8 @@ export function VoteBar({
   const toggleConfirm = () =>
     act(async () => {
       const { counts: c } = confirmed
-        ? await api.del<{ counts: VoteCounts }>(`/reports/${reportId}/confirm`)
-        : await api.post<{ counts: VoteCounts }>(`/reports/${reportId}/confirm`);
+        ? await api.del(`/reports/${reportId}/confirm`)
+        : await api.post(`/reports/${reportId}/confirm`);
       setCounts(c);
       setConfirmed((v) => !v);
       if (!confirmed) setFollowing(true); // confirming auto-follows
@@ -73,9 +73,7 @@ export function VoteBar({
 
   const flagFalse = () =>
     act(async () => {
-      const { counts: c } = await api.post<{ counts: VoteCounts }>(
-        `/reports/${reportId}/false-report`,
-      );
+      const { counts: c } = await api.post(`/reports/${reportId}/false-report`);
       setCounts(c);
       toast('Flagged as possibly false. Thanks.', 'success');
     }, 'flag');

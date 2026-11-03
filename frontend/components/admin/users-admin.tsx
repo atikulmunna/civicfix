@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorMessage } from '@/lib/api';
-import type { AdminUser, Paginated, Role } from '@/lib/types';
+import type { AdminUser, Role } from '@/lib/types';
 import { queryKeys } from '@/lib/query-keys';
 import { useAuth } from '@/components/auth-context';
 import { canManageUser } from '@/lib/permissions';
@@ -30,7 +30,7 @@ export function UsersAdmin() {
   const params = { search: debouncedSearch || undefined, page, limit: 20 };
   const users = useQuery({
     queryKey: queryKeys.adminUsers(params),
-    queryFn: ({ signal }) => api.get<Paginated<AdminUser>>('/admin/users', params, { signal }),
+    queryFn: ({ signal }) => api.get('/admin/users', params, { signal }),
     placeholderData: keepPreviousData,
   });
   const data = users.data;
@@ -45,8 +45,7 @@ export function UsersAdmin() {
   });
 
   const resetPassword = useMutation({
-    mutationFn: (u: AdminUser) =>
-      api.post<{ temporaryPassword: string }>(`/admin/users/${u.id}/reset-password`),
+    mutationFn: (u: AdminUser) => api.post(`/admin/users/${u.id}/reset-password`),
     onSuccess: (data, u) => {
       setConfirmReset(null);
       setIssued({ email: u.email, password: data.temporaryPassword });

@@ -45,3 +45,16 @@ export const STATUS_OPTIONS: ReportStatus[] = [
 ];
 
 export const SEVERITY_OPTIONS: Severity[] = ['low', 'medium', 'high', 'urgent'];
+
+/**
+ * Narrows a <select> or URL value to a report status. Anything else (empty,
+ * unknown) means "any status", so a bad value never reaches the API.
+ */
+export function asStatus(value: string | null | undefined): ReportStatus | undefined {
+  return STATUS_OPTIONS.find((s) => s === value);
+}
+
+/** Like asStatus, for severities. */
+export function asSeverity(value: string | null | undefined): Severity | undefined {
+  return SEVERITY_OPTIONS.find((s) => s === value);
+}

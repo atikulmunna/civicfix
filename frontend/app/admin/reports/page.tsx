@@ -4,8 +4,14 @@ import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api, errorMessage } from '@/lib/api';
-import type { Category, Paginated, Report } from '@/lib/types';
-import { SEVERITY_OPTIONS, STATUS_OPTIONS, severityLabel, statusLabel } from '@/lib/format';
+import {
+  asSeverity,
+  asStatus,
+  SEVERITY_OPTIONS,
+  STATUS_OPTIONS,
+  severityLabel,
+  statusLabel,
+} from '@/lib/format';
 import { queryKeys } from '@/lib/query-keys';
 import { RequireAuth } from '@/components/require-auth';
 import { ReportCard } from '@/components/report-card';
@@ -22,21 +28,20 @@ function AdminReportsList() {
 
   const categories = useQuery({
     queryKey: queryKeys.categories,
-    queryFn: ({ signal }) =>
-      api.get<{ categories: Category[] }>('/categories', undefined, { signal }),
+    queryFn: ({ signal }) => api.get('/categories', undefined, { signal }),
     select: (d) => d.categories,
   });
 
   const params = {
-    status: filters.status || undefined,
+    status: asStatus(filters.status),
     categoryId: filters.categoryId || undefined,
-    severity: filters.severity || undefined,
+    severity: asSeverity(filters.severity),
     page: filters.page,
     limit: 10,
   };
   const reports = useQuery({
     queryKey: queryKeys.adminReports(params),
-    queryFn: ({ signal }) => api.get<Paginated<Report>>('/admin/reports', params, { signal }),
+    queryFn: ({ signal }) => api.get('/admin/reports', params, { signal }),
     placeholderData: keepPreviousData,
   });
   const data = reports.data;

@@ -26,7 +26,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 /** Current user, or null when there is no valid session (AUTH_REQUIRED is not an error). */
 async function fetchCurrentUser(signal: AbortSignal): Promise<User | null> {
   try {
-    const { user } = await api.get<{ user: User }>('/auth/me', undefined, { signal });
+    const { user } = await api.get('/auth/me', undefined, { signal });
     return user;
   } catch (err) {
     if (err instanceof ApiError && err.code === 'AUTH_REQUIRED') return null;
@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (email: string, password: string) => {
-      const { user } = await api.post<{ user: User }>('/auth/login', { email, password });
+      const { user } = await api.post('/auth/login', { email, password });
       resetOtherQueries();
       queryClient.setQueryData(queryKeys.me, user);
       return user;
@@ -61,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = useCallback(
     async (input: { name: string; email: string; password: string; phone?: string }) => {
-      const { user } = await api.post<{ user: User }>('/auth/register', input);
+      const { user } = await api.post('/auth/register', input);
       resetOtherQueries();
       queryClient.setQueryData(queryKeys.me, user);
     },

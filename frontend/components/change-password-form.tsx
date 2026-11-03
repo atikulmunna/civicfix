@@ -2,7 +2,6 @@
 
 import { useState, type FormEvent } from 'react';
 import { api, errorMessage } from '@/lib/api';
-import type { User } from '@/lib/types';
 import { useAuth } from '@/components/auth-context';
 import { useToast } from '@/components/toast';
 import { Button, Card, FieldError, Input, Label } from '@/components/ui';
@@ -36,7 +35,7 @@ export function ChangePasswordForm() {
     }
     setBusy(true);
     try {
-      await api.post<{ user: User }>('/auth/change-password', {
+      await api.post('/auth/change-password', {
         currentPassword: current,
         newPassword: next,
       });

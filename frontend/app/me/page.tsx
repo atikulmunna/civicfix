@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 import { api, ApiError } from '@/lib/api';
-import type { User } from '@/lib/types';
 import { RequireAuth } from '@/components/require-auth';
 import { useAuth } from '@/components/auth-context';
 import { useToast } from '@/components/toast';
@@ -24,7 +23,7 @@ function ProfileForm() {
     setError(null);
     setBusy(true);
     try {
-      await api.patch<{ user: User }>('/users/me', { name, phone: phone || null, phoneIsPublic });
+      await api.patch('/users/me', { name, phone: phone || null, phoneIsPublic });
       await refreshUser();
       toast('Profile updated.', 'success');
     } catch (err) {

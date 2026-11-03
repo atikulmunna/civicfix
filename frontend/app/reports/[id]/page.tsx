@@ -5,7 +5,6 @@ import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
 import { api, assetUrl, errorMessage } from '@/lib/api';
 import { queryKeys } from '@/lib/query-keys';
-import type { Report, StatusHistoryEntry } from '@/lib/types';
 import { formatDateTime } from '@/lib/format';
 import { SeverityBadge, StatusBadge } from '@/components/badges';
 import { VoteBar } from '@/components/vote-bar';
@@ -17,12 +16,11 @@ import { Card, LoadError, Spinner } from '@/components/ui';
 export function ReportDetail({ id }: { id: string }) {
   const reportQuery = useQuery({
     queryKey: queryKeys.report(id),
-    queryFn: ({ signal }) => api.get<{ report: Report }>(`/reports/${id}`, undefined, { signal }),
+    queryFn: ({ signal }) => api.get(`/reports/${id}`, undefined, { signal }),
   });
   const historyQuery = useQuery({
     queryKey: queryKeys.reportHistory(id),
-    queryFn: ({ signal }) =>
-      api.get<{ history: StatusHistoryEntry[] }>(`/reports/${id}/history`, undefined, { signal }),
+    queryFn: ({ signal }) => api.get(`/reports/${id}/history`, undefined, { signal }),
   });
 
   if (reportQuery.isPending) return <Spinner />;

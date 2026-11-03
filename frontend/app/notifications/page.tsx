@@ -20,8 +20,7 @@ function NotificationsList() {
   const queryClient = useQueryClient();
   const notifications = useQuery({
     queryKey: queryKeys.notifications,
-    queryFn: ({ signal }) =>
-      api.get<NotificationsData>('/notifications', { limit: 50 }, { signal }),
+    queryFn: ({ signal }) => api.get('/notifications', { limit: 50 }, { signal }),
   });
   const data = notifications.data;
 

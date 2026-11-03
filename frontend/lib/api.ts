@@ -2,7 +2,14 @@
  * Typed API client for the CivicFix backend. Always sends cookies
  * (credentials: 'include') so the httpOnly access/refresh cookies flow with
  * each request. Unwraps the §22.1 envelope and throws ApiError on failure.
+ *
+ * Calls are typed by the backend contract (R10b): the path you pass, e.g.
+ * `/reports/${id}`, is matched to its route (`/reports/{id}`) in the
+ * generated lib/api-schema.ts, which decides the query, body and response
+ * types. An unknown path or a mismatched body does not compile.
  */
+import type { paths } from './api-schema';
+
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api/v1';
 
 export class ApiError extends Error {
@@ -104,39 +111,155 @@ export function errorMessage(error: unknown, fallback: string): string {
   return error instanceof ApiError ? error.message : fallback;
 }
 
-function toQuery(params?: Record<string, unknown>): string {
-  if (!params) return '';
+function toQuery(params: unknown): string {
+  if (typeof params !== 'object' || params === null) return '';
   const q = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) {
+  for (const [k, v] of Object.entries(params) as [string, unknown][]) {
     if (v !== undefined && v !== null && v !== '') q.set(k, String(v));
   }
   const s = q.toString();
   return s ? `?${s}` : '';
 }
 
-export const api = {
-  get: <T>(path: string, params?: Record<string, unknown>, opts: RequestOptions = {}) =>
-    request<T>(`${path}${toQuery(params)}`, { method: 'GET', signal: opts.signal }),
+// ---------------------------------------------------------------------------
+// Contract typing. Routes come from lib/api-schema.ts (generated from
+// backend/openapi.json); paths there carry the /api/v1 prefix, which is part
+// of API_URL here.
 
-  post: <T>(path: string, data?: unknown, opts: RequestOptions = {}) =>
-    request<T>(path, {
+type Method = 'get' | 'post' | 'patch' | 'delete';
+type Prefix = '/api/v1';
+
+/** Every route relative to API_URL, e.g. '/reports/{id}'. */
+type Route = keyof paths extends infer K ? (K extends `${Prefix}${infer R}` ? R : never) : never;
+
+/** The operation for `method` on `route` (never if the route lacks it). */
+type Operation<R extends Route, M extends Method> = M extends keyof paths[`${Prefix}${R}`]
+  ? Exclude<paths[`${Prefix}${R}`][M], undefined>
+  : never;
+
+type RoutesFor<M extends Method> = {
+  [R in Route]: [Operation<R, M>] extends [never] ? never : R;
+}[Route];
+
+/** '/reports/{id}/comments' becomes `/reports/${string}/comments` (a coarse filter). */
+type Pattern<T extends string> = T extends `${infer A}{${string}}${infer B}`
+  ? `${A}${string}${Pattern<B>}`
+  : T;
+
+/** Equal both ways (a literal and a pattern are not the same). */
+type Same<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
+
+/** '/reports/r1/comments' becomes ['reports', 'r1', 'comments']. */
+type Segments<S extends string> = S extends `/${infer Rest}` ? SegmentsOf<Rest> : [];
+type SegmentsOf<S extends string> = S extends `${infer Head}/${infer Tail}`
+  ? [Head, ...SegmentsOf<Tail>]
+  : [S];
+
+/** A `{param}` segment takes any non-empty segment; a literal one must be equal. */
+type SegmentMatches<R, P> = R extends `{${string}}` ? (P extends '' ? false : true) : Same<R, P>;
+
+type AllSegmentsMatch<R extends unknown[], P extends unknown[]> = R extends [
+  infer R1,
+  ...infer RRest,
+]
+  ? P extends [infer P1, ...infer PRest]
+    ? SegmentMatches<R1, P1> extends true
+      ? AllSegmentsMatch<RRest, PRest>
+      : false
+    : false
+  : P extends []
+    ? true
+    : false;
+
+type StaticRouteOf<M extends Method, P extends string> = {
+  [R in RoutesFor<M>]: Same<R, P> extends true ? R : never;
+}[RoutesFor<M>];
+
+type ParamRouteOf<M extends Method, P extends string> = {
+  [R in RoutesFor<M>]: AllSegmentsMatch<Segments<R>, Segments<P>> extends true ? R : never;
+}[RoutesFor<M>];
+
+/**
+ * The route a concrete path belongs to, matched segment by segment like a
+ * router: '/reports/r1' and `/reports/${id}` are '/reports/{id}', and a static
+ * route wins ('/reports/nearby' is not '/reports/{id}'). Distributes over
+ * unions, so a path that is one of several routes gets all their types.
+ */
+type RouteOf<M extends Method, P extends string> = P extends string
+  ? [StaticRouteOf<M, P>] extends [never]
+    ? ParamRouteOf<M, P>
+    : StaticRouteOf<M, P>
+  : never;
+
+type OperationFor<M extends Method, P extends string> = Operation<RouteOf<M, P>, M>;
+
+type SuccessOf<O> = O extends { responses: infer Res }
+  ? 200 extends keyof Res
+    ? Res[200]
+    : 201 extends keyof Res
+      ? Res[201]
+      : never
+  : never;
+
+/** A path the API accepts for `method`, as written at the call site. */
+export type ApiPath<M extends Method> = Pattern<RoutesFor<M>>;
+
+/**
+ * `T` for a path that is a route of the API, never otherwise. Without this
+ * guard a path with no route would match the conditional types below as
+ * `unknown`, which accepts any body and hides the response type.
+ */
+type IfRoute<M extends Method, P extends string, T> = [RouteOf<M, P>] extends [never] ? never : T;
+
+// The extractors take the operation as a naked type parameter, so they
+// distribute: a path that is one of several routes gets the union of their
+// types (an `infer` over a union would pick one candidate instead).
+type DataOf<O> =
+  SuccessOf<O> extends { content: { 'application/json': { data: infer D } } } ? D : never;
+type QueryOf<O> = O extends { parameters: { query?: infer Q } } ? Q : never;
+type BodyOf<O> = O extends { requestBody?: { content: { 'application/json': infer B } } }
+  ? B
+  : never;
+
+/** The `data` a call returns (the envelope is unwrapped). */
+export type ApiData<M extends Method, P extends string> = IfRoute<M, P, DataOf<OperationFor<M, P>>>;
+
+type ApiQuery<P extends string> = IfRoute<'get', P, QueryOf<OperationFor<'get', P>>>;
+
+type ApiBody<M extends Method, P extends string> = IfRoute<M, P, BodyOf<OperationFor<M, P>>>;
+
+export const api = {
+  get: <P extends ApiPath<'get'>>(path: P, params?: ApiQuery<P>, opts: RequestOptions = {}) =>
+    request<ApiData<'get', P>>(`${path}${toQuery(params)}`, {
+      method: 'GET',
+      signal: opts.signal,
+    }),
+
+  post: <P extends ApiPath<'post'>>(
+    path: P,
+    data?: ApiBody<'post', P>,
+    opts: RequestOptions = {},
+  ) =>
+    request<ApiData<'post', P>>(path, {
       method: 'POST',
       headers: data !== undefined ? { 'Content-Type': 'application/json' } : undefined,
       body: data !== undefined ? JSON.stringify(data) : undefined,
       signal: opts.signal,
     }),
 
-  patch: <T>(path: string, data?: unknown) =>
-    request<T>(path, {
+  patch: <P extends ApiPath<'patch'>>(path: P, data?: ApiBody<'patch', P>) =>
+    request<ApiData<'patch', P>>(path, {
       method: 'PATCH',
       headers: data !== undefined ? { 'Content-Type': 'application/json' } : undefined,
       body: data !== undefined ? JSON.stringify(data) : undefined,
     }),
 
-  del: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
+  del: <P extends ApiPath<'delete'>>(path: P) =>
+    request<ApiData<'delete', P>>(path, { method: 'DELETE' }),
 
   /** Multipart POST (e.g. report creation with images). No JSON content-type. */
-  postForm: <T>(path: string, form: FormData) => request<T>(path, { method: 'POST', body: form }),
+  postForm: <P extends ApiPath<'post'>>(path: P, form: FormData) =>
+    request<ApiData<'post', P>>(path, { method: 'POST', body: form }),
 };
 
 /** Absolute URL for a backend-served upload path like /uploads/abc.png. */

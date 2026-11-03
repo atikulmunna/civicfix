@@ -20,8 +20,7 @@ export function CommentSection({ reportId }: { reportId: string }) {
 
   const commentsQuery = useQuery({
     queryKey: key,
-    queryFn: ({ signal }) =>
-      api.get<{ comments: Comment[] }>(`/reports/${reportId}/comments`, undefined, { signal }),
+    queryFn: ({ signal }) => api.get(`/reports/${reportId}/comments`, undefined, { signal }),
   });
   const comments = commentsQuery.data?.comments ?? [];
   const updateComments = (update: (c: Comment[]) => Comment[]) => {
@@ -31,8 +30,7 @@ export function CommentSection({ reportId }: { reportId: string }) {
   };
 
   const post = useMutation({
-    mutationFn: (text: string) =>
-      api.post<{ comment: Comment }>(`/reports/${reportId}/comments`, { content: text }),
+    mutationFn: (text: string) => api.post(`/reports/${reportId}/comments`, { content: text }),
     onSuccess: ({ comment }) => {
       updateComments((c) => [...c, comment]);
       setContent('');

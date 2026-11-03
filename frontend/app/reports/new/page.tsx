@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { skipToken, useQuery } from '@tanstack/react-query';
 import { api, ApiError } from '@/lib/api';
-import type { Category, Report } from '@/lib/types';
+import type { Report } from '@/lib/types';
 import { SEVERITY_OPTIONS, severityLabel } from '@/lib/format';
 import { queryKeys } from '@/lib/query-keys';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
@@ -56,8 +56,7 @@ function NewReportForm() {
 
   const categoriesQuery = useQuery({
     queryKey: queryKeys.categories,
-    queryFn: ({ signal }) =>
-      api.get<{ categories: Category[] }>('/categories', undefined, { signal }),
+    queryFn: ({ signal }) => api.get('/categories', undefined, { signal }),
     select: (d) => d.categories,
   });
   const categories = categoriesQuery.data ?? [];
@@ -74,11 +73,10 @@ function NewReportForm() {
   const debouncedDupParams = useDebouncedValue(dupParams, 400);
   const duplicatesQuery = useQuery({
     queryKey: queryKeys.duplicates(debouncedDupParams),
-    queryFn: ({ signal }) =>
-      api.post<{ possibleDuplicates: Report[] }>('/reports/check-duplicates', debouncedDupParams, {
-        signal,
-      }),
-    enabled: debouncedDupParams !== null,
+    // skipToken: no request until category and location are both set.
+    queryFn: debouncedDupParams
+      ? ({ signal }) => api.post('/reports/check-duplicates', debouncedDupParams, { signal })
+      : skipToken,
     select: (d) => d.possibleDuplicates,
   });
   // Advisory only: hide the hint when the inputs are cleared or the check fails.
@@ -136,7 +134,7 @@ function NewReportForm() {
 
     setPhase('uploading');
     try {
-      const { report } = await api.postForm<{ report: Report }>('/reports', fd);
+      const { report } = await api.postForm('/reports', fd);
       toast('Report submitted. Thank you!', 'success');
       router.push(`/reports/${report.id}`);
     } catch (err) {

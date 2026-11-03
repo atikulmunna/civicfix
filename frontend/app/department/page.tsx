@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorMessage } from '@/lib/api';
-import type { Paginated, Report } from '@/lib/types';
 import { formatDate } from '@/lib/format';
 import { RequireAuth } from '@/components/require-auth';
 import { SeverityBadge, StatusBadge } from '@/components/badges';
@@ -22,8 +21,7 @@ function Queue() {
   const queryClient = useQueryClient();
   const queue = useQuery({
     queryKey: queryKeys.departmentQueue,
-    queryFn: ({ signal }) =>
-      api.get<Paginated<Report>>('/department/reports', { limit: 50 }, { signal }),
+    queryFn: ({ signal }) => api.get('/department/reports', { limit: 50 }, { signal }),
   });
   const data = queue.data;
 
