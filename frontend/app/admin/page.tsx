@@ -4,19 +4,9 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { api, errorMessage } from '@/lib/api';
 import { queryKeys } from '@/lib/query-keys';
-import type { ReportStatus, Severity } from '@/lib/types';
+import type { AnalyticsSummary as Summary } from '@/lib/types';
 import { RequireAuth } from '@/components/require-auth';
 import { Card, LoadError, PageHeader, Spinner, StatTile } from '@/components/ui';
-
-interface Summary {
-  totalReports: number;
-  byStatus: Record<ReportStatus, number>;
-  bySeverity: Record<Severity, number>;
-  resolvedCount: number;
-  resolutionRate: number;
-  avgResolutionHours: number | null;
-  unresolvedHighPriority: number;
-}
 
 function Dashboard() {
   // Same key as the analytics page: both read one cached summary.

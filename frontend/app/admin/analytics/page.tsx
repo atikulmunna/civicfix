@@ -3,51 +3,37 @@
 import { useQuery } from '@tanstack/react-query';
 import { api, errorMessage } from '@/lib/api';
 import { queryKeys } from '@/lib/query-keys';
-import type { ReportStatus, Severity } from '@/lib/types';
+import type {
+  AnalyticsSummary,
+  CategoryAnalytics,
+  DepartmentAnalytics,
+  ReportStatus,
+  Severity,
+} from '@/lib/types';
 import { severityLabel, statusLabel } from '@/lib/format';
 import { RequireAuth } from '@/components/require-auth';
 import { BarChart } from '@/components/bar-chart';
 import { Card, LoadError, PageHeader, Spinner, StatTile } from '@/components/ui';
 
-interface Summary {
-  totalReports: number;
-  byStatus: Record<ReportStatus, number>;
-  bySeverity: Record<Severity, number>;
-  resolvedCount: number;
-  resolutionRate: number;
-  avgResolutionHours: number | null;
-  unresolvedHighPriority: number;
-  monthlyTrends: { month: string; count: number }[];
-}
-interface CategoryRow {
-  categoryId: string;
-  name: string;
-  total: number;
-  resolved: number;
-}
-interface DeptRow {
-  departmentId: string;
-  name: string;
-  total: number;
-  openAssignments: number;
-  resolved: number;
-  avgResolutionHours: number | null;
-}
-
 function Analytics() {
   const summaryQuery = useQuery({
     queryKey: queryKeys.analytics('summary'),
-    queryFn: ({ signal }) => api.get<Summary>('/admin/analytics/summary', undefined, { signal }),
+    queryFn: ({ signal }) =>
+      api.get<AnalyticsSummary>('/admin/analytics/summary', undefined, { signal }),
   });
   const categoriesQuery = useQuery({
     queryKey: queryKeys.analytics('categories'),
     queryFn: ({ signal }) =>
-      api.get<{ categories: CategoryRow[] }>('/admin/analytics/categories', undefined, { signal }),
+      api.get<{ categories: CategoryAnalytics[] }>('/admin/analytics/categories', undefined, {
+        signal,
+      }),
   });
   const departmentsQuery = useQuery({
     queryKey: queryKeys.analytics('departments'),
     queryFn: ({ signal }) =>
-      api.get<{ departments: DeptRow[] }>('/admin/analytics/departments', undefined, { signal }),
+      api.get<{ departments: DepartmentAnalytics[] }>('/admin/analytics/departments', undefined, {
+        signal,
+      }),
   });
   const queries = [summaryQuery, categoriesQuery, departmentsQuery];
 
