@@ -8,7 +8,7 @@ import { ApiError } from '../../lib/errors.js';
 import { env } from '../../config/env.js';
 import { sanitizeText } from '../../lib/sanitize.js';
 import { deleteStoredImages, type StoredImage } from '../../lib/uploads.js';
-import { getVoteCounts } from '../community/votes.service.js';
+import { getVoteCounts, viewerState } from '../community/votes.service.js';
 import { findDuplicateIds, findNearbyIds } from './geo.js';
 import { priorityFromAnchor } from './priority.js';
 import { refreshPriority } from './triage.service.js';
@@ -142,8 +142,11 @@ export async function getReportById(id: string, actor: Actor | null) {
   if (!report) {
     throw new ApiError('NOT_FOUND', 'Report not found.');
   }
-  const counts = (await getVoteCounts([id])).get(id);
-  return { ...toPublicReport(report, isAdmin(actor)), counts };
+  const [counts, viewer] = await Promise.all([
+    getVoteCounts([id]).then((m) => m.get(id)),
+    actor ? viewerState(id, actor.id) : undefined,
+  ]);
+  return { ...toPublicReport(report, isAdmin(actor)), counts, ...(viewer && { viewer }) };
 }
 
 /**

@@ -5035,6 +5035,10 @@
             "description": "Present on report detail and list endpoints.",
             "$ref": "#/components/schemas/VoteCounts"
           },
+          "viewer": {
+            "description": "Your own votes and follow; on report detail when signed in.",
+            "$ref": "#/components/schemas/ReportViewerState"
+          },
           "distanceM": {
             "description": "Distance in metres; present on nearby and duplicate searches.",
             "type": "number",
@@ -5145,6 +5149,30 @@
           "upvotes",
           "confirms",
           "falseReports"
+        ],
+        "additionalProperties": false
+      },
+      "ReportViewerState": {
+        "type": "object",
+        "properties": {
+          "upvoted": {
+            "type": "boolean"
+          },
+          "confirmed": {
+            "type": "boolean"
+          },
+          "flagged": {
+            "type": "boolean"
+          },
+          "following": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "upvoted",
+          "confirmed",
+          "flagged",
+          "following"
         ],
         "additionalProperties": false
       },

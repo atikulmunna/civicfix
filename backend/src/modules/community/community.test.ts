@@ -24,6 +24,7 @@ const emails = {
   author: `com_author_${stamp}@example.com`,
   voter: `com_voter_${stamp}@example.com`,
   admin: `com_admin_${stamp}@example.com`,
+  viewer: `com_viewer_${stamp}@example.com`,
 };
 
 let categoryId = '';
@@ -271,5 +272,56 @@ describe('vote-count wiring into reports (VOTE-005)', () => {
     const found = res.body.data.items.find((r: { id: string }) => r.id === reportId);
     expect(found.counts).toBeDefined();
     expect(found.counts.upvotes).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe('viewer state on the report detail', () => {
+  const viewerOf = async (token?: string) => {
+    const req = request(app).get(`/api/v1/reports/${reportId}`);
+    const res = token ? await req.set(...bearer(token)) : await req;
+    return res.body.data.report.viewer as Record<string, boolean> | undefined;
+  };
+
+  it('is absent for anonymous visitors', async () => {
+    expect(await viewerOf()).toBeUndefined();
+  });
+
+  it("reflects the signed-in user's own votes and follow", async () => {
+    const other = await registerAndLogin(emails.viewer);
+    expect(await viewerOf(other)).toEqual({
+      upvoted: false,
+      confirmed: false,
+      flagged: false,
+      following: false,
+    });
+
+    await request(app)
+      .post(`/api/v1/reports/${reportId}/upvote`)
+      .set(...bearer(other));
+    await request(app)
+      .post(`/api/v1/reports/${reportId}/confirm`)
+      .set(...bearer(other));
+    await request(app)
+      .post(`/api/v1/reports/${reportId}/false-report`)
+      .set(...bearer(other));
+    // Confirming auto-follows (BR-016).
+    expect(await viewerOf(other)).toEqual({
+      upvoted: true,
+      confirmed: true,
+      flagged: true,
+      following: true,
+    });
+
+    await request(app)
+      .delete(`/api/v1/reports/${reportId}/follow`)
+      .set(...bearer(other));
+    await request(app)
+      .delete(`/api/v1/reports/${reportId}/upvote`)
+      .set(...bearer(other));
+    expect(await viewerOf(other)).toMatchObject({ upvoted: false, following: false });
+  });
+
+  it('shows the author as following their own report', async () => {
+    expect(await viewerOf(authorToken)).toMatchObject({ following: true, upvoted: false });
   });
 });
