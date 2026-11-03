@@ -157,6 +157,25 @@ export const StatusHistoryEntrySchema = z
   })
   .meta({ id: 'StatusHistoryEntry' });
 
+/** Why an open report scores what it does today (F1); see modules/reports/priority.ts. */
+export const PriorityExplanationSchema = z
+  .strictObject({
+    severity: z.number().int(),
+    confirmations: z.number().int(),
+    waiting: z.number().int(),
+    flags: z.number().int(),
+    reporter: z.number().int(),
+    total: z.number().int(),
+    daysOpen: z.number().int(),
+    inputs: z.strictObject({
+      severity: SeveritySchema,
+      confirms: count,
+      falseReports: count,
+      reporterTrust: z.number().int(),
+    }),
+  })
+  .meta({ id: 'PriorityExplanation' });
+
 // ---------------------------------------------------------------------------
 // Community and notifications
 

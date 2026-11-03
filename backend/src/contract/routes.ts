@@ -47,6 +47,7 @@ import {
   DepartmentAnalyticsSchema,
   DepartmentSchema,
   MapMarkerSchema,
+  PriorityExplanationSchema,
   NotificationPageSchema,
   ReportPageSchema,
   ReportSchema,
@@ -389,6 +390,15 @@ export const routes: readonly ContractRoute[] = [
     params: idParams,
     body: duplicateSchema,
     data: report,
+  },
+  {
+    method: 'get',
+    path: '/api/v1/admin/reports/{id}/priority',
+    summary: 'Why a report ranks where it does; null when it is closed (not ranked).',
+    tag: 'Workflow',
+    access: ADMIN,
+    params: idParams,
+    data: z.strictObject({ priority: PriorityExplanationSchema.nullable() }),
   },
   {
     method: 'get',

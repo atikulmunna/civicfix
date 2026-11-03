@@ -12,13 +12,14 @@ kill_timeout = '10s'
 
 [build]
 
-# Apply pending database migrations before the new version takes traffic.
-# Runs once per deploy in a temporary machine with the new image and the app's
-# secrets (Prisma Migrate uses DATABASE_URL_UNPOOLED, the direct connection).
-# A failed migration stops the deploy, so old code never meets a new schema
-# half-applied.
+# Apply pending database migrations, then recompute triage (F1: trust scores
+# and priority anchors), before the new version takes traffic. Runs once per
+# deploy in a temporary machine with the new image and the app's secrets
+# (Prisma Migrate uses DATABASE_URL_UNPOOLED, the direct connection). A failed
+# step stops the deploy, so old code never meets a new schema half-applied.
+# `npm run release` is defined in package.json.
 [deploy]
-  release_command = 'npx prisma migrate deploy'
+  release_command = 'npm run release'
 
 [env]
   NODE_ENV = 'production'

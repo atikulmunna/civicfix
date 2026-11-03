@@ -10,6 +10,7 @@
 import 'dotenv/config';
 import type { ReportStatus, Severity } from '../src/generated/prisma/client.js';
 import { createPrismaClient } from '../src/lib/prisma-client.js';
+import { recomputeAll } from '../src/modules/reports/triage.service.js';
 import { hashPassword } from '../src/modules/auth/password.js';
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -363,6 +364,9 @@ async function main(): Promise<void> {
   }
 
   console.log('Seed complete:');
+  // Trust scores and priority anchors from the seeded histories and votes (F1).
+  await recomputeAll(prisma);
+
   console.log(`  users: 1 super admin, 1 admin, 2 workers, ${citizens.length} citizens`);
   console.log(`  categories: ${categories.length}, departments: ${departments.length}`);
   console.log(`  reports: ${reportIds.length} (with histories, subscriptions, votes, comments)`);
