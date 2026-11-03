@@ -1796,6 +1796,62 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/reports/{id}/priority": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Why a report ranks where it does; null when it is closed (not ranked).
+         * @description Requires role: admin, super_admin.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Success */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @constant */
+                            success: true;
+                            data: {
+                                priority: components["schemas"]["PriorityExplanation"] | null;
+                            };
+                        };
+                    };
+                };
+                /** @description Error (see ErrorCode) */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/department/reports": {
         parameters: {
             query?: never;
@@ -3162,6 +3218,21 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        PriorityExplanation: {
+            severity: number;
+            confirmations: number;
+            waiting: number;
+            flags: number;
+            reporter: number;
+            total: number;
+            daysOpen: number;
+            inputs: {
+                severity: components["schemas"]["Severity"];
+                confirms: number;
+                falseReports: number;
+                reporterTrust: number;
+            };
         };
         NotificationPage: {
             items: components["schemas"]["Notification"][];

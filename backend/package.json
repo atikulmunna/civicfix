@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.js",
+    "release": "prisma migrate deploy && node dist/scripts/recompute-triage.js",
     "postinstall": "prisma generate",
     "build": "tsc -p tsconfig.build.json",
     "test": "vitest run",

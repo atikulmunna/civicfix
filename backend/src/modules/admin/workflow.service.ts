@@ -13,6 +13,7 @@ import { assertReportExists } from '../community/shared.js';
 import { getVoteCounts } from '../community/votes.service.js';
 import { createStatusChangeNotifications } from '../notifications/notifications.service.js';
 import { getReportById, toPublicReport, type Actor } from '../reports/reports.service.js';
+import { refreshPriority, refreshReporterTrust } from '../reports/triage.service.js';
 import {
   assertTransition,
   InvalidStatusTransitionError,
@@ -28,6 +29,13 @@ export interface TransitionPayload {
   duplicateOfReportId?: string;
   departmentId?: string;
 }
+
+/** Outcomes that change the reporter's trust score (F1). */
+const TRUST_OUTCOMES: ReadonlySet<ReportStatus> = new Set<ReportStatus>([
+  'VERIFIED',
+  'RESOLVED',
+  'REJECTED',
+]);
 
 export async function transitionStatus(
   reportId: string,
@@ -132,6 +140,12 @@ export async function transitionStatus(
       newStatus: toStatus,
       actorId: actor.id,
     });
+
+    // Triage (F1), after the history row it counts: an outcome changes the
+    // reporter's trust (and so all their reports); any status change can
+    // close or reopen this report's ranking.
+    if (TRUST_OUTCOMES.has(toStatus)) await refreshReporterTrust(report.userId, tx);
+    else await refreshPriority(reportId, tx);
   });
 
   return getReportById(reportId, actor);
@@ -153,7 +167,7 @@ export async function listAdminReports(input: AdminListInput) {
     input.sort === 'oldest'
       ? [{ createdAt: 'asc' }]
       : input.sort === 'priority'
-        ? [{ priorityScore: 'desc' }, { createdAt: 'desc' }]
+        ? [{ priorityAnchor: { sort: 'desc', nulls: 'last' } }, { createdAt: 'desc' }]
         : [{ createdAt: 'desc' }];
 
   const [total, rows] = await prisma.$transaction([

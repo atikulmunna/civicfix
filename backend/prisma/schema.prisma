@@ -155,30 +155,34 @@ model Department {
 }
 
 model Report {
-  id                     String                                 @id @default(uuid()) @db.Uuid
-  userId                 String                                 @map("user_id") @db.Uuid
-  title                  String                                 @db.VarChar(180)
-  description            String
-  categoryId             String                                 @map("category_id") @db.Uuid
-  status                 ReportStatus                           @default(SUBMITTED)
-  severity               Severity
-  latitude               Decimal                                @db.Decimal(9, 6)
-  longitude              Decimal                                @db.Decimal(9, 6)
+  id                   String                                 @id @default(uuid()) @db.Uuid
+  userId               String                                 @map("user_id") @db.Uuid
+  title                String                                 @db.VarChar(180)
+  description          String
+  categoryId           String                                 @map("category_id") @db.Uuid
+  status               ReportStatus                           @default(SUBMITTED)
+  severity             Severity
+  latitude             Decimal                                @db.Decimal(9, 6)
+  longitude            Decimal                                @db.Decimal(9, 6)
   // Managed via raw SQL/migration; derived from latitude/longitude on write.
-  location               Unsupported("geography(Point, 4326)")?
-  address                String?
-  landmark               String?
-  assignedDepartmentId   String?                                @map("assigned_department_id") @db.Uuid
-  priorityScore          Int                                    @default(0) @map("priority_score")
-  priorityScoreUpdatedAt DateTime?                              @map("priority_score_updated_at")
+  location             Unsupported("geography(Point, 4326)")?
+  address              String?
+  landmark             String?
+  assignedDepartmentId String?                                @map("assigned_department_id") @db.Uuid
+  // Triage priority (F1), stored so lists can sort by it: the score minus the
+  // UTC day number the report was created on. Today's score is anchor + today's
+  // day number, so the "+1 per day open" part needs no daily job. Null for
+  // closed reports (resolved, rejected, duplicate, archived), which are not
+  // ranked. Written only by modules/reports/triage.service.ts.
+  priorityAnchor       Int?                                   @map("priority_anchor")
   // Number of `confirm` votes. Maintained by a trigger on votes (migration
   // *_report_confirm_count), never written by application code.
-  confirmCount           Int                                    @default(0) @map("confirm_count")
-  duplicateOfReportId    String?                                @map("duplicate_of_report_id") @db.Uuid
-  internalNote           String?                                @map("internal_note")
-  createdAt              DateTime                               @default(now()) @map("created_at")
-  updatedAt              DateTime                               @updatedAt @map("updated_at")
-  resolvedAt             DateTime?                              @map("resolved_at")
+  confirmCount         Int                                    @default(0) @map("confirm_count")
+  duplicateOfReportId  String?                                @map("duplicate_of_report_id") @db.Uuid
+  internalNote         String?                                @map("internal_note")
+  createdAt            DateTime                               @default(now()) @map("created_at")
+  updatedAt            DateTime                               @updatedAt @map("updated_at")
+  resolvedAt           DateTime?                              @map("resolved_at")
 
   reporter           User        @relation("ReportReporter", fields: [userId], references: [id])
   category           Category    @relation(fields: [categoryId], references: [id])
@@ -201,6 +205,8 @@ model Report {
   @@index([location], map: "idx_reports_location_gist", type: Gist)
   // "My reports" filters by reporter.
   @@index([userId])
+  // "Highest priority" sort (closed reports, with no anchor, come last).
+  @@index([priorityAnchor(sort: Desc), createdAt(sort: Desc)])
   // "Most confirmed" sort.
   @@index([confirmCount(sort: Desc), createdAt(sort: Desc)])
   // Map viewport filters by a latitude range, then a longitude range.

@@ -10,6 +10,7 @@ import { queryKeys } from '@/lib/query-keys';
 import { SeverityBadge, StatusBadge } from '@/components/badges';
 import { StatusTimeline } from '@/components/status-timeline';
 import { RequireAuth } from '@/components/require-auth';
+import { PriorityCard } from '@/components/admin/priority-card';
 import { useToast } from '@/components/toast';
 import { Button, Card, Input, Label, LoadError, Select, Spinner, Textarea } from '@/components/ui';
 
@@ -134,6 +135,8 @@ export function Moderation({ id }: { id: string }) {
       </div>
 
       <aside className="flex flex-col gap-4">
+        <PriorityCard reportId={id} />
+
         <Card>
           <h2 className="mb-3 font-semibold text-slate-900">Update status</h2>
           <div className="flex flex-col gap-2">

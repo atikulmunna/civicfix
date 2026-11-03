@@ -6,6 +6,9 @@
 import { Router } from 'express';
 import { parseInput, routeParam, sendSuccess } from '../../lib/http.js';
 import { authUser, optionalAuth, requireAuth, requireRole } from '../../middleware/require-auth.js';
+import { assertReportExists } from '../community/shared.js';
+import { prisma } from '../../lib/prisma.js';
+import { explainPriority } from '../reports/triage.service.js';
 import * as workflow from './workflow.service.js';
 import {
   adminListSchema,
@@ -79,6 +82,13 @@ adminReportsRouter.post('/:id/duplicate', requireAuth, requireRole(...ADMIN), as
     input,
   );
   sendSuccess(res, { report });
+});
+
+// Why a report ranks where it does (F1); null when it is closed (not ranked).
+adminReportsRouter.get('/:id/priority', requireAuth, requireRole(...ADMIN), async (req, res) => {
+  const id = routeParam(req, 'id');
+  await assertReportExists(id);
+  sendSuccess(res, { priority: await explainPriority(id, prisma) });
 });
 
 // /api/v1/department

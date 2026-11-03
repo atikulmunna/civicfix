@@ -7,6 +7,7 @@
 import type { VoteType } from '../../generated/prisma/client.js';
 import { prisma } from '../../lib/prisma.js';
 import { isUniqueViolation } from '../../lib/prisma-errors.js';
+import { refreshPriority } from '../reports/triage.service.js';
 import { assertReportExists } from './shared.js';
 
 export interface VoteCounts {
@@ -43,6 +44,9 @@ async function counts(reportId: string): Promise<VoteCounts> {
   );
 }
 
+/** Confirmations and false-report flags are triage inputs (F1); upvotes are not. */
+const AFFECTS_PRIORITY: ReadonlySet<VoteType> = new Set<VoteType>(['confirm', 'false_report']);
+
 /** Cast a vote; idempotent if the same vote already exists (BR-006/007). */
 export async function castVote(
   reportId: string,
@@ -63,6 +67,7 @@ export async function castVote(
       skipDuplicates: true,
     });
   }
+  if (AFFECTS_PRIORITY.has(voteType)) await refreshPriority(reportId, prisma);
 
   return { counts: await counts(reportId) };
 }
@@ -80,5 +85,6 @@ export async function removeVote(
       where: { reportId, userId, source: 'confirm' },
     });
   }
+  if (AFFECTS_PRIORITY.has(voteType)) await refreshPriority(reportId, prisma);
   return { counts: await counts(reportId) };
 }

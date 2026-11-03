@@ -10,6 +10,8 @@ import { sanitizeText } from '../../lib/sanitize.js';
 import { deleteStoredImages, type StoredImage } from '../../lib/uploads.js';
 import { getVoteCounts } from '../community/votes.service.js';
 import { findDuplicateIds, findNearbyIds } from './geo.js';
+import { priorityFromAnchor } from './priority.js';
+import { refreshPriority } from './triage.service.js';
 import type {
   CheckDuplicatesInput,
   CreateReportInput,
@@ -50,7 +52,7 @@ export function toPublicReport(r: ReportWithRelations, canSeeInternal = false) {
     address: r.address,
     landmark: r.landmark,
     assignedDepartmentId: r.assignedDepartmentId,
-    priorityScore: r.priorityScore,
+    priorityScore: priorityFromAnchor(r.priorityAnchor, new Date()),
     duplicateOfReportId: r.duplicateOfReportId,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
@@ -123,6 +125,9 @@ export async function createReport(
       data: { reportId: created.id, userId, source: 'owner' },
     });
 
+    // Rank it for triage (F1).
+    await refreshPriority(created.id, tx);
+
     return created;
   });
 
@@ -149,7 +154,8 @@ export async function getReportById(id: string, actor: Actor | null) {
 const ORDER_BY: Record<ListReportsInput['sort'], Prisma.ReportOrderByWithRelationInput[]> = {
   newest: [{ createdAt: 'desc' }],
   oldest: [{ createdAt: 'asc' }],
-  priority: [{ priorityScore: 'desc' }, { createdAt: 'desc' }],
+  // Closed reports have no anchor and come last (F1).
+  priority: [{ priorityAnchor: { sort: 'desc', nulls: 'last' } }, { createdAt: 'desc' }],
   most_confirmed: [{ confirmCount: 'desc' }, { createdAt: 'desc' }],
 };
 
@@ -289,6 +295,8 @@ export async function updateReport(id: string, actor: Actor, input: UpdateReport
       }),
     },
   });
+  // Severity is part of the triage score (F1).
+  if (input.severity !== undefined) await refreshPriority(id, prisma);
   return getReportById(id, actor);
 }
 
