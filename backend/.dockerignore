@@ -7,3 +7,4 @@ uploads
 src/**/*.test.ts
 .git
 .gitignore
+src/generated

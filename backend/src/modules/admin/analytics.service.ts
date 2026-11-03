@@ -3,7 +3,7 @@
  * the admin dashboard. Count rollups use Prisma groupBy; time-based metrics
  * (avg resolution time, monthly trends) use parameter-free raw SQL.
  */
-import type { ReportStatus, Severity } from '@prisma/client';
+import type { ReportStatus, Severity } from '../../generated/prisma/client.js';
 import { prisma } from '../../lib/prisma.js';
 
 const ALL_STATUSES: ReportStatus[] = [

@@ -4,7 +4,7 @@
  * unique constraint (report_id, user_id, vote_type) enforces "only once".
  * Confirming auto-subscribes the user to the report (BR-016).
  */
-import type { VoteType } from '@prisma/client';
+import type { VoteType } from '../../generated/prisma/client.js';
 import { prisma } from '../../lib/prisma.js';
 import { isUniqueViolation } from '../../lib/prisma-errors.js';
 import { assertReportExists } from './shared.js';

@@ -8,10 +8,13 @@
  * Re-runnable: wipes existing data first. Run with `npm run seed`.
  */
 import 'dotenv/config';
-import { PrismaClient, type ReportStatus, type Severity } from '@prisma/client';
+import type { ReportStatus, Severity } from '../src/generated/prisma/client.js';
+import { createPrismaClient } from '../src/lib/prisma-client.js';
 import { hashPassword } from '../src/modules/auth/password.js';
 
-const prisma = new PrismaClient();
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) throw new Error('DATABASE_URL is not set (see backend/.env.example).');
+const prisma = createPrismaClient(databaseUrl);
 
 const SEED_PASSWORD = 'Password123!';
 const DHAKA = { lat: 23.78, lng: 90.4 };

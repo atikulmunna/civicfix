@@ -73,9 +73,9 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: backend/package-lock.json
+      # npm ci also generates the Prisma client (postinstall).
       - run: npm ci
       - run: npx prisma validate
-      - run: npx prisma generate
       - name: Lint
         run: npm run lint
       - name: Typecheck
@@ -84,11 +84,12 @@ jobs:
         run: npx prisma migrate deploy
       - name: Schema matches migrations (drift check)
         run: |
-          echo 'CREATE DATABASE civicfix_shadow;' | npx prisma db execute --stdin --url "$DATABASE_URL"
+          # Prisma 7: the CLI connects via prisma.config.ts (DATABASE_URL_UNPOOLED
+          # and SHADOW_DATABASE_URL from the job env).
+          echo 'CREATE DATABASE civicfix_shadow;' | npx prisma db execute --stdin
           npx prisma migrate diff \
             --from-migrations prisma/migrations \
-            --to-schema-datamodel prisma/schema.prisma \
-            --shadow-database-url "$SHADOW_DATABASE_URL" \
+            --to-schema prisma/schema.prisma \
             --exit-code
       - name: Test
         run: npm test
