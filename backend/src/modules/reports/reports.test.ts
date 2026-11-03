@@ -10,6 +10,7 @@ import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 import { buildApp } from '../../app.js';
+import { env } from '../../config/env.js';
 import { prisma } from '../../lib/prisma.js';
 import { LocalStore, objectStore } from '../../lib/storage.js';
 import { deleteStoredImages } from '../../lib/uploads.js';
@@ -161,6 +162,29 @@ describe('POST /reports (create)', () => {
     const out = await res;
     expect(out.status).toBe(400);
     expect(out.body.code).toBe('VALIDATION_ERROR');
+  });
+
+  it('rejects an image over the size limit with a clear message', async () => {
+    const res = await createReport({ token: ownerToken, withImage: false }).attach(
+      'images',
+      Buffer.alloc(env.MAX_UPLOAD_BYTES + 1),
+      { filename: 'huge.png', contentType: 'image/png' },
+    );
+    expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({
+      code: 'VALIDATION_ERROR',
+      message: `Each image must be at most ${String(env.MAX_UPLOAD_BYTES)} bytes.`,
+    });
+  });
+
+  it('rejects more than five images in one report', async () => {
+    const req = createReport({ token: ownerToken, withImage: false });
+    for (let i = 0; i < 6; i++) {
+      req.attach('images', PNG, { filename: `photo${String(i)}.png`, contentType: 'image/png' });
+    }
+    const res = await req;
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('VALIDATION_ERROR');
   });
 
   it('rejects an unknown category (REP-004)', async () => {
