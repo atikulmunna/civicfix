@@ -81,4 +81,53 @@ describe('NewReportPage', () => {
     expect(fd.getAll('images')).toHaveLength(1);
     await waitFor(() => expect(push).toHaveBeenCalledWith('/reports/new1'));
   });
+
+  /** Fills every required field except photos. */
+  async function fillForm(user: ReturnType<typeof userEvent.setup>) {
+    renderWithQuery(
+      <ToastProvider>
+        <AuthProvider>
+          <NewReportPage />
+        </AuthProvider>
+      </ToastProvider>,
+    );
+    await user.type(await screen.findByLabelText('Title'), 'Broken light');
+    await user.type(screen.getByLabelText('Description'), 'The light is out completely.');
+    await user.selectOptions(screen.getByLabelText('Category'), 'c1');
+    await user.click(await screen.findByText('set-location'));
+  }
+
+  const png = (bytes: number, name: string) =>
+    new File([new Uint8Array(bytes)], name, { type: 'image/png' });
+
+  it('refuses more photos than a report can hold', async () => {
+    const user = userEvent.setup();
+    await fillForm(user);
+
+    const six = Array.from({ length: 6 }, (_, i) => png(10, `p${String(i)}.png`));
+    await user.upload(screen.getByLabelText('Photos'), six);
+    expect(screen.getByText('Choose up to 5 photos.')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /submit report/i }));
+    expect(await screen.findByText('Please add at least one photo.')).toBeInTheDocument();
+    expect(postForm).not.toHaveBeenCalled();
+  });
+
+  it('stops before uploading photos too large for the web proxy', async () => {
+    const user = userEvent.setup();
+    await fillForm(user);
+
+    // jsdom cannot decode images, so the files reach the size check unchanged.
+    await user.upload(screen.getByLabelText('Photos'), [
+      png(2 * 1024 * 1024, 'a.png'),
+      png(2 * 1024 * 1024, 'b.png'),
+    ]);
+    await user.click(screen.getByRole('button', { name: /submit report/i }));
+
+    expect(
+      await screen.findByText(/These photos add up to 4 MB, over the 3.5 MB limit/),
+    ).toBeInTheDocument();
+    expect(postForm).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: /submit report/i })).toBeEnabled();
+  });
 });
