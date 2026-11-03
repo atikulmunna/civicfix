@@ -71,6 +71,7 @@ export function ReportDetail({ id }: { id: string }) {
         <VoteBar
           reportId={report.id}
           initialCounts={report.counts ?? { upvotes: 0, confirms: 0, falseReports: 0 }}
+          initialViewer={report.viewer}
         />
 
         <hr className="border-slate-200" />

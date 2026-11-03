@@ -16,6 +16,7 @@ export type User = Schemas['User'];
 export type AdminUser = Schemas['AdminUser'];
 export type VoteCounts = Schemas['VoteCounts'];
 export type ReportImage = Schemas['ReportImage'];
+export type ReportViewerState = Schemas['ReportViewerState'];
 export type Category = Schemas['Category'];
 export type Department = Schemas['Department'];
 export type Report = Schemas['Report'];

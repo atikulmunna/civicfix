@@ -3147,6 +3147,8 @@ export interface components {
             internalNote?: string | null;
             /** @description Present on report detail and list endpoints. */
             counts?: components["schemas"]["VoteCounts"];
+            /** @description Your own votes and follow; on report detail when signed in. */
+            viewer?: components["schemas"]["ReportViewerState"];
             /** @description Distance in metres; present on nearby and duplicate searches. */
             distanceM?: number;
         };
@@ -3168,6 +3170,12 @@ export interface components {
             upvotes: number;
             confirms: number;
             falseReports: number;
+        };
+        ReportViewerState: {
+            upvoted: boolean;
+            confirmed: boolean;
+            flagged: boolean;
+            following: boolean;
         };
         ReportPage: {
             items: components["schemas"]["Report"][];
