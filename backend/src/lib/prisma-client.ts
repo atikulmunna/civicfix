@@ -43,5 +43,13 @@ export function createPrismaClient(connectionString: string): PrismaClient {
     connectionString: withVerifiedTls(connectionString),
     connectionTimeoutMillis: CONNECT_TIMEOUT_MS,
   });
-  return new PrismaClient({ adapter });
+  return new PrismaClient({
+    adapter,
+    // A transaction must first get a connection, and with the driver adapter
+    // that includes opening one. Prisma's default maxWait (2 s) is shorter
+    // than a Neon compute takes to wake, so the first transaction after an
+    // idle period failed with P2028 (production, 2026-11-03). Allow as long
+    // as connecting itself may take.
+    transactionOptions: { maxWait: CONNECT_TIMEOUT_MS },
+  });
 }
