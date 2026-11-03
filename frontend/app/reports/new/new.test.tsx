@@ -32,6 +32,7 @@ vi.mock('@/components/location-picker', () => ({
 
 import { AuthProvider } from '@/components/auth-context';
 import { ToastProvider } from '@/components/toast';
+import { queryKeys } from '@/lib/query-keys';
 import NewReportPage from './page';
 
 const ME = { id: 'u1', name: 'Me', email: 'me@e.com', role: 'citizen' };
@@ -54,7 +55,7 @@ describe('NewReportPage', () => {
 
   it('submits a multipart report and redirects to the new report', async () => {
     const user = userEvent.setup();
-    renderWithQuery(
+    const { client } = renderWithQuery(
       <ToastProvider>
         <AuthProvider>
           <NewReportPage />
@@ -62,6 +63,8 @@ describe('NewReportPage', () => {
       </ToastProvider>,
     );
 
+    // A list cached before the submit must not keep showing the old reports.
+    client.setQueryData(queryKeys.reports({ page: 1 }), { items: [] });
     await screen.findByLabelText('Title');
     await user.type(screen.getByLabelText('Title'), 'Broken light');
     await user.type(screen.getByLabelText('Description'), 'The light is out completely.');
@@ -80,6 +83,7 @@ describe('NewReportPage', () => {
     expect(fd.get('latitude')).toBe('23.8');
     expect(fd.getAll('images')).toHaveLength(1);
     await waitFor(() => expect(push).toHaveBeenCalledWith('/reports/new1'));
+    expect(client.getQueryState(queryKeys.reports({ page: 1 }))?.isInvalidated).toBe(true);
   });
 
   /** Fills every required field except photos. */

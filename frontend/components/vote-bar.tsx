@@ -2,14 +2,26 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { api, ApiError } from '@/lib/api';
-import type { VoteCounts } from '@/lib/types';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { api, errorMessage } from '@/lib/api';
+import { invalidateReportLists } from '@/lib/query-client';
+import { queryKeys } from '@/lib/query-keys';
+import type { Report, VoteCounts } from '@/lib/types';
 import { useAuth } from './auth-context';
 import { useToast } from './toast';
 
+type Vote = 'upvote' | 'confirm' | 'false-report';
+
+const VERB: Record<Vote, string> = {
+  upvote: 'upvote',
+  confirm: 'confirm',
+  'false-report': 'flag this report',
+};
+
 /**
  * Vote + follow actions. The API is idempotent and doesn't expose per-user
- * state, so toggles are tracked optimistically within this session.
+ * state, so which toggles are on is tracked within this session; counts and
+ * the follow state come from the API's responses.
  */
 export function VoteBar({
   reportId,
@@ -20,11 +32,42 @@ export function VoteBar({
 }) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [counts, setCounts] = useState(initialCounts);
   const [upvoted, setUpvoted] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [following, setFollowing] = useState(false);
-  const [busy, setBusy] = useState(false);
+
+  const castVote = useMutation({
+    mutationFn: ({ vote, undo }: { vote: Vote; undo: boolean }) =>
+      undo && vote !== 'false-report'
+        ? api.del(`/reports/${reportId}/${vote}`)
+        : api.post(`/reports/${reportId}/${vote}`),
+    onSuccess: ({ counts: next }, { vote, undo }) => {
+      setCounts(next);
+      if (vote === 'upvote') setUpvoted(!undo);
+      if (vote === 'confirm') {
+        setConfirmed(!undo);
+        if (!undo) setFollowing(true); // confirming auto-follows
+      }
+      if (vote === 'false-report') toast('Flagged as possibly false. Thanks.', 'success');
+      // Keep the cached report and every list showing counts in step.
+      queryClient.setQueryData<{ report: Report }>(queryKeys.report(reportId), (d) =>
+        d ? { report: { ...d.report, counts: next } } : d,
+      );
+      void invalidateReportLists(queryClient);
+    },
+    onError: (err, { vote }) => toast(errorMessage(err, `Could not ${VERB[vote]}.`), 'error'),
+  });
+
+  const follow = useMutation({
+    mutationFn: (undo: boolean) =>
+      undo ? api.del(`/reports/${reportId}/follow`) : api.post(`/reports/${reportId}/follow`),
+    onSuccess: ({ following: now }) => setFollowing(now),
+    onError: (err) => toast(errorMessage(err, 'Could not follow.'), 'error'),
+  });
+
+  const busy = castVote.isPending || follow.isPending;
 
   if (!user) {
     return (
@@ -41,49 +84,10 @@ export function VoteBar({
     );
   }
 
-  async function act(fn: () => Promise<void>, label: string) {
-    setBusy(true);
-    try {
-      await fn();
-    } catch (err) {
-      toast(err instanceof ApiError ? err.message : `Could not ${label}.`, 'error');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const toggleUpvote = () =>
-    act(async () => {
-      const { counts: c } = upvoted
-        ? await api.del(`/reports/${reportId}/upvote`)
-        : await api.post(`/reports/${reportId}/upvote`);
-      setCounts(c);
-      setUpvoted((v) => !v);
-    }, 'upvote');
-
-  const toggleConfirm = () =>
-    act(async () => {
-      const { counts: c } = confirmed
-        ? await api.del(`/reports/${reportId}/confirm`)
-        : await api.post(`/reports/${reportId}/confirm`);
-      setCounts(c);
-      setConfirmed((v) => !v);
-      if (!confirmed) setFollowing(true); // confirming auto-follows
-    }, 'confirm');
-
-  const flagFalse = () =>
-    act(async () => {
-      const { counts: c } = await api.post(`/reports/${reportId}/false-report`);
-      setCounts(c);
-      toast('Flagged as possibly false. Thanks.', 'success');
-    }, 'flag');
-
-  const toggleFollow = () =>
-    act(async () => {
-      if (following) await api.del(`/reports/${reportId}/follow`);
-      else await api.post(`/reports/${reportId}/follow`);
-      setFollowing((v) => !v);
-    }, 'follow');
+  const toggleUpvote = () => castVote.mutate({ vote: 'upvote', undo: upvoted });
+  const toggleConfirm = () => castVote.mutate({ vote: 'confirm', undo: confirmed });
+  const flagFalse = () => castVote.mutate({ vote: 'false-report', undo: false });
+  const toggleFollow = () => follow.mutate(following);
 
   const btn = 'rounded-md border px-3 py-1.5 text-sm font-medium transition disabled:opacity-50';
 

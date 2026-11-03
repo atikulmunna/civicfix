@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, errorMessage } from '@/lib/api';
+import { queryKeys } from '@/lib/query-keys';
 import { useAuth } from '@/components/auth-context';
 import { useToast } from '@/components/toast';
 import { Button, Card, FieldError, Input, Label } from '@/components/ui';
@@ -14,15 +16,31 @@ const MIN_LENGTH = 8;
  * keeps going on the fresh cookies it returns.
  */
 export function ChangePasswordForm() {
-  const { user, refreshUser } = useAuth();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
 
-  async function onSubmit(e: FormEvent) {
+  const change = useMutation({
+    mutationFn: (body: { currentPassword: string; newPassword: string }) =>
+      api.post('/auth/change-password', body),
+    // The response is the updated user (mustChangePassword cleared), so the
+    // reset banner disappears without refetching /auth/me.
+    onSuccess: ({ user: updated }) => {
+      queryClient.setQueryData(queryKeys.me, updated);
+      setCurrent('');
+      setNext('');
+      setConfirm('');
+      toast('Password changed. You were signed out on your other devices.', 'success');
+    },
+    onError: (err) => setError(errorMessage(err, 'Could not change your password.')),
+  });
+  const busy = change.isPending;
+
+  function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     if (next.length < MIN_LENGTH) {
@@ -33,22 +51,7 @@ export function ChangePasswordForm() {
       setError('The new passwords do not match.');
       return;
     }
-    setBusy(true);
-    try {
-      await api.post('/auth/change-password', {
-        currentPassword: current,
-        newPassword: next,
-      });
-      setCurrent('');
-      setNext('');
-      setConfirm('');
-      await refreshUser();
-      toast('Password changed. You were signed out on your other devices.', 'success');
-    } catch (err) {
-      setError(errorMessage(err, 'Could not change your password.'));
-    } finally {
-      setBusy(false);
-    }
+    change.mutate({ currentPassword: current, newPassword: next });
   }
 
   return (

@@ -1,5 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
 import { ApiError } from './api';
+import { reportListPrefixes } from './query-keys';
 
 /** Retry transient failures (network, 5xx) at most twice; never retry 4xx. */
 export function shouldRetry(failureCount: number, error: unknown): boolean {
@@ -22,4 +23,14 @@ export function makeQueryClient(): QueryClient {
       mutations: { retry: false },
     },
   });
+}
+
+/**
+ * Marks every report list stale after a write that changes reports. Lists on
+ * screen refetch now; the rest refetch when next shown.
+ */
+export async function invalidateReportLists(queryClient: QueryClient): Promise<void> {
+  await Promise.all(
+    reportListPrefixes.map((queryKey) => queryClient.invalidateQueries({ queryKey })),
+  );
 }
