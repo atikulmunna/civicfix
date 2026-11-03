@@ -9,6 +9,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { pinoHttp } from 'pino-http';
 import { env } from './config/env.js';
+import { enforceContract } from './contract/validate.js';
 import { ApiError } from './lib/errors.js';
 import { errorHandler } from './lib/error-handler.js';
 import { checkDatabase } from './lib/health.js';
@@ -44,6 +45,10 @@ export function buildApp() {
   // req.ip is the address that connected to them, never a client-supplied
   // X-Forwarded-For value. See lib/client-ip.ts for the web-proxy hop.
   app.set('trust proxy', env.TRUST_PROXY_HOPS);
+
+  // Test build only: every JSON response is checked against the API contract
+  // (src/contract), so the integration suite also verifies the OpenAPI spec.
+  if (env.NODE_ENV === 'test') app.use(enforceContract());
 
   // One structured log line per request, with a request id that is echoed in
   // X-Request-Id (and in 500 responses) so reports can be traced. Fly's

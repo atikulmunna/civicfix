@@ -137,7 +137,7 @@ describe('categories (§9.8)', () => {
 });
 
 describe('departments (§9.9)', () => {
-  it('creates, lists, and disables a department', async () => {
+  it('creates, lists, updates and disables a department', async () => {
     const create = await request(app)
       .post('/api/v1/admin/departments')
       .set(...bearer(adminToken))
@@ -148,6 +148,13 @@ describe('departments (§9.9)', () => {
 
     const list = await request(app).get('/api/v1/departments');
     expect(list.body.data.departments.some((d: { id: string }) => d.id === id)).toBe(true);
+
+    const upd = await request(app)
+      .patch(`/api/v1/admin/departments/${id}`)
+      .set(...bearer(adminToken))
+      .send({ phone: '+880 2 555 0100' });
+    expect(upd.status).toBe(200);
+    expect(upd.body.data.department).toMatchObject({ id, phone: '+880 2 555 0100' });
 
     const del = await request(app)
       .delete(`/api/v1/admin/departments/${id}`)

@@ -9,5 +9,7 @@ export default defineConfig({
     // Vitest's 5 s default on a remote database (CI, Neon branches).
     testTimeout: 20_000,
     hookTimeout: 30_000,
+    // Fails any test whose requests broke the API contract (src/contract).
+    setupFiles: ['src/test/contract-setup.ts'],
   },
 });
