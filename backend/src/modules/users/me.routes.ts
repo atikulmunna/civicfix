@@ -3,7 +3,7 @@
  */
 import { Router } from 'express';
 import { z } from 'zod';
-import { asyncHandler, sendSuccess } from '../../lib/http.js';
+import { sendSuccess } from '../../lib/http.js';
 import { ApiError } from '../../lib/errors.js';
 import { authUser, requireAuth } from '../../middleware/require-auth.js';
 import * as me from './me.service.js';
@@ -24,36 +24,24 @@ const listSchema = z.object({
 
 export const usersRouter = Router();
 
-usersRouter.get(
-  '/me',
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    sendSuccess(res, { user: await me.getMyProfile(authUser(req).id) });
-  }),
-);
+usersRouter.get('/me', requireAuth, async (req, res) => {
+  sendSuccess(res, { user: await me.getMyProfile(authUser(req).id) });
+});
 
-usersRouter.patch(
-  '/me',
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    const result = updateSchema.safeParse(req.body);
-    if (!result.success) {
-      const details = result.error.issues.map((i) => ({
-        path: i.path.join('.'),
-        message: i.message,
-      }));
-      throw new ApiError('VALIDATION_ERROR', 'Invalid request data.', details);
-    }
-    sendSuccess(res, { user: await me.updateMyProfile(authUser(req).id, result.data) });
-  }),
-);
+usersRouter.patch('/me', requireAuth, async (req, res) => {
+  const result = updateSchema.safeParse(req.body);
+  if (!result.success) {
+    const details = result.error.issues.map((i) => ({
+      path: i.path.join('.'),
+      message: i.message,
+    }));
+    throw new ApiError('VALIDATION_ERROR', 'Invalid request data.', details);
+  }
+  sendSuccess(res, { user: await me.updateMyProfile(authUser(req).id, result.data) });
+});
 
-usersRouter.get(
-  '/me/reports',
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    const parsed = listSchema.safeParse(req.query);
-    const { page, limit } = parsed.success ? parsed.data : { page: 1, limit: 20 };
-    sendSuccess(res, await me.listMyReports(authUser(req).id, page, limit));
-  }),
-);
+usersRouter.get('/me/reports', requireAuth, async (req, res) => {
+  const parsed = listSchema.safeParse(req.query);
+  const { page, limit } = parsed.success ? parsed.data : { page: 1, limit: 20 };
+  sendSuccess(res, await me.listMyReports(authUser(req).id, page, limit));
+});

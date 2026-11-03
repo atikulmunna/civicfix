@@ -144,6 +144,20 @@ describe('POST /auth/login', () => {
     expect(res.status).toBe(400);
     expect(res.body.message).toBe('Invalid email or password.');
   });
+
+  // Express 5 leaves req.body undefined when no body parser ran (Express 4
+  // gave {}): a missing or non-JSON body must still be a 400, not a 500.
+  it('rejects a missing or non-JSON body as a validation error', async () => {
+    const empty = await request(app).post('/api/v1/auth/login');
+    const text = await request(app)
+      .post('/api/v1/auth/login')
+      .set('content-type', 'text/plain')
+      .send('email=a@b.c');
+    for (const res of [empty, text]) {
+      expect(res.status).toBe(400);
+      expect(res.body.code).toBe('VALIDATION_ERROR');
+    }
+  });
 });
 
 describe('GET /auth/me', () => {

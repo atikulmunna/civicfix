@@ -5,7 +5,7 @@
  */
 import { Router } from 'express';
 import { z } from 'zod';
-import { asyncHandler, routeParam, sendSuccess } from '../../lib/http.js';
+import { routeParam, sendSuccess } from '../../lib/http.js';
 import { ApiError } from '../../lib/errors.js';
 import { authUser, optionalAuth, requireAuth } from '../../middleware/require-auth.js';
 import { commentLimiter } from '../../middleware/rate-limit.js';
@@ -32,85 +32,44 @@ function parseComment(body: unknown): { content: string } {
 // Nested under /api/v1/reports
 export const communityRouter = Router();
 
-communityRouter.get(
-  '/:id/comments',
-  optionalAuth,
-  asyncHandler(async (req, res) => {
-    sendSuccess(res, { comments: await comments.listComments(routeParam(req, 'id')) });
-  }),
-);
+communityRouter.get('/:id/comments', optionalAuth, async (req, res) => {
+  sendSuccess(res, { comments: await comments.listComments(routeParam(req, 'id')) });
+});
 
-communityRouter.post(
-  '/:id/comments',
-  requireAuth,
-  commentLimiter,
-  asyncHandler(async (req, res) => {
-    const { content } = parseComment(req.body);
-    const comment = await comments.addComment(routeParam(req, 'id'), authUser(req).id, content);
-    sendSuccess(res, { comment }, 201);
-  }),
-);
+communityRouter.post('/:id/comments', requireAuth, commentLimiter, async (req, res) => {
+  const { content } = parseComment(req.body);
+  const comment = await comments.addComment(routeParam(req, 'id'), authUser(req).id, content);
+  sendSuccess(res, { comment }, 201);
+});
 
 // Votes: upvote / confirm / false-report (§9.6)
-communityRouter.post(
-  '/:id/upvote',
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    sendSuccess(res, await votes.castVote(routeParam(req, 'id'), authUser(req).id, 'upvote'));
-  }),
-);
-communityRouter.delete(
-  '/:id/upvote',
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    sendSuccess(res, await votes.removeVote(routeParam(req, 'id'), authUser(req).id, 'upvote'));
-  }),
-);
-communityRouter.post(
-  '/:id/confirm',
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    sendSuccess(res, await votes.castVote(routeParam(req, 'id'), authUser(req).id, 'confirm'));
-  }),
-);
-communityRouter.delete(
-  '/:id/confirm',
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    sendSuccess(res, await votes.removeVote(routeParam(req, 'id'), authUser(req).id, 'confirm'));
-  }),
-);
-communityRouter.post(
-  '/:id/false-report',
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    sendSuccess(res, await votes.castVote(routeParam(req, 'id'), authUser(req).id, 'false_report'));
-  }),
-);
+communityRouter.post('/:id/upvote', requireAuth, async (req, res) => {
+  sendSuccess(res, await votes.castVote(routeParam(req, 'id'), authUser(req).id, 'upvote'));
+});
+communityRouter.delete('/:id/upvote', requireAuth, async (req, res) => {
+  sendSuccess(res, await votes.removeVote(routeParam(req, 'id'), authUser(req).id, 'upvote'));
+});
+communityRouter.post('/:id/confirm', requireAuth, async (req, res) => {
+  sendSuccess(res, await votes.castVote(routeParam(req, 'id'), authUser(req).id, 'confirm'));
+});
+communityRouter.delete('/:id/confirm', requireAuth, async (req, res) => {
+  sendSuccess(res, await votes.removeVote(routeParam(req, 'id'), authUser(req).id, 'confirm'));
+});
+communityRouter.post('/:id/false-report', requireAuth, async (req, res) => {
+  sendSuccess(res, await votes.castVote(routeParam(req, 'id'), authUser(req).id, 'false_report'));
+});
 
 // Follow / unfollow (NOTIF-007)
-communityRouter.post(
-  '/:id/follow',
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    sendSuccess(res, await subscriptions.follow(routeParam(req, 'id'), authUser(req).id));
-  }),
-);
-communityRouter.delete(
-  '/:id/follow',
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    sendSuccess(res, await subscriptions.unfollow(routeParam(req, 'id'), authUser(req).id));
-  }),
-);
+communityRouter.post('/:id/follow', requireAuth, async (req, res) => {
+  sendSuccess(res, await subscriptions.follow(routeParam(req, 'id'), authUser(req).id));
+});
+communityRouter.delete('/:id/follow', requireAuth, async (req, res) => {
+  sendSuccess(res, await subscriptions.unfollow(routeParam(req, 'id'), authUser(req).id));
+});
 
 // Top-level: DELETE /api/v1/comments/:id
 export const commentsRouter = Router();
-commentsRouter.delete(
-  '/:id',
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    await comments.deleteComment(routeParam(req, 'id'), authUser(req));
-    sendSuccess(res, { deleted: true });
-  }),
-);
+commentsRouter.delete('/:id', requireAuth, async (req, res) => {
+  await comments.deleteComment(routeParam(req, 'id'), authUser(req));
+  sendSuccess(res, { deleted: true });
+});

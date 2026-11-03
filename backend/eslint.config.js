@@ -19,8 +19,11 @@ export default defineConfig(
       globals: globals.node,
       parserOptions: {
         projectService: {
-          // This config file is plain JS outside the TS project.
+          // This config file is plain JS outside the TS project; type it with
+          // the project's compiler options (Node types included) rather than
+          // TypeScript's bare defaults.
           allowDefaultProject: ['eslint.config.js'],
+          defaultProject: 'tsconfig.json',
         },
         tsconfigRootDir: import.meta.dirname,
       },

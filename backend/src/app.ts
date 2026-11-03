@@ -12,7 +12,7 @@ import { env } from './config/env.js';
 import { ApiError } from './lib/errors.js';
 import { errorHandler } from './lib/error-handler.js';
 import { checkDatabase } from './lib/health.js';
-import { asyncHandler, routeParam, sendSuccess } from './lib/http.js';
+import { routeParam, sendSuccess } from './lib/http.js';
 import { logger } from './lib/logger.js';
 import { LocalStore, objectStore, STORAGE_KEY_PATTERN } from './lib/storage.js';
 import { authRouter } from './modules/auth/auth.routes.js';
@@ -85,19 +85,16 @@ export function buildApp() {
   });
 
   // Readiness (uptime monitor): the database answers.
-  app.get(
-    '/health/ready',
-    asyncHandler(async (req, res) => {
-      res.set('Cache-Control', 'no-store');
-      try {
-        await checkDatabase();
-      } catch (err) {
-        req.log.error({ err }, 'database check failed');
-        throw new ApiError('SERVICE_UNAVAILABLE', 'Database unavailable.');
-      }
-      sendSuccess(res, { status: 'ready', checks: { database: 'ok' } });
-    }),
-  );
+  app.get('/health/ready', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    try {
+      await checkDatabase();
+    } catch (err) {
+      req.log.error({ err }, 'database check failed');
+      throw new ApiError('SERVICE_UNAVAILABLE', 'Database unavailable.');
+    }
+    sendSuccess(res, { status: 'ready', checks: { database: 'ok' } });
+  });
 
   if (objectStore instanceof LocalStore) {
     // Serve uploaded images read-only; nosniff prevents content-type confusion.
