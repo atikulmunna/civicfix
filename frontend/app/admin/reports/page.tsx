@@ -17,12 +17,25 @@ import { RequireAuth } from '@/components/require-auth';
 import { ReportCard } from '@/components/report-card';
 import { Button, Card, LoadError, PageHeader, Select, Spinner } from '@/components/ui';
 
+const ADMIN_SORTS = [
+  { value: 'priority', label: 'Highest priority' },
+  { value: 'newest', label: 'Newest' },
+  { value: 'oldest', label: 'Oldest' },
+] as const;
+
+/** The selected sort, or priority for anything unknown. */
+function asAdminSort(value: string) {
+  return ADMIN_SORTS.find((s) => s.value === value)?.value ?? 'priority';
+}
+
 function AdminReportsList() {
   const searchParams = useSearchParams();
   const [filters, setFilters] = useState({
     status: searchParams.get('status') ?? '',
     categoryId: '',
     severity: '',
+    // Triage queue: the most urgent open reports first.
+    sort: 'priority',
     page: 1,
   });
 
@@ -36,6 +49,7 @@ function AdminReportsList() {
     status: asStatus(filters.status),
     categoryId: filters.categoryId || undefined,
     severity: asSeverity(filters.severity),
+    sort: asAdminSort(filters.sort),
     page: filters.page,
     limit: 10,
   };
@@ -58,7 +72,7 @@ function AdminReportsList() {
         subtitle="Review, verify, and route incoming issues."
       />
 
-      <Card className="grid gap-3 sm:grid-cols-3">
+      <Card className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Select
           value={filters.status}
           onChange={(e) => setFilter('status', e.target.value)}
@@ -95,6 +109,17 @@ function AdminReportsList() {
             </option>
           ))}
         </Select>
+        <Select
+          value={filters.sort}
+          onChange={(e) => setFilter('sort', e.target.value)}
+          aria-label="Sort"
+        >
+          {ADMIN_SORTS.map((s) => (
+            <option key={s.value} value={s.value}>
+              {s.label}
+            </option>
+          ))}
+        </Select>
       </Card>
 
       {reports.isPending ? (
@@ -105,7 +130,7 @@ function AdminReportsList() {
         <>
           <div className="grid gap-4 md:grid-cols-2">
             {data.items.map((r) => (
-              <ReportCard key={r.id} report={r} hrefBase="/admin/reports" />
+              <ReportCard key={r.id} report={r} hrefBase="/admin/reports" showPriority />
             ))}
           </div>
           <div className="flex items-center justify-between pt-2">

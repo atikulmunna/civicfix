@@ -8,9 +8,12 @@ import { SeverityBadge, StatusBadge } from './badges';
 export function ReportCard({
   report,
   hrefBase = '/reports',
+  showPriority = false,
 }: {
   report: Report;
   hrefBase?: string;
+  /** Show the triage score (admin queues; closed reports score 0 and show none). */
+  showPriority?: boolean;
 }) {
   const thumb = report.images?.[0]?.imageUrl;
   return (
@@ -38,6 +41,14 @@ export function ReportCard({
           <SeverityBadge severity={report.severity} />
           {report.category && (
             <span className="text-xs text-slate-500">{report.category.name}</span>
+          )}
+          {showPriority && report.priorityScore > 0 && (
+            <span
+              className="ml-auto rounded-md bg-slate-900 px-1.5 py-0.5 text-xs font-semibold text-white tabular-nums"
+              title="Triage priority"
+            >
+              Priority {report.priorityScore}
+            </span>
           )}
         </div>
         <h3 className="mt-1 truncate font-semibold text-slate-900 transition group-hover:text-teal-700">

@@ -44,6 +44,7 @@ describe('Moderation panel', () => {
       if (path === '/reports/r1/history') return Promise.resolve({ history: [] });
       if (path === '/departments')
         return Promise.resolve({ departments: [{ id: 'd1', name: 'Public Works' }] });
+      if (path === '/admin/reports/r1/priority') return Promise.resolve({ priority: null });
       return Promise.resolve({});
     });
   });
