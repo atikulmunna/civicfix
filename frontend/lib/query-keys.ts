@@ -23,3 +23,15 @@ export const queryKeys = {
   analytics: (part: 'summary' | 'categories' | 'departments') =>
     ['admin', 'analytics', part] as const,
 };
+
+/**
+ * Prefixes of every cached list that shows reports (their counts, statuses or
+ * membership). Writes that change a report invalidate all of them.
+ */
+export const reportListPrefixes = [
+  ['reports', 'list'],
+  ['reports', 'map'],
+  ['me', 'reports'],
+  ['admin', 'reports'],
+  ['department', 'reports'],
+] as const;

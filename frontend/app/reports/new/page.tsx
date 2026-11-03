@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { skipToken, useQuery } from '@tanstack/react-query';
-import { api, ApiError } from '@/lib/api';
+import { skipToken, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { api, errorMessage } from '@/lib/api';
 import type { Report } from '@/lib/types';
 import { SEVERITY_OPTIONS, severityLabel } from '@/lib/format';
+import { invalidateReportLists } from '@/lib/query-client';
 import { queryKeys } from '@/lib/query-keys';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import {
@@ -51,8 +52,20 @@ function NewReportForm() {
   const [location, setLocation] = useState<LatLng | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [phase, setPhase] = useState<'idle' | 'preparing' | 'uploading'>('idle');
-  const busy = phase !== 'idle';
+  const queryClient = useQueryClient();
+  // Resizing photos happens before the request; the mutation covers the upload.
+  const [preparing, setPreparing] = useState(false);
+  const submit = useMutation({
+    mutationFn: (fd: FormData) => api.postForm('/reports', fd),
+    onSuccess: async ({ report }) => {
+      // The new report belongs in every list (yours, the public one, the map).
+      await invalidateReportLists(queryClient);
+      toast('Report submitted. Thank you!', 'success');
+      router.push(`/reports/${report.id}`);
+    },
+    onError: (err) => setError(errorMessage(err, 'Could not submit the report.')),
+  });
+  const busy = preparing || submit.isPending;
 
   const categoriesQuery = useQuery({
     queryKey: queryKeys.categories,
@@ -111,11 +124,11 @@ function NewReportForm() {
     if (!location) return setError('Please select a location on the map.');
     if (files.length === 0) return setError('Please add at least one photo.');
 
-    setPhase('preparing');
+    setPreparing(true);
     const images = await prepareImages(files);
+    setPreparing(false);
     const size = totalBytes(images);
     if (size > UPLOAD_BUDGET_BYTES) {
-      setPhase('idle');
       return setError(
         `These photos add up to ${formatMegabytes(size)}, over the ${formatMegabytes(UPLOAD_BUDGET_BYTES)} limit. Remove a photo or choose smaller ones.`,
       );
@@ -132,16 +145,7 @@ function NewReportForm() {
     if (form.landmark) fd.set('landmark', form.landmark);
     images.forEach((image) => fd.append('images', image));
 
-    setPhase('uploading');
-    try {
-      const { report } = await api.postForm('/reports', fd);
-      toast('Report submitted. Thank you!', 'success');
-      router.push(`/reports/${report.id}`);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not submit the report.');
-    } finally {
-      setPhase('idle');
-    }
+    submit.mutate(fd);
   }
 
   return (
@@ -271,11 +275,7 @@ function NewReportForm() {
           <FieldError>{error}</FieldError>
           <div>
             <Button type="submit" disabled={busy}>
-              {phase === 'preparing'
-                ? 'Preparing photos…'
-                : phase === 'uploading'
-                  ? 'Submitting…'
-                  : 'Submit report'}
+              {preparing ? 'Preparing photos…' : submit.isPending ? 'Submitting…' : 'Submit report'}
             </Button>
           </div>
         </form>

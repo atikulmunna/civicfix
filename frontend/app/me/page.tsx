@@ -2,7 +2,9 @@
 
 import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
-import { api, ApiError } from '@/lib/api';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { api, errorMessage } from '@/lib/api';
+import { queryKeys } from '@/lib/query-keys';
 import { RequireAuth } from '@/components/require-auth';
 import { useAuth } from '@/components/auth-context';
 import { useToast } from '@/components/toast';
@@ -10,27 +12,30 @@ import { ChangePasswordForm } from '@/components/change-password-form';
 import { Button, Card, FieldError, Input, Label, PageHeader } from '@/components/ui';
 
 function ProfileForm() {
-  const { user, refreshUser } = useAuth();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
   const [name, setName] = useState(user!.name);
   const [phone, setPhone] = useState(user!.phone ?? '');
   const [phoneIsPublic, setPhoneIsPublic] = useState(user!.phoneIsPublic);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
 
-  async function onSubmit(e: FormEvent) {
+  const save = useMutation({
+    mutationFn: () => api.patch('/users/me', { name, phone: phone || null, phoneIsPublic }),
+    // The response is the updated user: put it in the session cache (the
+    // navbar shows the name) instead of refetching /auth/me.
+    onSuccess: ({ user: updated }) => {
+      queryClient.setQueryData(queryKeys.me, updated);
+      toast('Profile updated.', 'success');
+    },
+    onError: (err) => setError(errorMessage(err, 'Could not update profile.')),
+  });
+  const busy = save.isPending;
+
+  function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    setBusy(true);
-    try {
-      await api.patch('/users/me', { name, phone: phone || null, phoneIsPublic });
-      await refreshUser();
-      toast('Profile updated.', 'success');
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not update profile.');
-    } finally {
-      setBusy(false);
-    }
+    save.mutate();
   }
 
   return (

@@ -18,7 +18,6 @@ interface AuthContextValue {
     phone?: string;
   }) => Promise<void>;
   logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -77,14 +76,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [queryClient, resetOtherQueries]);
 
-  const refreshUser = useCallback(
-    () => queryClient.invalidateQueries({ queryKey: queryKeys.me }),
-    [queryClient],
-  );
-
   const value = useMemo(
-    () => ({ user, loading: me.isPending, login, register, logout, refreshUser }),
-    [user, me.isPending, login, register, logout, refreshUser],
+    () => ({ user, loading: me.isPending, login, register, logout }),
+    [user, me.isPending, login, register, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
