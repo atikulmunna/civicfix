@@ -18,6 +18,18 @@ const nextConfig: NextConfig = {
   // The repo root has its own package-lock.json (shared tooling), so pin the
   // app root explicitly instead of letting Next.js guess between lockfiles.
   outputFileTracingRoot: path.join(__dirname),
+  // Report photos go through next/image (resized per device, cached by the
+  // CDN). Allowed sources: same-origin uploads (keys have no query string)
+  // and the seed photos. Locally, uploads come from the API on localhost,
+  // which Next 16 refuses to optimize (dangerouslyAllowLocalIP), so images are
+  // served as they are there.
+  images: backend
+    ? {
+        localPatterns: [{ pathname: '/uploads/**', search: '' }],
+        remotePatterns: [{ protocol: 'https', hostname: 'images.unsplash.com', pathname: '/**' }],
+        qualities: [75],
+      }
+    : { unoptimized: true },
   async rewrites() {
     if (!backend) return [];
     return [

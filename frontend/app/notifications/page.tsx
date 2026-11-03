@@ -1,12 +1,14 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { api, errorMessage } from '@/lib/api';
 import type { Notification, Paginated } from '@/lib/types';
 import { formatDateTime } from '@/lib/format';
+import { queryKeys } from '@/lib/query-keys';
 import { RequireAuth } from '@/components/require-auth';
-import { Button, PageHeader, Spinner } from '@/components/ui';
+import { useToast } from '@/components/toast';
+import { Button, LoadError, PageHeader, Spinner } from '@/components/ui';
 
 interface NotificationsData extends Paginated<Notification> {
   unreadCount: number;
@@ -14,24 +16,19 @@ interface NotificationsData extends Paginated<Notification> {
 
 function NotificationsList() {
   const router = useRouter();
-  const [data, setData] = useState<NotificationsData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const notifications = useQuery({
+    queryKey: queryKeys.notifications,
+    queryFn: ({ signal }) =>
+      api.get<NotificationsData>('/notifications', { limit: 50 }, { signal }),
+  });
+  const data = notifications.data;
 
-  function load() {
-    return api
-      .get<NotificationsData>('/notifications', { limit: 50 })
-      .then(setData)
-      .catch(() => setData(null));
-  }
-
-  useEffect(() => {
-    load().finally(() => setLoading(false));
-  }, []);
-
-  async function open(n: Notification) {
-    if (!n.isRead) {
-      await api.patch(`/notifications/${n.id}/read`).catch(() => {});
-      setData((d) =>
+  const markRead = useMutation({
+    mutationFn: (n: Notification) => api.patch(`/notifications/${n.id}/read`),
+    onSuccess: (_result, n) => {
+      queryClient.setQueryData<NotificationsData>(queryKeys.notifications, (d) =>
         d
           ? {
               ...d,
@@ -40,16 +37,27 @@ function NotificationsList() {
             }
           : d,
       );
-    }
+    },
+    onError: (err) => toast(errorMessage(err, 'Could not mark the notification as read.'), 'error'),
+  });
+
+  const markAll = useMutation({
+    mutationFn: () => api.patch('/notifications/read-all'),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.notifications }),
+    onError: (err) => toast(errorMessage(err, 'Could not mark notifications as read.'), 'error'),
+  });
+
+  function open(n: Notification) {
+    if (!n.isRead) markRead.mutate(n);
     if (n.reportId) router.push(`/reports/${n.reportId}`);
   }
 
-  async function markAll() {
-    await api.patch('/notifications/read-all').catch(() => {});
-    await load();
+  if (notifications.isPending) return <Spinner />;
+  if (notifications.isError) {
+    return (
+      <LoadError>{errorMessage(notifications.error, 'Failed to load notifications.')}</LoadError>
+    );
   }
-
-  if (loading) return <Spinner />;
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4">
@@ -67,7 +75,11 @@ function NotificationsList() {
         }
         actions={
           data && data.unreadCount > 0 ? (
-            <Button variant="secondary" onClick={markAll}>
+            <Button
+              variant="secondary"
+              disabled={markAll.isPending}
+              onClick={() => markAll.mutate()}
+            >
               Mark all read
             </Button>
           ) : undefined

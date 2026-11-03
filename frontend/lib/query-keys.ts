@@ -16,4 +16,9 @@ export const queryKeys = {
   myReports: (page: number) => ['me', 'reports', page] as const,
   adminReports: (params: Record<string, unknown>) => ['admin', 'reports', params] as const,
   adminUsers: (params: Record<string, unknown>) => ['admin', 'users', params] as const,
+  reportComments: (id: string) => ['reports', 'comments', id] as const,
+  notifications: ['notifications'] as const,
+  departmentQueue: ['department', 'reports'] as const,
+  analytics: (part: 'summary' | 'categories' | 'departments') =>
+    ['admin', 'analytics', part] as const,
 };

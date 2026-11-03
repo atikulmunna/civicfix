@@ -7,6 +7,7 @@ import type { Paginated, Role } from '@/lib/types';
 import { queryKeys } from '@/lib/query-keys';
 import { useAuth } from '@/components/auth-context';
 import { canManageUser } from '@/lib/permissions';
+import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { useToast } from '@/components/toast';
 import { Button, Input, LoadError, Select, Spinner } from '@/components/ui';
 
@@ -20,6 +21,7 @@ interface AdminUser {
 }
 
 const ROLES: Role[] = ['citizen', 'department_worker', 'admin', 'super_admin'];
+export const SEARCH_DEBOUNCE_MS = 300;
 
 export function UsersAdmin() {
   const { user } = useAuth();
@@ -32,7 +34,9 @@ export function UsersAdmin() {
   const [confirmReset, setConfirmReset] = useState<AdminUser | null>(null);
   const [issued, setIssued] = useState<{ email: string; password: string } | null>(null);
 
-  const params = { search: search || undefined, page, limit: 20 };
+  // Wait for typing to pause before querying, so each keystroke is not a request.
+  const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS);
+  const params = { search: debouncedSearch || undefined, page, limit: 20 };
   const users = useQuery({
     queryKey: queryKeys.adminUsers(params),
     queryFn: ({ signal }) => api.get<Paginated<AdminUser>>('/admin/users', params, { signal }),

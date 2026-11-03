@@ -9,6 +9,13 @@ import type { Category, Report } from '@/lib/types';
 import { SEVERITY_OPTIONS, severityLabel } from '@/lib/format';
 import { queryKeys } from '@/lib/query-keys';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
+import {
+  MAX_PHOTOS,
+  UPLOAD_BUDGET_BYTES,
+  formatMegabytes,
+  prepareImages,
+  totalBytes,
+} from '@/lib/resize-image';
 import { RequireAuth } from '@/components/require-auth';
 import { useToast } from '@/components/toast';
 import {
@@ -44,7 +51,8 @@ function NewReportForm() {
   const [location, setLocation] = useState<LatLng | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [phase, setPhase] = useState<'idle' | 'preparing' | 'uploading'>('idle');
+  const busy = phase !== 'idle';
 
   const categoriesQuery = useQuery({
     queryKey: queryKeys.categories,
@@ -82,6 +90,18 @@ function NewReportForm() {
   );
   useEffect(() => () => previews.forEach((p) => URL.revokeObjectURL(p.url)), [previews]);
 
+  function pickPhotos(e: React.ChangeEvent<HTMLInputElement>) {
+    const picked = Array.from(e.target.files ?? []);
+    if (picked.length > MAX_PHOTOS) {
+      e.target.value = '';
+      setFiles([]);
+      setError(`Choose up to ${String(MAX_PHOTOS)} photos.`);
+      return;
+    }
+    setError(null);
+    setFiles(picked);
+  }
+
   function update(key: keyof typeof form) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
       setForm((f) => ({ ...f, [key]: e.target.value }));
@@ -93,6 +113,16 @@ function NewReportForm() {
     if (!location) return setError('Please select a location on the map.');
     if (files.length === 0) return setError('Please add at least one photo.');
 
+    setPhase('preparing');
+    const images = await prepareImages(files);
+    const size = totalBytes(images);
+    if (size > UPLOAD_BUDGET_BYTES) {
+      setPhase('idle');
+      return setError(
+        `These photos add up to ${formatMegabytes(size)}, over the ${formatMegabytes(UPLOAD_BUDGET_BYTES)} limit. Remove a photo or choose smaller ones.`,
+      );
+    }
+
     const fd = new FormData();
     fd.set('title', form.title);
     fd.set('description', form.description);
@@ -102,9 +132,9 @@ function NewReportForm() {
     fd.set('longitude', String(location.lng));
     if (form.address) fd.set('address', form.address);
     if (form.landmark) fd.set('landmark', form.landmark);
-    files.forEach((f) => fd.append('images', f));
+    images.forEach((image) => fd.append('images', image));
 
-    setBusy(true);
+    setPhase('uploading');
     try {
       const { report } = await api.postForm<{ report: Report }>('/reports', fd);
       toast('Report submitted. Thank you!', 'success');
@@ -112,7 +142,7 @@ function NewReportForm() {
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not submit the report.');
     } finally {
-      setBusy(false);
+      setPhase('idle');
     }
   }
 
@@ -211,17 +241,23 @@ function NewReportForm() {
 
           <div>
             <Label htmlFor="images">Photos</Label>
+            <p id="images-hint" className="mb-1 text-xs text-slate-500">
+              Up to {MAX_PHOTOS} photos. Large photos are resized before upload.
+            </p>
             <input
               id="images"
               type="file"
               accept="image/png,image/jpeg,image/webp"
               multiple
-              onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
+              aria-describedby="images-hint"
+              onChange={pickPhotos}
               className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium hover:file:bg-slate-200"
             />
             {previews.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-2">
                 {previews.map((p) => (
+                  // Local blob: previews of files not yet uploaded; the image
+                  // optimizer cannot fetch them, so a plain img is correct here.
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     key={p.url}
@@ -237,7 +273,11 @@ function NewReportForm() {
           <FieldError>{error}</FieldError>
           <div>
             <Button type="submit" disabled={busy}>
-              {busy ? 'Submitting…' : 'Submit report'}
+              {phase === 'preparing'
+                ? 'Preparing photos…'
+                : phase === 'uploading'
+                  ? 'Submitting…'
+                  : 'Submit report'}
             </Button>
           </div>
         </form>
