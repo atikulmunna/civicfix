@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { useQuery } from '@tanstack/react-query';
+import { api, errorMessage } from '@/lib/api';
+import { queryKeys } from '@/lib/query-keys';
 import type { ReportStatus, Severity } from '@/lib/types';
 import { RequireAuth } from '@/components/require-auth';
-import { Card, PageHeader, Spinner, StatTile } from '@/components/ui';
+import { Card, LoadError, PageHeader, Spinner, StatTile } from '@/components/ui';
 
 interface Summary {
   totalReports: number;
@@ -18,16 +19,12 @@ interface Summary {
 }
 
 function Dashboard() {
-  const [summary, setSummary] = useState<Summary | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    api
-      .get<Summary>('/admin/analytics/summary')
-      .then(setSummary)
-      .catch(() => setSummary(null))
-      .finally(() => setLoading(false));
-  }, []);
+  // Same key as the analytics page: both read one cached summary.
+  const summaryQuery = useQuery({
+    queryKey: queryKeys.analytics('summary'),
+    queryFn: ({ signal }) => api.get<Summary>('/admin/analytics/summary', undefined, { signal }),
+  });
+  const summary = summaryQuery.data;
 
   const tiles = summary
     ? [
@@ -63,8 +60,10 @@ function Dashboard() {
         }
       />
 
-      {loading ? (
+      {summaryQuery.isPending ? (
         <Spinner />
+      ) : summaryQuery.isError ? (
+        <LoadError>{errorMessage(summaryQuery.error, 'Failed to load the dashboard.')}</LoadError>
       ) : (
         <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
           {tiles.map((t) => (
