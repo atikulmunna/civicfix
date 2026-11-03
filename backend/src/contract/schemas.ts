@@ -97,6 +97,16 @@ export const ReportImageSchema = z
   .strictObject({ id, imageUrl: z.string(), imageType: ImageTypeSchema, createdAt: timestamp })
   .meta({ id: 'ReportImage' });
 
+/** The signed-in viewer's own votes and follow on a report. */
+export const ReportViewerStateSchema = z
+  .strictObject({
+    upvoted: z.boolean(),
+    confirmed: z.boolean(),
+    flagged: z.boolean(),
+    following: z.boolean(),
+  })
+  .meta({ id: 'ReportViewerState' });
+
 export const ReportSchema = z
   .strictObject({
     id,
@@ -125,6 +135,9 @@ export const ReportSchema = z
       .meta({ description: 'Only present for admins and department staff (BR-012).' }),
     counts: VoteCountsSchema.optional().meta({
       description: 'Present on report detail and list endpoints.',
+    }),
+    viewer: ReportViewerStateSchema.optional().meta({
+      description: 'Your own votes and follow; on report detail when signed in.',
     }),
     distanceM: z
       .number()

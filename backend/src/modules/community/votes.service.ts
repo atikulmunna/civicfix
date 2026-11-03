@@ -44,6 +44,36 @@ async function counts(reportId: string): Promise<VoteCounts> {
   );
 }
 
+/** What a signed-in user has done on a report: their votes and follow. */
+export interface ViewerState {
+  upvoted: boolean;
+  confirmed: boolean;
+  flagged: boolean;
+  following: boolean;
+}
+
+/**
+ * The viewer's own votes and follow on a report, so clients can show which
+ * actions are already on after a reload. Following means any subscription
+ * (owner, confirm or explicit), matching what unfollow removes.
+ */
+export async function viewerState(reportId: string, userId: string): Promise<ViewerState> {
+  const [votes, subscription] = await Promise.all([
+    prisma.vote.findMany({ where: { reportId, userId }, select: { voteType: true } }),
+    prisma.reportSubscription.findFirst({
+      where: { reportId, userId },
+      select: { reportId: true },
+    }),
+  ]);
+  const cast = new Set(votes.map((v) => v.voteType));
+  return {
+    upvoted: cast.has('upvote'),
+    confirmed: cast.has('confirm'),
+    flagged: cast.has('false_report'),
+    following: subscription !== null,
+  };
+}
+
 /** Confirmations and false-report flags are triage inputs (F1); upvotes are not. */
 const AFFECTS_PRIORITY: ReadonlySet<VoteType> = new Set<VoteType>(['confirm', 'false_report']);
 

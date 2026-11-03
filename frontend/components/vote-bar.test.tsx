@@ -12,20 +12,29 @@ vi.mock('./auth-context', () => ({ useAuth: () => ({ user: { id: 'u1', role: 'ci
 
 import { ApiError } from '@/lib/api';
 import { queryKeys } from '@/lib/query-keys';
-import type { VoteCounts } from '@/lib/types';
+import type { ReportViewerState, VoteCounts } from '@/lib/types';
 import { ToastProvider } from './toast';
 import { VoteBar } from './vote-bar';
 
 const counts = (upvotes: number): VoteCounts => ({ upvotes, confirms: 0, falseReports: 0 });
 
-function setup() {
+const none: ReportViewerState = {
+  upvoted: false,
+  confirmed: false,
+  flagged: false,
+  following: false,
+};
+
+function setup(viewer?: ReportViewerState) {
   const client = createTestQueryClient();
-  client.setQueryData(queryKeys.report('r1'), { report: { id: 'r1', counts: counts(1) } });
+  client.setQueryData(queryKeys.report('r1'), {
+    report: { id: 'r1', counts: counts(1), viewer: viewer ?? none },
+  });
   client.setQueryData(queryKeys.reports({ page: 1 }), { items: [] });
   client.setQueryData(queryKeys.myReports(1), { items: [] });
   renderWithQuery(
     <ToastProvider>
-      <VoteBar reportId="r1" initialCounts={counts(1)} />
+      <VoteBar reportId="r1" initialCounts={counts(1)} initialViewer={viewer} />
     </ToastProvider>,
     client,
   );
@@ -84,5 +93,39 @@ describe('VoteBar', () => {
     expect(await screen.findByText('Report not found.')).toBeInTheDocument();
     await waitFor(() => expect(screen.getByRole('button', { name: /confirm/i })).toBeEnabled());
     expect(client.getQueryState(queryKeys.reports({ page: 1 }))?.isInvalidated).toBe(false);
+  });
+
+  it("starts from the viewer's own votes, so an upvote is undone after a reload", async () => {
+    del.mockResolvedValue({ counts: counts(0) });
+    const { user } = setup({ upvoted: true, confirmed: false, flagged: true, following: true });
+
+    const upvote = screen.getByRole('button', { name: /upvote/i });
+    expect(upvote).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Following' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    // A flag cannot be withdrawn.
+    expect(screen.getByRole('button', { name: 'Flagged' })).toBeDisabled();
+
+    await user.click(upvote);
+    expect(await screen.findByRole('button', { name: /Upvote · 0/ })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    expect(del).toHaveBeenCalledWith('/reports/r1/upvote');
+    expect(post).not.toHaveBeenCalled();
+  });
+
+  it('keeps the cached viewer state in step, including the follow a confirm adds', async () => {
+    post.mockResolvedValue({ counts: { upvotes: 1, confirms: 1, falseReports: 0 } });
+    const { client, user } = setup();
+
+    await user.click(screen.getByRole('button', { name: /confirm/i }));
+
+    expect(await screen.findByRole('button', { name: 'Following' })).toBeInTheDocument();
+    expect(
+      client.getQueryData<{ report: { viewer: ReportViewerState } }>(queryKeys.report('r1')),
+    ).toMatchObject({ report: { viewer: { confirmed: true, following: true } } });
   });
 });
