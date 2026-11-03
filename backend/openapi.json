@@ -5593,13 +5593,57 @@
           },
           "byStatus": {
             "type": "object",
-            "propertyNames": {
-              "$ref": "#/components/schemas/ReportStatus"
-            },
-            "additionalProperties": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9007199254740991
+            "properties": {
+              "SUBMITTED": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "UNDER_REVIEW": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "VERIFIED": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ASSIGNED": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "IN_PROGRESS": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "RESOLVED": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "REJECTED": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "DUPLICATE": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "NEEDS_MORE_INFO": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ARCHIVED": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
             },
             "required": [
               "SUBMITTED",
@@ -5612,24 +5656,40 @@
               "DUPLICATE",
               "NEEDS_MORE_INFO",
               "ARCHIVED"
-            ]
+            ],
+            "additionalProperties": false
           },
           "bySeverity": {
             "type": "object",
-            "propertyNames": {
-              "$ref": "#/components/schemas/Severity"
-            },
-            "additionalProperties": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9007199254740991
+            "properties": {
+              "low": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "medium": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "high": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "urgent": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
             },
             "required": [
               "low",
               "medium",
               "high",
               "urgent"
-            ]
+            ],
+            "additionalProperties": false
           },
           "resolvedCount": {
             "type": "integer",

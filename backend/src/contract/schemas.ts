@@ -187,11 +187,22 @@ export const NotificationSchema = z
 // ---------------------------------------------------------------------------
 // Analytics
 
+/**
+ * A count for every value of an enum, all present. Spelled out as properties
+ * (rather than z.record over the enum) so OpenAPI tools see each key as
+ * required; record keys reach generated types as an open string index.
+ */
+function countsFor<const T extends string>(values: readonly T[]) {
+  // Object.fromEntries widens keys to string; they are exactly `values`.
+  const shape = Object.fromEntries(values.map((v) => [v, count])) as Record<T, typeof count>;
+  return z.strictObject(shape);
+}
+
 export const AnalyticsSummarySchema = z
   .strictObject({
     totalReports: count,
-    byStatus: z.record(ReportStatusSchema, count),
-    bySeverity: z.record(SeveritySchema, count),
+    byStatus: countsFor(Object.values(ReportStatus)),
+    bySeverity: countsFor(Object.values(Severity)),
     resolvedCount: count,
     resolutionRate: z.number().min(0).max(1),
     avgResolutionHours: z.number().nullable(),
