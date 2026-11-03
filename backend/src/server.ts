@@ -4,10 +4,17 @@ import { env } from './config/env.js';
 import { logger } from './lib/logger.js';
 import { prisma } from './lib/prisma.js';
 import { createShutdown } from './lib/shutdown.js';
+import { startServer } from './lib/start-server.js';
 
 const app = buildApp();
-const server = app.listen(env.PORT, () => {
-  logger.info({ port: env.PORT }, 'CivicFix API listening');
+const server = startServer(app, env.PORT, {
+  listening: () => {
+    logger.info({ port: env.PORT }, 'CivicFix API listening');
+  },
+  failed: (error) => {
+    logger.fatal({ err: error, port: env.PORT }, 'CivicFix API could not start');
+    process.exit(1);
+  },
 });
 
 // Below fly.toml's kill_timeout (10 s), so we exit on our own terms.
