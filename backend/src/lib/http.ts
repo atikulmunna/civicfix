@@ -1,23 +1,15 @@
 /**
- * Response-envelope helpers (SRS v1.1 §22.1), a small async wrapper so route
- * handlers can `throw` instead of plumbing errors to next() by hand, and typed
- * accessors for request input (body/query validation, route params, cookies).
+ * Response-envelope helpers (SRS v1.1 §22.1) and typed accessors for request
+ * input (body/query validation, route params, cookies). Route handlers can be
+ * async and simply throw: Express 5 forwards rejected promises to the error
+ * middleware.
  */
-import type { NextFunction, Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import type { z } from 'zod';
 import { ApiError } from './errors.js';
 
 export function sendSuccess(res: Response, data: unknown, status = 200): void {
   res.status(status).json({ success: true, data });
-}
-
-type AsyncHandler = (req: Request, res: Response, next: NextFunction) => Promise<unknown>;
-
-/** Wrap an async route handler so rejected promises reach the error middleware. */
-export function asyncHandler(fn: AsyncHandler) {
-  return (req: Request, res: Response, next: NextFunction): void => {
-    fn(req, res, next).catch(next);
-  };
 }
 
 /**
