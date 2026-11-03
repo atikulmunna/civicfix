@@ -9,6 +9,7 @@ export const queryKeys = {
   /** Admin catalog lists include inactive items, so they are cached separately. */
   catalog: (listPath: string) => ['catalog', listPath] as const,
   reports: (params: Record<string, unknown>) => ['reports', 'list', params] as const,
+  mapMarkers: (params: Record<string, unknown>) => ['reports', 'map', params] as const,
   report: (id: string) => ['reports', 'detail', id] as const,
   reportHistory: (id: string) => ['reports', 'history', id] as const,
   duplicates: (params: { categoryId: string; latitude: number; longitude: number } | null) =>
