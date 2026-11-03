@@ -4,6 +4,7 @@ package-lock.json
 **/.next/
 **/coverage/
 **/uploads/
+backend/src/generated/
 *.tsbuildinfo
 frontend/next-env.d.ts
 frontend/public/

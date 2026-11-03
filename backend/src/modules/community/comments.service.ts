@@ -3,7 +3,7 @@
  * rejected (COM-005); deletes are soft (is_deleted) and allowed for the
  * author or an admin (COM-003/004).
  */
-import type { Comment, User } from '@prisma/client';
+import type { Comment, User } from '../../generated/prisma/client.js';
 import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../lib/errors.js';
 import { sanitizeText } from '../../lib/sanitize.js';

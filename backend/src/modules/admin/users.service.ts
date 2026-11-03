@@ -4,7 +4,7 @@
  * roles (route-enforced). Self-modification is blocked to avoid lockout.
  */
 import { randomBytes } from 'node:crypto';
-import type { Prisma, User } from '@prisma/client';
+import type { Prisma, User } from '../../generated/prisma/client.js';
 import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../lib/errors.js';
 import { logger } from '../../lib/logger.js';

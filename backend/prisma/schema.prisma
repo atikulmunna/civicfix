@@ -12,18 +12,25 @@
 // - All status-transition rules live in code (backend/src/modules/reports/status-machine.ts),
 //   not in the DB, so they can return INVALID_STATUS_TRANSITION with context.
 
+// Prisma 7 client: TypeScript generated into src/ (gitignored) and compiled
+// with the app. ESM with .js import specifiers, as NodeNext requires.
 generator client {
-  provider = "prisma-client-js"
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  runtime             = "nodejs"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
 }
 
-// url: the app's runtime connection. On Neon this is the pooled (-pooler) URL.
-// directUrl: used by Prisma Migrate. On Neon this is the direct (unpooled) URL,
-// because migrations need session state that a transaction pooler drops.
+// Connection URLs live outside the schema since Prisma 7:
+// - the app connects with DATABASE_URL (on Neon the pooled -pooler URL)
+//   through the pg driver adapter (src/lib/prisma.ts);
+// - the CLI (migrate, db execute) uses DATABASE_URL_UNPOOLED from
+//   prisma.config.ts, because migrations need session state that a
+//   transaction pooler drops.
 // Locally both point at the same docker-compose database.
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DATABASE_URL_UNPOOLED")
+  provider = "postgresql"
 }
 
 // ---------------------------------------------------------------------------

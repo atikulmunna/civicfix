@@ -2,7 +2,7 @@
  * Reports business logic (SRS v1.1 §6.3/6.4, REP-*, LIST-*, MAP-009, DUP-*).
  * HTTP/multipart handled in routes; this stays framework-free and testable.
  */
-import type { Prisma, Report, ReportImage, Category } from '@prisma/client';
+import type { Prisma, Report, ReportImage, Category } from '../../generated/prisma/client.js';
 import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../lib/errors.js';
 import { env } from '../../config/env.js';

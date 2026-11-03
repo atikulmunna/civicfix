@@ -3,7 +3,7 @@
  * routes handle HTTP/cookies, this module handles users + token records so it
  * stays unit-testable and reusable.
  */
-import type { User, UserRole } from '@prisma/client';
+import type { User, UserRole } from '../../generated/prisma/client.js';
 import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../lib/errors.js';
 import { logger } from '../../lib/logger.js';

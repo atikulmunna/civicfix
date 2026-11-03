@@ -11,6 +11,9 @@ build/
 .env.local
 .env.*.local
 
+# Generated Prisma client (npm install runs prisma generate)
+backend/src/generated/
+
 # Uploads (local storage provider)
 backend/uploads/
 

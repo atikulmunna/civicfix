@@ -6,7 +6,7 @@
  * side effects (internal note / duplicate target / assignment / resolvedAt),
  * and always writes a status_history row (BR-009/STAT-002).
  */
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '../../generated/prisma/client.js';
 import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../lib/errors.js';
 import { assertReportExists } from '../community/shared.js';

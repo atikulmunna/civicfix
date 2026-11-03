@@ -6,7 +6,7 @@
  * attaches { id, role } to req.user. requireRole gates by role.
  */
 import type { NextFunction, Request, Response } from 'express';
-import type { UserRole } from '@prisma/client';
+import type { UserRole } from '../generated/prisma/client.js';
 import { ApiError } from '../lib/errors.js';
 import { readCookie } from '../lib/http.js';
 import { verifyAccessToken } from '../modules/auth/tokens.js';

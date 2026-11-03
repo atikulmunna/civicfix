@@ -6,7 +6,7 @@
  * notification per subscriber. Creation runs inside the workflow transaction
  * (accepts a tx client) so notifications are atomic with the status change.
  */
-import type { Prisma, PrismaClient, ReportStatus } from '@prisma/client';
+import type { Prisma, PrismaClient, ReportStatus } from '../../generated/prisma/client.js';
 import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../lib/errors.js';
 

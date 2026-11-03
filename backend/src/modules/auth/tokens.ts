@@ -9,7 +9,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import { env } from '../../config/env.js';
-import type { UserRole } from '@prisma/client';
+import type { UserRole } from '../../generated/prisma/client.js';
 
 export interface AccessTokenPayload {
   sub: string; // user id

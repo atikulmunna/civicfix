@@ -7,7 +7,7 @@
  * The bbox/map query lives in the service as a plain latitude/longitude range
  * filter (indexable, no geography needed).
  */
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../generated/prisma/client.js';
 import { prisma } from '../../lib/prisma.js';
 
 /** Statuses excluded from duplicate matching (§6.9: terminal/inactive). */

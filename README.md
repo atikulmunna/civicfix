@@ -90,8 +90,7 @@ docker compose up -d
 # 2. Backend
 cd backend
 cp .env.example .env            # adjust secrets as needed
-npm install
-npx prisma generate
+npm install                     # also generates the Prisma client (src/generated)
 npx prisma migrate deploy       # apply schema + PostGIS trigger/index
 npm run seed                    # demo data (optional but recommended)
 npm run dev                     # http://localhost:5000
@@ -120,8 +119,10 @@ The backend suite runs against the Docker database, so make sure
 ```
 backend/
   prisma/                 schema, migrations (PostGIS), seed.ts
+  prisma.config.ts        Prisma CLI config (migrations, seed, CLI database URL)
   src/
     config/               validated env
+    generated/            Prisma client (generated, gitignored)
     lib/                  prisma, errors, http envelope, uploads, sanitize
     middleware/           requireAuth/requireRole, rate limiting
     modules/
@@ -141,9 +142,11 @@ frontend/
 
 **Backend (`backend/.env`)**, see `backend/.env.example`:
 
-- `DATABASE_URL`: Postgres connection (matches docker-compose, port 5434)
-- `DATABASE_URL_UNPOOLED`: connection used by Prisma Migrate. Locally the same
-  as `DATABASE_URL`; on Neon, the direct (non `-pooler`) connection string
+- `DATABASE_URL`: Postgres connection the app uses (matches docker-compose, port
+  5434). TLS modes `require`/`prefer`/`verify-ca` are pinned to `verify-full`.
+- `DATABASE_URL_UNPOOLED`: connection used by the Prisma CLI (migrations, via
+  `prisma.config.ts`). Locally the same as `DATABASE_URL`; on Neon, the direct
+  (non `-pooler`) connection string
 - `JWT_ACCESS_SECRET`: long random string (required)
 - `JWT_ACCESS_EXPIRES_IN` (default `15m`), `REFRESH_TOKEN_TTL_DAYS` (default `7`)
 - `CORS_ORIGIN` (default `http://localhost:3000`)
