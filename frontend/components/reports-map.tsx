@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { CircleMarker, MapContainer, Popup, TileLayer, useMapEvents } from 'react-leaflet';
 import { api } from '@/lib/api';
 import type { MapMarker } from '@/lib/types';
-import { STATUS_OPTIONS, statusLabel } from '@/lib/format';
+import { asStatus, STATUS_OPTIONS, statusLabel } from '@/lib/format';
 import { bboxString, statusColor } from '@/lib/map';
 import { StatusBadge } from './badges';
 import type { Category } from '@/lib/types';
@@ -50,7 +50,7 @@ export function ReportsMap() {
 
   useEffect(() => {
     api
-      .get<{ categories: Category[] }>('/categories')
+      .get('/categories')
       .then((d) => setCategories(d.categories))
       .catch(() => {});
   }, []);
@@ -59,9 +59,9 @@ export function ReportsMap() {
     (bbox: string) => {
       bboxRef.current = bbox;
       api
-        .get<{ items: MapMarker[] }>('/reports/map', {
+        .get('/reports/map', {
           bbox,
-          status: status || undefined,
+          status: asStatus(status),
           categoryId: categoryId || undefined,
           limit: 1000,
         })

@@ -3,13 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { api, errorMessage } from '@/lib/api';
 import { queryKeys } from '@/lib/query-keys';
-import type {
-  AnalyticsSummary,
-  CategoryAnalytics,
-  DepartmentAnalytics,
-  ReportStatus,
-  Severity,
-} from '@/lib/types';
+import type { ReportStatus, Severity } from '@/lib/types';
 import { severityLabel, statusLabel } from '@/lib/format';
 import { RequireAuth } from '@/components/require-auth';
 import { BarChart } from '@/components/bar-chart';
@@ -18,20 +12,19 @@ import { Card, LoadError, PageHeader, Spinner, StatTile } from '@/components/ui'
 function Analytics() {
   const summaryQuery = useQuery({
     queryKey: queryKeys.analytics('summary'),
-    queryFn: ({ signal }) =>
-      api.get<AnalyticsSummary>('/admin/analytics/summary', undefined, { signal }),
+    queryFn: ({ signal }) => api.get('/admin/analytics/summary', undefined, { signal }),
   });
   const categoriesQuery = useQuery({
     queryKey: queryKeys.analytics('categories'),
     queryFn: ({ signal }) =>
-      api.get<{ categories: CategoryAnalytics[] }>('/admin/analytics/categories', undefined, {
+      api.get('/admin/analytics/categories', undefined, {
         signal,
       }),
   });
   const departmentsQuery = useQuery({
     queryKey: queryKeys.analytics('departments'),
     queryFn: ({ signal }) =>
-      api.get<{ departments: DepartmentAnalytics[] }>('/admin/analytics/departments', undefined, {
+      api.get('/admin/analytics/departments', undefined, {
         signal,
       }),
   });

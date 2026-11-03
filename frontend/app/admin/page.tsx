@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { api, errorMessage } from '@/lib/api';
 import { queryKeys } from '@/lib/query-keys';
-import type { AnalyticsSummary as Summary } from '@/lib/types';
 import { RequireAuth } from '@/components/require-auth';
 import { Card, LoadError, PageHeader, Spinner, StatTile } from '@/components/ui';
 
@@ -12,7 +11,7 @@ function Dashboard() {
   // Same key as the analytics page: both read one cached summary.
   const summaryQuery = useQuery({
     queryKey: queryKeys.analytics('summary'),
-    queryFn: ({ signal }) => api.get<Summary>('/admin/analytics/summary', undefined, { signal }),
+    queryFn: ({ signal }) => api.get('/admin/analytics/summary', undefined, { signal }),
   });
   const summary = summaryQuery.data;
 

@@ -10,9 +10,9 @@ vi.mock('@/lib/api', async () => {
 });
 
 import { ToastProvider } from '@/components/toast';
-import { CatalogAdmin } from './catalog-admin';
+import { CatalogAdmin, type CatalogConfig } from './catalog-admin';
 
-const config = {
+const config: CatalogConfig = {
   listPath: '/categories',
   adminPath: '/admin/categories',
   responseKey: 'categories',

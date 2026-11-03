@@ -5,8 +5,7 @@ import { use, useState } from 'react';
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError, assetUrl, errorMessage } from '@/lib/api';
-import type { Department, Report, StatusHistoryEntry } from '@/lib/types';
-import { STATUS_OPTIONS, formatDateTime, statusLabel } from '@/lib/format';
+import { asStatus, STATUS_OPTIONS, formatDateTime, statusLabel } from '@/lib/format';
 import { queryKeys } from '@/lib/query-keys';
 import { SeverityBadge, StatusBadge } from '@/components/badges';
 import { StatusTimeline } from '@/components/status-timeline';
@@ -25,6 +24,8 @@ export function Moderation({ id }: { id: string }) {
 
   // action form state
   const [status, setStatus] = useState('');
+  // The chosen status, or undefined until one is picked (the button stays disabled).
+  const nextStatus = asStatus(status);
   const [note, setNote] = useState('');
   const [internalNote, setInternalNote] = useState('');
   const [departmentId, setDepartmentId] = useState('');
@@ -32,19 +33,17 @@ export function Moderation({ id }: { id: string }) {
 
   const reportQuery = useQuery({
     queryKey: queryKeys.report(id),
-    queryFn: ({ signal }) => api.get<{ report: Report }>(`/reports/${id}`, undefined, { signal }),
+    queryFn: ({ signal }) => api.get(`/reports/${id}`, undefined, { signal }),
     select: (d) => d.report,
   });
   const historyQuery = useQuery({
     queryKey: queryKeys.reportHistory(id),
-    queryFn: ({ signal }) =>
-      api.get<{ history: StatusHistoryEntry[] }>(`/reports/${id}/history`, undefined, { signal }),
+    queryFn: ({ signal }) => api.get(`/reports/${id}/history`, undefined, { signal }),
     select: (d) => d.history,
   });
   const departmentsQuery = useQuery({
     queryKey: queryKeys.departments,
-    queryFn: ({ signal }) =>
-      api.get<{ departments: Department[] }>('/departments', undefined, { signal }),
+    queryFn: ({ signal }) => api.get('/departments', undefined, { signal }),
     select: (d) => d.departments,
   });
   const history = historyQuery.data ?? [];
@@ -165,18 +164,19 @@ export function Moderation({ id }: { id: string }) {
               aria-label="Internal note"
             />
             <Button
-              disabled={busy || !status}
-              onClick={() =>
+              disabled={busy || !nextStatus}
+              onClick={() => {
+                if (!nextStatus) return;
                 run(
                   () =>
                     api.patch(`/admin/reports/${id}/status`, {
-                      status,
+                      status: nextStatus,
                       note: note || undefined,
                       internalNote: internalNote || undefined,
                     }),
                   'Status updated.',
-                )
-              }
+                );
+              }}
             >
               Apply status
             </Button>

@@ -6,20 +6,23 @@ import { api, errorMessage } from '@/lib/api';
 import { queryKeys } from '@/lib/query-keys';
 import { useToast } from '@/components/toast';
 import { Button, Input, LoadError, Spinner } from '@/components/ui';
+import type { Category, Department } from '@/lib/types';
 
-interface CatalogItem {
-  id: string;
-  name: string;
-  isActive?: boolean;
-  [key: string]: unknown;
+type CatalogItem = Category | Department;
+
+/** Which catalog to manage; the paths are typed by the API contract. */
+export interface CatalogConfig {
+  listPath: '/categories' | '/departments';
+  adminPath: '/admin/categories' | '/admin/departments';
+  responseKey: 'categories' | 'departments';
+  itemKey: string; // e.g. category
+  /** Optional second field: a category's icon or a department's contact email. */
+  secondary?: { key: 'icon' | 'contactEmail'; label: string };
 }
 
-export interface CatalogConfig {
-  listPath: string; // e.g. /categories
-  adminPath: string; // e.g. /admin/categories
-  responseKey: string; // e.g. categories
-  itemKey: string; // e.g. category
-  secondary?: { key: string; label: string };
+/** The optional second field of an item, whichever catalog it belongs to. */
+function secondaryOf(item: CatalogItem): string | null {
+  return 'icon' in item ? item.icon : item.contactEmail;
 }
 
 /** Generic CRUD admin for categories & departments (name + optional field). */
@@ -31,13 +34,8 @@ export function CatalogAdmin({ config }: { config: CatalogConfig }) {
 
   const items = useQuery({
     queryKey: queryKeys.catalog(config.listPath),
-    queryFn: ({ signal }) =>
-      api.get<Record<string, CatalogItem[] | undefined>>(
-        config.listPath,
-        { includeInactive: 'true' },
-        { signal },
-      ),
-    select: (d) => d[config.responseKey] ?? [],
+    queryFn: ({ signal }) => api.get(config.listPath, { includeInactive: 'true' }, { signal }),
+    select: (d): CatalogItem[] => ('categories' in d ? d.categories : d.departments),
   });
 
   /** Refresh this admin list and the public list it mirrors (e.g. /categories). */
@@ -49,7 +47,8 @@ export function CatalogAdmin({ config }: { config: CatalogConfig }) {
   }
 
   const create = useMutation({
-    mutationFn: (payload: Record<string, string>) => api.post(config.adminPath, payload),
+    mutationFn: (payload: { name: string; icon?: string; contactEmail?: string }) =>
+      api.post(config.adminPath, payload),
     onSuccess: async () => {
       setName('');
       setSecondary('');
@@ -70,9 +69,8 @@ export function CatalogAdmin({ config }: { config: CatalogConfig }) {
   function onCreate(e: FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
-    const payload: Record<string, string> = { name };
-    if (config.secondary && secondary) payload[config.secondary.key] = secondary;
-    create.mutate(payload);
+    const extra = config.secondary && secondary ? { [config.secondary.key]: secondary } : {};
+    create.mutate({ name, ...extra });
   }
 
   return (
@@ -115,8 +113,8 @@ export function CatalogAdmin({ config }: { config: CatalogConfig }) {
                 >
                   {item.name}
                 </span>
-                {config.secondary && item[config.secondary.key] ? (
-                  <span className="ml-2 text-slate-500">{String(item[config.secondary.key])}</span>
+                {config.secondary && secondaryOf(item) ? (
+                  <span className="ml-2 text-slate-500">{secondaryOf(item)}</span>
                 ) : null}
               </div>
               {item.isActive === false ? (

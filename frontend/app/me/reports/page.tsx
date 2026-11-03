@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api, errorMessage } from '@/lib/api';
-import type { Paginated, Report } from '@/lib/types';
 import { queryKeys } from '@/lib/query-keys';
 import { RequireAuth } from '@/components/require-auth';
 import { ReportCard } from '@/components/report-card';
@@ -14,8 +13,7 @@ function MyReports() {
   const [page, setPage] = useState(1);
   const reports = useQuery({
     queryKey: queryKeys.myReports(page),
-    queryFn: ({ signal }) =>
-      api.get<Paginated<Report>>('/users/me/reports', { page, limit: 10 }, { signal }),
+    queryFn: ({ signal }) => api.get('/users/me/reports', { page, limit: 10 }, { signal }),
     placeholderData: keepPreviousData,
   });
   const data = reports.data;
