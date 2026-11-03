@@ -80,6 +80,8 @@ jobs:
         run: npm run lint
       - name: Typecheck
         run: npm run typecheck
+      - name: OpenAPI document is up to date
+        run: npm run openapi:check
       - name: Apply migrations
         run: npx prisma migrate deploy
       - name: Schema matches migrations (drift check)

@@ -16,7 +16,9 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts",
+    "openapi": "tsx scripts/openapi.ts",
+    "openapi:check": "tsx scripts/openapi.ts --check"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -37,7 +39,8 @@
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.72.1",
     "vite": "^8.3.5",
-    "vitest": "^5.0.5"
+    "vitest": "^5.0.5",
+    "zod-openapi": "^6.0.2"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1161.0",
