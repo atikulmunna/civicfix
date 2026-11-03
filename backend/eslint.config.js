@@ -37,8 +37,8 @@ export default defineConfig(
     },
   },
   {
-    // The seed script is a CLI that reports to the terminal.
-    files: ['prisma/seed.ts'],
+    // The seed and generator scripts are CLIs that report to the terminal.
+    files: ['prisma/seed.ts', 'scripts/**/*.ts'],
     rules: { 'no-console': 'off' },
   },
   {

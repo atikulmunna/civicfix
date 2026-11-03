@@ -3,22 +3,13 @@
 import { useState } from 'react';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorMessage } from '@/lib/api';
-import type { Paginated, Role } from '@/lib/types';
+import type { AdminUser, Paginated, Role } from '@/lib/types';
 import { queryKeys } from '@/lib/query-keys';
 import { useAuth } from '@/components/auth-context';
 import { canManageUser } from '@/lib/permissions';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { useToast } from '@/components/toast';
 import { Button, Input, LoadError, Select, Spinner } from '@/components/ui';
-
-interface AdminUser {
-  id: string;
-  name: string;
-  email: string;
-  role: Role;
-  isActive: boolean;
-  departmentId: string | null;
-}
 
 const ROLES: Role[] = ['citizen', 'department_worker', 'admin', 'super_admin'];
 export const SEARCH_DEBOUNCE_MS = 300;

@@ -11,3 +11,5 @@ frontend/public/
 
 # Prisma migrations are applied history; never reformat them.
 backend/prisma/migrations/
+backend/openapi.json
+frontend/lib/api-schema.ts

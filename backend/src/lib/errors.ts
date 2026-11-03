@@ -4,17 +4,21 @@
  * (see app.ts) turns it into the standard error envelope.
  */
 
-export type ErrorCode =
-  | 'AUTH_REQUIRED'
-  | 'FORBIDDEN'
-  | 'VALIDATION_ERROR'
-  | 'NOT_FOUND'
-  | 'DUPLICATE_RESOURCE'
-  | 'INVALID_STATUS_TRANSITION'
-  | 'RATE_LIMITED'
-  | 'UPLOAD_FAILED'
-  | 'SERVICE_UNAVAILABLE'
-  | 'INTERNAL_ERROR';
+/** Every error code the API may return (also published in the OpenAPI contract). */
+export const ERROR_CODES = [
+  'AUTH_REQUIRED',
+  'FORBIDDEN',
+  'VALIDATION_ERROR',
+  'NOT_FOUND',
+  'DUPLICATE_RESOURCE',
+  'INVALID_STATUS_TRANSITION',
+  'RATE_LIMITED',
+  'UPLOAD_FAILED',
+  'SERVICE_UNAVAILABLE',
+  'INTERNAL_ERROR',
+] as const;
+
+export type ErrorCode = (typeof ERROR_CODES)[number];
 
 const STATUS_BY_CODE: Record<ErrorCode, number> = {
   AUTH_REQUIRED: 401,

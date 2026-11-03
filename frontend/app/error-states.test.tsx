@@ -26,6 +26,7 @@ import { CommentSection } from '@/components/comment-section';
 import NotificationsPage from './notifications/page';
 import DepartmentPage from './department/page';
 import AnalyticsPage from './admin/analytics/page';
+import AdminDashboardPage from './admin/page';
 import { ReportDetail } from './reports/[id]/page';
 
 const OUTAGE = 'Service unavailable.';
@@ -50,6 +51,7 @@ const cases: [string, ReactElement, string, string][] = [
   ['notifications', <NotificationsPage key="n" />, 'citizen', '/notifications'],
   ['department queue', <DepartmentPage key="d" />, 'department_worker', '/department/reports'],
   ['analytics', <AnalyticsPage key="a" />, 'admin', '/admin/analytics/categories'],
+  ['admin dashboard', <AdminDashboardPage key="ad" />, 'admin', '/admin/analytics/summary'],
   ['report detail', <ReportDetail key="r" id="r1" />, 'citizen', '/reports/r1'],
   ['comments', <CommentSection key="c" reportId="r1" />, 'citizen', '/reports/r1/comments'],
 ];

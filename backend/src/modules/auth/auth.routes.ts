@@ -4,32 +4,13 @@
  * the §22.1 success envelope.
  */
 import { Router } from 'express';
-import { z } from 'zod';
 import { parseInput, readCookie, sendSuccess } from '../../lib/http.js';
 import { ApiError } from '../../lib/errors.js';
 import { authUser, requireAuth } from '../../middleware/require-auth.js';
 import { authLimiter } from '../../middleware/rate-limit.js';
 import { clearAuthCookies, REFRESH_COOKIE, setAuthCookies } from './cookies.js';
+import { changePasswordSchema, loginSchema, registerSchema } from './auth.schemas.js';
 import * as authService from './auth.service.js';
-
-const registerSchema = z.object({
-  name: z.string().trim().min(1, 'Name is required.').max(120),
-  email: z.string().trim().max(255).pipe(z.email('A valid email is required.')),
-  password: z.string().min(1, 'Password is required.'),
-  phone: z.string().trim().max(30).optional(),
-});
-
-const loginSchema = z.object({
-  email: z.string().trim().pipe(z.email('A valid email is required.')),
-  password: z.string().min(1, 'Password is required.'),
-});
-
-const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1, 'Current password is required.'),
-  // Length cap guards the password hasher; the policy itself is enforced by
-  // assertPasswordPolicy in the service.
-  newPassword: z.string().min(1, 'New password is required.').max(200),
-});
 
 export const authRouter = Router();
 

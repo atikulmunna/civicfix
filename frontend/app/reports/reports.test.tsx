@@ -19,7 +19,7 @@ function makeReport(over: Partial<Report> = {}): Report {
     title: 'Pothole on 5th',
     description: 'A big pothole.',
     categoryId: 'c1',
-    category: { id: 'c1', name: 'Roads' },
+    category: { id: 'c1', name: 'Roads', icon: null },
     status: 'SUBMITTED',
     severity: 'high',
     latitude: 1,

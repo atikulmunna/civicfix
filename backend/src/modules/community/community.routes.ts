@@ -4,18 +4,14 @@
  * conflict); the comments router handles top-level /comments/:id deletes.
  */
 import { Router } from 'express';
-import { z } from 'zod';
 import { routeParam, sendSuccess } from '../../lib/http.js';
 import { ApiError } from '../../lib/errors.js';
 import { authUser, optionalAuth, requireAuth } from '../../middleware/require-auth.js';
 import { commentLimiter } from '../../middleware/rate-limit.js';
+import { commentSchema } from './community.schemas.js';
 import * as comments from './comments.service.js';
 import * as votes from './votes.service.js';
 import * as subscriptions from './subscriptions.service.js';
-
-const commentSchema = z.object({
-  content: z.string().min(1, 'Comment cannot be empty.').max(2000),
-});
 
 function parseComment(body: unknown): { content: string } {
   const result = commentSchema.safeParse(body);
