@@ -95,6 +95,7 @@ export async function transitionStatus(
 
   const data: Prisma.ReportUpdateInput = { status: toStatus };
   if (effects.setsResolvedAt) data.resolvedAt = new Date();
+  if (effects.clearsResolvedAt) data.resolvedAt = null;
   if (payload.internalNote !== undefined) data.internalNote = payload.internalNote;
   if (effects.requiresDuplicateTarget && payload.duplicateOfReportId) {
     data.duplicateOf = { connect: { id: payload.duplicateOfReportId } };

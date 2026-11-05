@@ -155,6 +155,12 @@ describe('side-effect flags', () => {
       setsResolvedAt: true,
     });
   });
+
+  it('flags clearing resolvedAt on the reopen RESOLVED -> IN_PROGRESS', () => {
+    expect(canTransition('RESOLVED', 'IN_PROGRESS', 'admin').effects).toEqual({
+      clearsResolvedAt: true,
+    });
+  });
 });
 
 describe('assertTransition', () => {

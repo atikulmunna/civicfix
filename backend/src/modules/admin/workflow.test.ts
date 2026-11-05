@@ -161,6 +161,32 @@ describe('full lifecycle SUBMITTED -> RESOLVED (§26)', () => {
   });
 });
 
+describe('reopening a resolved report', () => {
+  it('clears the resolution date, and resolving again sets a new one', async () => {
+    const id = await createReport();
+    const admin = (method: 'patch' | 'post', action: string, body: object) =>
+      request(app)
+        [method](`/api/v1/admin/reports/${id}/${action}`)
+        .set(...bearer(adminToken))
+        .send(body);
+    await admin('patch', 'status', { status: 'UNDER_REVIEW' });
+    await admin('patch', 'status', { status: 'VERIFIED' });
+    await admin('patch', 'assign', { departmentId: deptA });
+    await admin('patch', 'status', { status: 'IN_PROGRESS' });
+    const first = await admin('post', 'resolve', {});
+    const firstDate: string = first.body.data.report.resolvedAt;
+    expect(firstDate).not.toBeNull();
+
+    const reopen = await admin('patch', 'status', { status: 'IN_PROGRESS' });
+    expect(reopen.status).toBe(200);
+    expect(reopen.body.data.report.resolvedAt).toBeNull();
+
+    const again = await admin('post', 'resolve', {});
+    expect(again.body.data.report.resolvedAt).not.toBeNull();
+    expect(again.body.data.report.resolvedAt).not.toBe(firstDate);
+  });
+});
+
 describe('transition guards', () => {
   it('rejects an illegal transition with 422 (STAT-007)', async () => {
     const id = await createReport();
