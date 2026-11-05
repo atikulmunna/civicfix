@@ -297,6 +297,8 @@ model ReportAssignment {
 
   @@index([reportId])
   @@index([departmentId])
+  // Public scorecards (F2) read current assignments per department.
+  @@index([isCurrent, departmentId])
   @@map("report_assignments")
 }
 

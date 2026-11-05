@@ -51,6 +51,7 @@ import {
   NotificationPageSchema,
   ReportPageSchema,
   ReportSchema,
+  ScorecardsSchema,
   StatusHistoryEntrySchema,
   UserSchema,
   VoteCountsSchema,
@@ -582,6 +583,16 @@ export const routes: readonly ContractRoute[] = [
     params: idParams,
     body: userRoleSchema,
     data: adminUser,
+  },
+
+  // ------------------------------------------------------------ scorecards
+  {
+    method: 'get',
+    path: '/api/v1/scorecards',
+    summary: 'Public department scorecards: response and resolution against targets.',
+    tag: 'Scorecards',
+    access: 'public',
+    data: ScorecardsSchema,
   },
 
   // ------------------------------------------------------------- analytics

@@ -2921,6 +2921,58 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/v1/scorecards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Public department scorecards: response and resolution against targets.
+         * @description No authentication.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Success */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @constant */
+                            success: true;
+                            data: components["schemas"]["Scorecards"];
+                        };
+                    };
+                };
+                /** @description Error (see ErrorCode) */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/analytics/summary": {
         parameters: {
             query?: never;
@@ -3310,6 +3362,53 @@ export interface components {
             isActive: boolean;
             /** Format: date-time */
             updatedAt: string;
+        };
+        /** @description Target hours by severity; rates are 0 to 1. */
+        Scorecards: {
+            /** Format: date-time */
+            generatedAt: string;
+            windowDays: number;
+            targets: {
+                response: {
+                    low: number;
+                    medium: number;
+                    high: number;
+                    urgent: number;
+                };
+                resolution: {
+                    low: number;
+                    medium: number;
+                    high: number;
+                    urgent: number;
+                };
+            };
+            departments: components["schemas"]["DepartmentScorecard"][];
+        };
+        DepartmentScorecard: {
+            /** Format: uuid */
+            departmentId: string;
+            name: string;
+            assigned: number;
+            resolved: number;
+            resolutionRate: number | null;
+            medianResponseHours: number | null;
+            medianResolveHours: number | null;
+            respondedOnTimeRate: number | null;
+            resolvedOnTimeRate: number | null;
+            overdueCount: number;
+            overdue: components["schemas"]["OverdueReport"][];
+        };
+        OverdueReport: {
+            /** Format: uuid */
+            reportId: string;
+            title: string;
+            severity: components["schemas"]["Severity"];
+            status: components["schemas"]["ReportStatus"];
+            /** Format: date-time */
+            assignedAt: string;
+            /** Format: date-time */
+            dueAt: string;
+            hoursOverdue: number;
         };
         AnalyticsSummary: {
             totalReports: number;

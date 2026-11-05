@@ -58,3 +58,19 @@ export function asStatus(value: string | null | undefined): ReportStatus | undef
 export function asSeverity(value: string | null | undefined): Severity | undefined {
   return SEVERITY_OPTIONS.find((s) => s === value);
 }
+
+/** A duration for people to read: "5 hours", "3 days", "under 1 hour". */
+export function formatDuration(hours: number): string {
+  if (hours < 1) return 'under 1 hour';
+  if (hours < 24) {
+    const whole = Math.round(hours);
+    return `${String(whole)} ${whole === 1 ? 'hour' : 'hours'}`;
+  }
+  const days = Math.round(hours / 24);
+  return `${String(days)} ${days === 1 ? 'day' : 'days'}`;
+}
+
+/** A share from 0 to 1 as a whole percentage. */
+export function formatRate(rate: number): string {
+  return `${String(Math.round(rate * 100))}%`;
+}
