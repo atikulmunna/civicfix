@@ -6,6 +6,7 @@ export const queryKeys = {
   me: ['auth', 'me'] as const,
   categories: ['categories'] as const,
   departments: ['departments'] as const,
+  scorecards: ['scorecards'] as const,
   /** Admin catalog lists include inactive items, so they are cached separately. */
   catalog: (listPath: string) => ['catalog', listPath] as const,
   reports: (params: Record<string, unknown>) => ['reports', 'list', params] as const,
