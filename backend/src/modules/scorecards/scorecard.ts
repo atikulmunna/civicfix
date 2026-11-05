@@ -75,7 +75,9 @@ export interface DepartmentScorecard {
   respondedOnTimeRate: number | null;
   /** Of reports whose resolution is in or overdue, the share on time. */
   resolvedOnTimeRate: number | null;
-  /** Open reports past their resolution target (any age), most overdue first. */
+  /** How many open reports are past their resolution target, at any age. */
+  overdueCount: number;
+  /** The most overdue of them, at most OVERDUE_LIMIT. */
   overdue: OverdueReport[];
 }
 
@@ -125,7 +127,7 @@ export function scorecard(
   const resolvable = recent.filter((f) => !CLOSED_UNRESOLVED.has(f.status));
   const resolved = resolvable.filter((f) => f.resolvedAt !== null);
 
-  const overdue = facts
+  const allOverdue = facts
     .filter((f) => !CLOSED.has(f.status))
     .map((f) => {
       const dueAt = new Date(
@@ -134,17 +136,16 @@ export function scorecard(
       return { f, dueAt, hoursOverdue: round1(hoursBetween(dueAt, now)) };
     })
     .filter((o) => o.hoursOverdue > 0)
-    .sort((a, b) => b.hoursOverdue - a.hoursOverdue)
-    .slice(0, OVERDUE_LIMIT)
-    .map(({ f, dueAt, hoursOverdue }) => ({
-      reportId: f.reportId,
-      title: f.title,
-      severity: f.severity,
-      status: f.status,
-      assignedAt: f.assignedAt,
-      dueAt,
-      hoursOverdue,
-    }));
+    .sort((a, b) => b.hoursOverdue - a.hoursOverdue);
+  const overdue = allOverdue.slice(0, OVERDUE_LIMIT).map(({ f, dueAt, hoursOverdue }) => ({
+    reportId: f.reportId,
+    title: f.title,
+    severity: f.severity,
+    status: f.status,
+    assignedAt: f.assignedAt,
+    dueAt,
+    hoursOverdue,
+  }));
 
   return {
     departmentId: department.id,
@@ -162,6 +163,7 @@ export function scorecard(
     ),
     respondedOnTimeRate: onTimeRate(recent, (f) => f.firstResponseAt, TARGET_HOURS.response, now),
     resolvedOnTimeRate: onTimeRate(resolvable, (f) => f.resolvedAt, TARGET_HOURS.resolution, now),
+    overdueCount: allOverdue.length,
     overdue,
   };
 }

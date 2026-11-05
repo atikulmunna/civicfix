@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { median, scorecard, type AssignmentFacts } from './scorecard.js';
+import { median, OVERDUE_LIMIT, scorecard, type AssignmentFacts } from './scorecard.js';
 
 const now = new Date('2026-11-03T12:00:00Z');
 const hoursAgo = (h: number) => new Date(now.getTime() - h * 3_600_000);
@@ -104,6 +104,17 @@ describe('scorecard', () => {
     });
   });
 
+  it('counts every overdue report even though the list is capped', () => {
+    const many = Array.from({ length: OVERDUE_LIMIT + 3 }, (_, i) =>
+      fact({ severity: 'urgent', assignedAt: hoursAgo(100 + i) }),
+    );
+    const card = scorecard(dept, many, now);
+    expect(card.overdueCount).toBe(OVERDUE_LIMIT + 3);
+    expect(card.overdue).toHaveLength(OVERDUE_LIMIT);
+    // The list keeps the most overdue: 72 h target, oldest assigned 152 h ago.
+    expect(card.overdue[0]?.hoursOverdue).toBe(OVERDUE_LIMIT + 2 + 28);
+  });
+
   it('reports nothing measured as null rather than zero', () => {
     const card = scorecard(dept, [], now);
     expect(card).toMatchObject({
@@ -114,6 +125,7 @@ describe('scorecard', () => {
       medianResolveHours: null,
       respondedOnTimeRate: null,
       resolvedOnTimeRate: null,
+      overdueCount: 0,
       overdue: [],
     });
   });

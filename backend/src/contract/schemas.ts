@@ -287,6 +287,7 @@ export const DepartmentScorecardSchema = z
     medianResolveHours: hours.nullable(),
     respondedOnTimeRate: rate.nullable(),
     resolvedOnTimeRate: rate.nullable(),
+    overdueCount: count,
     overdue: z.array(OverdueReportSchema),
   })
   .meta({ id: 'DepartmentScorecard' });
