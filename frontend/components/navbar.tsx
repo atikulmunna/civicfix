@@ -34,20 +34,28 @@ export function Navbar() {
     router.push('/');
   }
 
+  const links = (
+    <>
+      <NavLink href="/reports">Reports</NavLink>
+      <NavLink href="/map">Map</NavLink>
+      <NavLink href="/scorecards">Scorecards</NavLink>
+      {user && <NavLink href="/reports/new">Report an issue</NavLink>}
+      {isStaff(user) && <NavLink href="/department">My queue</NavLink>}
+      {isAdmin(user) && <NavLink href="/admin">Admin</NavLink>}
+    </>
+  );
+
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/80 backdrop-blur-md">
-      <nav className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 sm:px-6">
+      <nav
+        aria-label="Main"
+        className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 sm:px-6"
+      >
         <Link href="/" className="text-lg font-bold tracking-tight text-slate-900">
           Civic<span className="text-teal-600">Fix</span>
         </Link>
 
-        <div className="hidden items-center gap-1 text-sm text-slate-600 sm:flex">
-          <NavLink href="/reports">Reports</NavLink>
-          <NavLink href="/map">Map</NavLink>
-          {user && <NavLink href="/reports/new">Report an issue</NavLink>}
-          {isStaff(user) && <NavLink href="/department">My queue</NavLink>}
-          {isAdmin(user) && <NavLink href="/admin">Admin</NavLink>}
-        </div>
+        <div className="hidden items-center gap-1 text-sm text-slate-600 sm:flex">{links}</div>
 
         <div className="ml-auto flex items-center gap-2 text-sm">
           {loading ? null : user ? (
@@ -91,6 +99,13 @@ export function Navbar() {
             </>
           )}
         </div>
+      </nav>
+      {/* Small screens: the same links in their own row, scrolling sideways if needed. */}
+      <nav
+        aria-label="Sections"
+        className="flex gap-1 overflow-x-auto whitespace-nowrap border-t border-slate-200/70 px-4 py-1.5 text-sm sm:hidden"
+      >
+        {links}
       </nav>
     </header>
   );
