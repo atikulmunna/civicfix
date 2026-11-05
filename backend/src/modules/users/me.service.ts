@@ -6,7 +6,7 @@ import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../lib/errors.js';
 import { sanitizeText } from '../../lib/sanitize.js';
 import { toPublicUser } from '../auth/auth.service.js';
-import { toPublicReport } from '../reports/reports.service.js';
+import { REPORT_IMAGES, toPublicReport } from '../reports/reports.service.js';
 import { getVoteCounts } from '../community/votes.service.js';
 
 export async function getMyProfile(userId: string) {
@@ -40,7 +40,7 @@ export async function listMyReports(userId: string, page: number, limit: number)
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * limit,
       take: limit,
-      include: { images: { orderBy: { createdAt: 'asc' } }, category: true },
+      include: { images: REPORT_IMAGES, category: true },
     }),
   ]);
   const counts = await getVoteCounts(rows.map((r) => r.id));

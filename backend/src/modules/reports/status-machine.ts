@@ -125,6 +125,17 @@ function findRule(from: ReportStatus, to: ReportStatus): TransitionRule | undefi
   return TRANSITIONS.find((r) => r.from === from && r.to === to);
 }
 
+/**
+ * The side effects of `from -> to` whoever performs it, for changes the
+ * system makes rather than a user (residents' disputes reopening a fix, F3).
+ * Throws if the table has no such transition.
+ */
+export function transitionEffects(from: ReportStatus, to: ReportStatus): TransitionEffects {
+  const rule = findRule(from, to);
+  if (!rule) throw new Error(`Transition ${from} -> ${to} is not in the table.`);
+  return rule.effects ?? {};
+}
+
 export interface TransitionCheck {
   allowed: boolean;
   /** Set when allowed === false. */

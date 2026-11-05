@@ -1,6 +1,6 @@
 /**
- * Rate limiting (ABUSE-003). Auth attempts are limited per IP; report and
- * comment creation per authenticated user. Exceeding a limit returns 429 with
+ * Rate limiting (ABUSE-003). Auth attempts are limited per IP; report,
+ * comment and fix-check creation per authenticated user. Exceeding a limit returns 429 with
  * the standard RATE_LIMITED envelope (§22.2).
  *
  * Limiters are disabled under NODE_ENV=test by default so the integration
@@ -60,5 +60,11 @@ export const reportLimiter = makeLimiter({
 export const commentLimiter = makeLimiter({
   windowMs: HOUR,
   max: env.RATE_LIMIT_COMMENTS_PER_HOUR,
+  by: 'user',
+});
+/** Fix checks carry a photo to decode and store, so they are limited too (F3). */
+export const fixCheckLimiter = makeLimiter({
+  windowMs: HOUR,
+  max: env.RATE_LIMIT_FIX_CHECKS_PER_HOUR,
   by: 'user',
 });

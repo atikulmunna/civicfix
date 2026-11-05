@@ -29,6 +29,16 @@ export interface Actor {
 
 const isAdmin = (a: Actor | null): boolean => a?.role === 'admin' || a?.role === 'super_admin';
 
+/**
+ * A report's own photos, oldest first. Residents' fix-check photos (F3) are
+ * image rows too, so they are removed with the report, but they are shown
+ * with their checks rather than as photos of the problem.
+ */
+export const REPORT_IMAGES = {
+  where: { fixCheck: { is: null } },
+  orderBy: { createdAt: 'asc' },
+} satisfies Prisma.Report$imagesArgs;
+
 type ReportWithRelations = Report & {
   images?: ReportImage[];
   category?: Category | null;
@@ -137,7 +147,7 @@ export async function createReport(
 export async function getReportById(id: string, actor: Actor | null) {
   const report = await prisma.report.findUnique({
     where: { id },
-    include: { images: { orderBy: { createdAt: 'asc' } }, category: true },
+    include: { images: REPORT_IMAGES, category: true },
   });
   if (!report) {
     throw new ApiError('NOT_FOUND', 'Report not found.');
@@ -183,7 +193,7 @@ export async function listReports(input: ListReportsInput) {
       orderBy,
       skip: (input.page - 1) * input.limit,
       take: input.limit,
-      include: { images: { orderBy: { createdAt: 'asc' } }, category: true },
+      include: { images: REPORT_IMAGES, category: true },
     }),
   ]);
 
@@ -344,7 +354,7 @@ async function loadForMutation(id: string, actor: Actor): Promise<Report> {
 async function hydrate(ids: string[]): Promise<Map<string, ReportWithRelations>> {
   const rows = await prisma.report.findMany({
     where: { id: { in: ids } },
-    include: { images: { orderBy: { createdAt: 'asc' } }, category: true },
+    include: { images: REPORT_IMAGES, category: true },
   });
   return new Map(rows.map((r) => [r.id, r]));
 }

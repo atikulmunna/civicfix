@@ -27,6 +27,7 @@ import {
 } from '../modules/admin/workflow.schemas.js';
 import { changePasswordSchema, loginSchema, registerSchema } from '../modules/auth/auth.schemas.js';
 import { commentSchema } from '../modules/community/community.schemas.js';
+import { fixCheckSchema } from '../modules/fix-checks/fix-checks.schemas.js';
 import { listNotificationsSchema } from '../modules/notifications/notifications.schemas.js';
 import {
   checkDuplicatesSchema,
@@ -45,6 +46,8 @@ import {
   CategorySchema,
   CommentSchema,
   DepartmentAnalyticsSchema,
+  FixChecksSchema,
+  FixCheckSchema,
   DepartmentSchema,
   MapMarkerSchema,
   PriorityExplanationSchema,
@@ -75,8 +78,8 @@ export interface ContractRoute {
   params?: z.ZodObject;
   query?: z.ZodObject;
   body?: z.ZodType;
-  /** multipart/form-data body (fields; files are described separately). */
-  multipart?: z.ZodObject;
+  /** multipart/form-data body: its fields, and which file field it carries. */
+  multipart?: { fields: z.ZodObject; files: 'images' | 'photo' };
   /** Success status (default 200). */
   status?: 200 | 201;
   /** The `data` member of the success envelope. */
@@ -186,7 +189,7 @@ export const routes: readonly ContractRoute[] = [
     summary: 'Create a report with 1 to 5 photos (multipart field `images`).',
     tag: 'Reports',
     access: 'user',
-    multipart: createReportSchema,
+    multipart: { fields: createReportSchema, files: 'images' },
     status: 201,
     data: report,
   },
@@ -293,6 +296,26 @@ export const routes: readonly ContractRoute[] = [
     access: 'user',
     params: idParams,
     data: deleted,
+  },
+  {
+    method: 'get',
+    path: '/api/v1/reports/{id}/fix-checks',
+    summary: "Residents' checks of a report's fixes, and the current fix's tally.",
+    tag: 'Community',
+    access: 'optional',
+    params: idParams,
+    data: FixChecksSchema,
+  },
+  {
+    method: 'post',
+    path: '/api/v1/reports/{id}/fix-checks',
+    summary: "Confirm or dispute a resolved report's fix with a photo (multipart field `photo`).",
+    tag: 'Community',
+    access: 'user',
+    params: idParams,
+    multipart: { fields: fixCheckSchema, files: 'photo' },
+    status: 201,
+    data: z.strictObject({ fixCheck: FixCheckSchema, reopened: z.boolean() }),
   },
   ...(['upvote', 'confirm'] as const).flatMap((vote): ContractRoute[] => [
     {

@@ -12,7 +12,12 @@ import { ApiError } from '../../lib/errors.js';
 import { assertReportExists } from '../community/shared.js';
 import { getVoteCounts } from '../community/votes.service.js';
 import { createStatusChangeNotifications } from '../notifications/notifications.service.js';
-import { getReportById, toPublicReport, type Actor } from '../reports/reports.service.js';
+import {
+  getReportById,
+  REPORT_IMAGES,
+  toPublicReport,
+  type Actor,
+} from '../reports/reports.service.js';
 import { refreshPriority, refreshReporterTrust } from '../reports/triage.service.js';
 import {
   assertTransition,
@@ -197,7 +202,7 @@ export async function listAdminReports(input: AdminListInput) {
       orderBy,
       skip: (input.page - 1) * input.limit,
       take: input.limit,
-      include: { images: { orderBy: { createdAt: 'asc' } }, category: true },
+      include: { images: REPORT_IMAGES, category: true },
     }),
   ]);
 
@@ -232,7 +237,7 @@ export async function listDepartmentReports(actor: Actor, input: DeptListInput) 
       orderBy: [{ createdAt: 'desc' }],
       skip: (input.page - 1) * input.limit,
       take: input.limit,
-      include: { images: { orderBy: { createdAt: 'asc' } }, category: true },
+      include: { images: REPORT_IMAGES, category: true },
     }),
   ]);
 
