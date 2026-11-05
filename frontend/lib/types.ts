@@ -30,6 +30,9 @@ export type DepartmentAnalytics = Schemas['DepartmentAnalytics'];
 export type PriorityExplanation = Schemas['PriorityExplanation'];
 export type Scorecards = Schemas['Scorecards'];
 export type DepartmentScorecard = Schemas['DepartmentScorecard'];
+export type FixVerdict = Schemas['FixVerdict'];
+export type FixCheck = Schemas['FixCheck'];
+export type FixChecks = Schemas['FixChecks'];
 
 /** A page of items: the API's paginated shape (e.g. ReportPage), for any item type. */
 export type Paginated<T> = Omit<Schemas['ReportPage'], 'items'> & { items: T[] };

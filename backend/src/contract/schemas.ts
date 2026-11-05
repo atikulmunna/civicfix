@@ -14,6 +14,7 @@
 import { z } from 'zod';
 import { ERROR_CODES } from '../lib/errors.js';
 import {
+  FixVerdict,
   ImageType,
   NotificationType,
   ReportStatus,
@@ -32,6 +33,7 @@ export const RoleSchema = z.enum(UserRole).meta({ id: 'Role' });
 export const ReportStatusSchema = z.enum(ReportStatus).meta({ id: 'ReportStatus' });
 export const SeveritySchema = z.enum(Severity).meta({ id: 'Severity' });
 export const ImageTypeSchema = z.enum(ImageType).meta({ id: 'ImageType' });
+export const FixVerdictSchema = z.enum(FixVerdict).meta({ id: 'FixVerdict' });
 export const NotificationTypeSchema = z.enum(NotificationType).meta({ id: 'NotificationType' });
 export const ErrorCodeSchema = z.enum(ERROR_CODES).meta({ id: 'ErrorCode' });
 
@@ -202,6 +204,42 @@ export const CommentSchema = z
     updatedAt: timestamp,
   })
   .meta({ id: 'Comment' });
+
+// ---------------------------------------------------------------------------
+// Fix checks (F3)
+
+export const FixCheckSchema = z
+  .strictObject({
+    id,
+    verdict: FixVerdictSchema,
+    imageUrl: z.string(),
+    author: z.strictObject({ id, name: z.string() }),
+    resolvedAt: timestamp.meta({
+      description: 'The fix this checks: when the report was marked resolved.',
+    }),
+    createdAt: timestamp,
+  })
+  .meta({ id: 'FixCheck', description: "A resident's check of a fix, with a photo of it now." });
+
+export const FixChecksSchema = z
+  .strictObject({
+    disputesToReopen: count.meta({
+      description: 'Disputes from different residents that reopen a fix.',
+    }),
+    current: z
+      .strictObject({ resolvedAt: timestamp, confirmed: count, disputed: count })
+      .nullable()
+      .meta({ description: 'While the report is resolved: its fix and the tally so far.' }),
+    checks: z
+      .array(FixCheckSchema)
+      .meta({ description: 'Checks of every fix so far, newest first, at most 50.' }),
+    total: count,
+    viewer: z
+      .strictObject({ verdict: FixVerdictSchema.nullable(), canCheck: z.boolean() })
+      .optional()
+      .meta({ description: 'Signed in: your check of the current fix, and whether you may.' }),
+  })
+  .meta({ id: 'FixChecks' });
 
 export const NotificationSchema = z
   .strictObject({

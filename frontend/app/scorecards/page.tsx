@@ -193,6 +193,10 @@ function HowMeasured({ data }: { data: Scorecards }) {
           Reports rejected or marked as duplicates had nothing to resolve, so they are left out of
           the resolved percentages.
         </li>
+        <li>
+          A fix that residents dispute with photos goes back to the department, and the report
+          counts as unresolved again.
+        </li>
         <li>Typical means the median: half of reports were faster, half slower.</li>
       </ul>
     </section>

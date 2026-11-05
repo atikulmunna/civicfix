@@ -42,6 +42,8 @@ export interface TransitionEffects {
   createsAssignment?: boolean;
   /** Sets resolved_at = now(). */
   setsResolvedAt?: boolean;
+  /** Sets resolved_at = null: the report is no longer resolved. */
+  clearsResolvedAt?: boolean;
 }
 
 interface TransitionRule {
@@ -108,13 +110,30 @@ export const TRANSITIONS: readonly TransitionRule[] = [
   { from: 'IN_PROGRESS', to: 'NEEDS_MORE_INFO', allowedRoles: DEPT_OR_ADMIN },
 
   { from: 'RESOLVED', to: 'ARCHIVED', allowedRoles: ADMINS },
-  { from: 'RESOLVED', to: 'IN_PROGRESS', allowedRoles: ADMINS }, // reopen if fix failed
+  // Reopen if the fix failed.
+  {
+    from: 'RESOLVED',
+    to: 'IN_PROGRESS',
+    allowedRoles: ADMINS,
+    effects: { clearsResolvedAt: true },
+  },
 
   { from: 'REJECTED', to: 'ARCHIVED', allowedRoles: ADMINS },
 ];
 
 function findRule(from: ReportStatus, to: ReportStatus): TransitionRule | undefined {
   return TRANSITIONS.find((r) => r.from === from && r.to === to);
+}
+
+/**
+ * The side effects of `from -> to` whoever performs it, for changes the
+ * system makes rather than a user (residents' disputes reopening a fix, F3).
+ * Throws if the table has no such transition.
+ */
+export function transitionEffects(from: ReportStatus, to: ReportStatus): TransitionEffects {
+  const rule = findRule(from, to);
+  if (!rule) throw new Error(`Transition ${from} -> ${to} is not in the table.`);
+  return rule.effects ?? {};
 }
 
 export interface TransitionCheck {

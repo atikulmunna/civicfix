@@ -13,6 +13,7 @@ export const queryKeys = {
   mapMarkers: (params: Record<string, unknown>) => ['reports', 'map', params] as const,
   report: (id: string) => ['reports', 'detail', id] as const,
   reportHistory: (id: string) => ['reports', 'history', id] as const,
+  fixChecks: (id: string) => ['reports', 'fix-checks', id] as const,
   duplicates: (params: { categoryId: string; latitude: number; longitude: number } | null) =>
     ['reports', 'duplicates', params] as const,
   myReports: (page: number) => ['me', 'reports', page] as const,

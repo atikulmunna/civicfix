@@ -6,18 +6,24 @@
  * side effects (internal note / duplicate target / assignment / resolvedAt),
  * and always writes a status_history row (BR-009/STAT-002).
  */
-import type { Prisma } from '../../generated/prisma/client.js';
+import type { Prisma, Report } from '../../generated/prisma/client.js';
 import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../lib/errors.js';
 import { assertReportExists } from '../community/shared.js';
 import { getVoteCounts } from '../community/votes.service.js';
 import { createStatusChangeNotifications } from '../notifications/notifications.service.js';
-import { getReportById, toPublicReport, type Actor } from '../reports/reports.service.js';
+import {
+  getReportById,
+  REPORT_IMAGES,
+  toPublicReport,
+  type Actor,
+} from '../reports/reports.service.js';
 import { refreshPriority, refreshReporterTrust } from '../reports/triage.service.js';
 import {
   assertTransition,
   InvalidStatusTransitionError,
   type ReportStatus,
+  type TransitionEffects,
 } from '../reports/status-machine.js';
 import type { AdminListInput, DeptListInput } from './workflow.schemas.js';
 
@@ -93,8 +99,31 @@ export async function transitionStatus(
     }
   }
 
+  await prisma.$transaction((tx) =>
+    applyTransition(tx, report, toStatus, effects, actor.id, payload),
+  );
+
+  return getReportById(reportId, actor);
+}
+
+/**
+ * Write a status change that has already been checked (assertTransition, or
+ * transitionEffects for a system change) and its validated payload: the
+ * report itself, any assignment, the history row every change gets (BR-009),
+ * subscriber notifications and triage. Runs inside the caller's transaction.
+ */
+export async function applyTransition(
+  tx: Prisma.TransactionClient,
+  report: Pick<Report, 'id' | 'status' | 'title' | 'userId'>,
+  toStatus: ReportStatus,
+  effects: TransitionEffects,
+  actorId: string,
+  payload: TransitionPayload,
+): Promise<void> {
+  const reportId = report.id;
   const data: Prisma.ReportUpdateInput = { status: toStatus };
   if (effects.setsResolvedAt) data.resolvedAt = new Date();
+  if (effects.clearsResolvedAt) data.resolvedAt = null;
   if (payload.internalNote !== undefined) data.internalNote = payload.internalNote;
   if (effects.requiresDuplicateTarget && payload.duplicateOfReportId) {
     data.duplicateOf = { connect: { id: payload.duplicateOfReportId } };
@@ -103,52 +132,48 @@ export async function transitionStatus(
     data.assignedDepartment = { connect: { id: payload.departmentId } };
   }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.report.update({ where: { id: reportId }, data });
+  await tx.report.update({ where: { id: reportId }, data });
 
-    if (effects.createsAssignment && payload.departmentId) {
-      // Keep one current assignment; supersede prior ones (§8.2.10).
-      await tx.reportAssignment.updateMany({
-        where: { reportId, isCurrent: true },
-        data: { isCurrent: false },
-      });
-      await tx.reportAssignment.create({
-        data: {
-          reportId,
-          departmentId: payload.departmentId,
-          assignedBy: actor.id,
-          note: payload.note ?? null,
-          isCurrent: true,
-        },
-      });
-    }
-
-    await tx.statusHistory.create({
+  if (effects.createsAssignment && payload.departmentId) {
+    // Keep one current assignment; supersede prior ones (§8.2.10).
+    await tx.reportAssignment.updateMany({
+      where: { reportId, isCurrent: true },
+      data: { isCurrent: false },
+    });
+    await tx.reportAssignment.create({
       data: {
         reportId,
-        oldStatus: report.status,
-        newStatus: toStatus,
-        changedBy: actor.id,
+        departmentId: payload.departmentId,
+        assignedBy: actorId,
         note: payload.note ?? null,
+        isCurrent: true,
       },
     });
+  }
 
-    // Notify subscribers of the change (§13.5, NOTIF-001/002/003).
-    await createStatusChangeNotifications(tx, {
+  await tx.statusHistory.create({
+    data: {
       reportId,
-      reportTitle: report.title,
+      oldStatus: report.status,
       newStatus: toStatus,
-      actorId: actor.id,
-    });
-
-    // Triage (F1), after the history row it counts: an outcome changes the
-    // reporter's trust (and so all their reports); any status change can
-    // close or reopen this report's ranking.
-    if (TRUST_OUTCOMES.has(toStatus)) await refreshReporterTrust(report.userId, tx);
-    else await refreshPriority(reportId, tx);
+      changedBy: actorId,
+      note: payload.note ?? null,
+    },
   });
 
-  return getReportById(reportId, actor);
+  // Notify subscribers of the change (§13.5, NOTIF-001/002/003).
+  await createStatusChangeNotifications(tx, {
+    reportId,
+    reportTitle: report.title,
+    newStatus: toStatus,
+    actorId,
+  });
+
+  // Triage (F1), after the history row it counts: an outcome changes the
+  // reporter's trust (and so all their reports); any status change can
+  // close or reopen this report's ranking.
+  if (TRUST_OUTCOMES.has(toStatus)) await refreshReporterTrust(report.userId, tx);
+  else await refreshPriority(reportId, tx);
 }
 
 export async function listAdminReports(input: AdminListInput) {
@@ -177,7 +202,7 @@ export async function listAdminReports(input: AdminListInput) {
       orderBy,
       skip: (input.page - 1) * input.limit,
       take: input.limit,
-      include: { images: { orderBy: { createdAt: 'asc' } }, category: true },
+      include: { images: REPORT_IMAGES, category: true },
     }),
   ]);
 
@@ -212,7 +237,7 @@ export async function listDepartmentReports(actor: Actor, input: DeptListInput) 
       orderBy: [{ createdAt: 'desc' }],
       skip: (input.page - 1) * input.limit,
       take: input.limit,
-      include: { images: { orderBy: { createdAt: 'asc' } }, category: true },
+      include: { images: REPORT_IMAGES, category: true },
     }),
   ]);
 

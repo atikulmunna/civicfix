@@ -6,6 +6,7 @@ import {
   isTerminal,
   TERMINAL_STATUSES,
   InvalidStatusTransitionError,
+  transitionEffects,
   type ReportStatus,
   type UserRole,
 } from './status-machine.js';
@@ -153,6 +154,17 @@ describe('side-effect flags', () => {
   it('flags resolvedAt on IN_PROGRESS -> RESOLVED', () => {
     expect(canTransition('IN_PROGRESS', 'RESOLVED', 'admin').effects).toEqual({
       setsResolvedAt: true,
+    });
+  });
+
+  it('gives a transition its effects without a role, for system changes', () => {
+    expect(transitionEffects('RESOLVED', 'IN_PROGRESS')).toEqual({ clearsResolvedAt: true });
+    expect(() => transitionEffects('SUBMITTED', 'RESOLVED')).toThrow(/not in the table/);
+  });
+
+  it('flags clearing resolvedAt on the reopen RESOLVED -> IN_PROGRESS', () => {
+    expect(canTransition('RESOLVED', 'IN_PROGRESS', 'admin').effects).toEqual({
+      clearsResolvedAt: true,
     });
   });
 });

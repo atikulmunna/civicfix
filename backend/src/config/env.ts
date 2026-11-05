@@ -55,6 +55,7 @@ const schema = z.object({
   // Rate limits (ABUSE-003).
   RATE_LIMIT_REPORTS_PER_HOUR: z.coerce.number().int().positive().default(5),
   RATE_LIMIT_COMMENTS_PER_HOUR: z.coerce.number().int().positive().default(20),
+  RATE_LIMIT_FIX_CHECKS_PER_HOUR: z.coerce.number().int().positive().default(10),
   RATE_LIMIT_AUTH_PER_15MIN: z.coerce.number().int().positive().default(10),
 });
 

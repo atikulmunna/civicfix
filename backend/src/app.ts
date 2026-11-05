@@ -25,6 +25,7 @@ import {
   reportHistoryRouter,
 } from './modules/admin/workflow.routes.js';
 import { notificationsRouter } from './modules/notifications/notifications.routes.js';
+import { fixChecksRouter } from './modules/fix-checks/fix-checks.routes.js';
 import { usersRouter } from './modules/users/me.routes.js';
 import {
   adminCategoriesRouter,
@@ -127,6 +128,7 @@ export function buildApp() {
   // Community sub-resources share the /reports prefix (distinct sub-paths).
   app.use('/api/v1/reports', communityRouter);
   app.use('/api/v1/reports', reportHistoryRouter);
+  app.use('/api/v1/reports', fixChecksRouter);
   app.use('/api/v1/comments', commentsRouter);
   app.use('/api/v1/admin/reports', adminReportsRouter);
   app.use('/api/v1/department', departmentRouter);

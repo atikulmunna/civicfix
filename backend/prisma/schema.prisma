@@ -76,6 +76,11 @@ enum VoteType {
   false_report
 }
 
+enum FixVerdict {
+  confirmed
+  disputed
+}
+
 enum NotificationType {
   status_change
   comment
@@ -113,6 +118,7 @@ model User {
   reports         Report[]             @relation("ReportReporter")
   comments        Comment[]
   votes           Vote[]
+  fixChecks       FixCheck[]
   uploadedImages  ReportImage[]        @relation("ImageUploader")
   statusChanges   StatusHistory[]      @relation("StatusChanger")
   assignmentsMade ReportAssignment[]   @relation("AssignmentAuthor")
@@ -193,6 +199,7 @@ model Report {
   images        ReportImage[]
   comments      Comment[]
   votes         Vote[]
+  fixChecks     FixCheck[]
   statusHistory StatusHistory[]
   assignments   ReportAssignment[]
   subscriptions ReportSubscription[]
@@ -227,11 +234,34 @@ model ReportImage {
   uploadedBy String    @map("uploaded_by") @db.Uuid
   createdAt  DateTime  @default(now()) @map("created_at")
 
-  report   Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
-  uploader User   @relation("ImageUploader", fields: [uploadedBy], references: [id])
+  report   Report    @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  uploader User      @relation("ImageUploader", fields: [uploadedBy], references: [id])
+  fixCheck FixCheck?
 
   @@index([reportId])
   @@map("report_images")
+}
+
+/// A resident's check of a claimed fix, with a photo as evidence (F3).
+model FixCheck {
+  id         String     @id @default(uuid()) @db.Uuid
+  reportId   String     @map("report_id") @db.Uuid
+  userId     String     @map("user_id") @db.Uuid
+  imageId    String     @unique @map("image_id") @db.Uuid
+  verdict    FixVerdict
+  /// Which attempt at a fix this checks: the report's resolved_at at the time.
+  resolvedAt DateTime   @map("resolved_at")
+  createdAt  DateTime   @default(now()) @map("created_at")
+
+  report Report      @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  user   User        @relation(fields: [userId], references: [id])
+  image  ReportImage @relation(fields: [imageId], references: [id], onDelete: Cascade)
+
+  // One response per person per attempt; the next fix can be checked afresh.
+  // Also serves counting one attempt's checks by verdict.
+  @@unique([reportId, resolvedAt, userId])
+  @@index([reportId, createdAt])
+  @@map("fix_checks")
 }
 
 model Comment {

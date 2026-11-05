@@ -21,12 +21,18 @@ const OUTPUT = fileURLToPath(new URL('../openapi.json', import.meta.url));
 
 const signedIn: Record<string, string[]>[] = [{ cookieAuth: [] }, { bearerAuth: [] }];
 
-/** Report photos: the multipart `images` field (validated by magic bytes). */
-const images = z
-  .array(z.string().meta({ format: 'binary' }))
-  .min(1)
-  .max(5)
-  .meta({ description: '1 to 5 photos (PNG, JPEG or WebP), at most 5 MB each.' });
+/** Multipart file fields (validated by magic bytes). */
+const FILE_FIELDS = {
+  images: z
+    .array(z.string().meta({ format: 'binary' }))
+    .min(1)
+    .max(5)
+    .meta({ description: '1 to 5 photos (PNG, JPEG or WebP), at most 5 MB each.' }),
+  photo: z.string().meta({
+    format: 'binary',
+    description: 'One photo (PNG, JPEG or WebP), at most 5 MB.',
+  }),
+};
 
 function accessNote(route: ContractRoute): string {
   if (route.access === 'public') return 'No authentication.';
@@ -64,7 +70,13 @@ function operation(route: ContractRoute): ZodOpenApiOperationObject {
   } else if (route.multipart) {
     op.requestBody = {
       required: true,
-      content: { 'multipart/form-data': { schema: route.multipart.extend({ images }) } },
+      content: {
+        'multipart/form-data': {
+          schema: route.multipart.fields.extend({
+            [route.multipart.files]: FILE_FIELDS[route.multipart.files],
+          }),
+        },
+      },
     };
   }
   return op;

@@ -145,6 +145,7 @@ describe('department scorecards page', () => {
     expect(within(urgent).getByText('1 day')).toBeInTheDocument();
     expect(within(urgent).getByText('3 days')).toBeInTheDocument();
     expect(screen.getByText(/assigned in the last 90 days/)).toBeInTheDocument();
+    expect(screen.getByText(/counts as unresolved again/)).toBeInTheDocument();
   });
 
   it('shows the API error instead of an empty page', async () => {
