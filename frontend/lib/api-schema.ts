@@ -1131,6 +1131,113 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reports/{id}/fix-checks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Residents' checks of a report's fixes, and the current fix's tally.
+         * @description Authentication optional; staff see more.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Success */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @constant */
+                            success: true;
+                            data: components["schemas"]["FixChecks"];
+                        };
+                    };
+                };
+                /** @description Error (see ErrorCode) */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Confirm or dispute a resolved report's fix with a photo (multipart field `photo`).
+         * @description Requires a signed-in user.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "multipart/form-data": {
+                        /** @enum {string} */
+                        verdict: "confirmed" | "disputed";
+                        /**
+                         * Format: binary
+                         * @description One photo (PNG, JPEG or WebP), at most 5 MB.
+                         */
+                        photo: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Success */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @constant */
+                            success: true;
+                            data: {
+                                fixCheck: components["schemas"]["FixCheck"];
+                                reopened: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Error (see ErrorCode) */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reports/{id}/upvote": {
         parameters: {
             query?: never;
@@ -3279,6 +3386,46 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        FixChecks: {
+            /** @description Disputes from different residents that reopen a fix. */
+            disputesToReopen: number;
+            /** @description While the report is resolved: its fix and the tally so far. */
+            current: {
+                /** Format: date-time */
+                resolvedAt: string;
+                confirmed: number;
+                disputed: number;
+            } | null;
+            /** @description Checks of every fix so far, newest first, at most 50. */
+            checks: components["schemas"]["FixCheck"][];
+            total: number;
+            /** @description Signed in: your check of the current fix, and whether you may. */
+            viewer?: {
+                verdict: components["schemas"]["FixVerdict"] | null;
+                canCheck: boolean;
+            };
+        };
+        /** @description A resident's check of a fix, with a photo of it now. */
+        FixCheck: {
+            /** Format: uuid */
+            id: string;
+            verdict: components["schemas"]["FixVerdict"];
+            imageUrl: string;
+            author: {
+                /** Format: uuid */
+                id: string;
+                name: string;
+            };
+            /**
+             * Format: date-time
+             * @description The fix this checks: when the report was marked resolved.
+             */
+            resolvedAt: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        /** @enum {string} */
+        FixVerdict: "confirmed" | "disputed";
         PriorityExplanation: {
             severity: number;
             confirmations: number;
