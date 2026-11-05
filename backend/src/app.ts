@@ -34,6 +34,7 @@ import {
   departmentsRouter,
 } from './modules/admin/admin-crud.routes.js';
 import { analyticsRouter } from './modules/admin/analytics.routes.js';
+import { scorecardsRouter } from './modules/scorecards/scorecards.routes.js';
 
 /** A caller-supplied X-Request-Id is reused only if it looks like an id. */
 const REQUEST_ID_PATTERN = /^[\w-]{8,64}$/;
@@ -137,6 +138,7 @@ export function buildApp() {
   app.use('/api/v1/admin/categories', adminCategoriesRouter);
   app.use('/api/v1/admin/departments', adminDepartmentsRouter);
   app.use('/api/v1/admin/analytics', analyticsRouter);
+  app.use('/api/v1/scorecards', scorecardsRouter);
 
   // 404 for unmatched routes.
   app.use((_req, res) => {

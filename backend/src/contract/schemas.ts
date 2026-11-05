@@ -259,6 +259,51 @@ export const DepartmentAnalyticsSchema = z
   .meta({ id: 'DepartmentAnalytics' });
 
 // ---------------------------------------------------------------------------
+// Public department scorecards (F2); see modules/scorecards/scorecard.ts
+
+const rate = z.number().min(0).max(1);
+const hours = z.number().nonnegative();
+
+export const OverdueReportSchema = z
+  .strictObject({
+    reportId: id,
+    title: z.string(),
+    severity: SeveritySchema,
+    status: ReportStatusSchema,
+    assignedAt: timestamp,
+    dueAt: timestamp,
+    hoursOverdue: z.number().positive(),
+  })
+  .meta({ id: 'OverdueReport' });
+
+export const DepartmentScorecardSchema = z
+  .strictObject({
+    departmentId: id,
+    name: z.string(),
+    assigned: count,
+    resolved: count,
+    resolutionRate: rate.nullable(),
+    medianResponseHours: hours.nullable(),
+    medianResolveHours: hours.nullable(),
+    respondedOnTimeRate: rate.nullable(),
+    resolvedOnTimeRate: rate.nullable(),
+    overdue: z.array(OverdueReportSchema),
+  })
+  .meta({ id: 'DepartmentScorecard' });
+
+export const ScorecardsSchema = z
+  .strictObject({
+    generatedAt: timestamp,
+    windowDays: z.number().int().positive(),
+    targets: z.strictObject({
+      response: countsFor(Object.values(Severity)),
+      resolution: countsFor(Object.values(Severity)),
+    }),
+    departments: z.array(DepartmentScorecardSchema),
+  })
+  .meta({ id: 'Scorecards', description: 'Target hours by severity; rates are 0 to 1.' });
+
+// ---------------------------------------------------------------------------
 // Envelopes (SRS v1.1 §22.1)
 
 const pageFields = {
