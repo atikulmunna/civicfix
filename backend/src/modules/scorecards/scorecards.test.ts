@@ -104,6 +104,20 @@ afterAll(async () => {
 });
 
 describe('GET /scorecards (F2)', () => {
+  // The align_seeded_assignment_times migration only moves assignments that are
+  // later than their ASSIGNED history row, so it must never touch real ones.
+  it('writes an assignment no later than its history row', async () => {
+    const id = await assignedReport('Blocked drain, timing');
+    const assignment = await prisma.reportAssignment.findFirstOrThrow({
+      where: { reportId: id, isCurrent: true },
+    });
+    const history = await prisma.statusHistory.findFirstOrThrow({
+      where: { reportId: id, newStatus: 'ASSIGNED' },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect(assignment.createdAt.getTime()).toBeLessThanOrEqual(history.createdAt.getTime());
+  });
+
   it("scores a department's response and resolution against the targets", async () => {
     const fixed = await assignedReport('Blocked drain, fixed');
     await startWork(fixed);
@@ -149,9 +163,9 @@ describe('GET /scorecards (F2)', () => {
     );
     expect(card).toMatchObject({
       name: departmentName,
-      assigned: 5,
+      assigned: 6, // includes the report from the timing test above
       resolved: 1,
-      resolutionRate: 0.2,
+      resolutionRate: 0.1667,
       // Known outcomes: three on-time responses, and the stale report's missed
       // 48 h target. The untouched new report is still in time, so not counted.
       respondedOnTimeRate: 0.75,
@@ -159,6 +173,7 @@ describe('GET /scorecards (F2)', () => {
       resolvedOnTimeRate: 0.5,
     });
     expect(card.medianResponseHours).toBeLessThan(1);
+    expect(card.overdueCount).toBe(1);
     expect(card.overdue).toHaveLength(1);
     expect(card.overdue[0]).toMatchObject({
       reportId: stale,

@@ -20,6 +20,8 @@ const prisma = createPrismaClient(databaseUrl);
 const SEED_PASSWORD = 'Password123!';
 const DHAKA = { lat: 23.78, lng: 90.4 };
 const DAY = 24 * 60 * 60 * 1000;
+/** Seeded status changes are spaced this far apart. */
+const HISTORY_STEP_MS = 6 * 60 * 60 * 1000;
 
 const CATEGORIES = [
   { name: 'Roads & Potholes', icon: 'road' },
@@ -285,7 +287,7 @@ async function main(): Promise<void> {
         newStatus: to,
         changedBy: idx === 0 ? reporter.id : changerFor(to),
         note: idx === 0 ? 'Report submitted.' : null,
-        createdAt: new Date(createdAt.getTime() + idx * 6 * 60 * 60 * 1000),
+        createdAt: new Date(createdAt.getTime() + idx * HISTORY_STEP_MS),
       })),
     });
 
@@ -297,7 +299,14 @@ async function main(): Promise<void> {
     // Current assignment for assigned/in-progress/resolved reports.
     if (assigned) {
       await prisma.reportAssignment.create({
-        data: { reportId: report.id, departmentId: dept.id, assignedBy: admin.id, isCurrent: true },
+        data: {
+          reportId: report.id,
+          departmentId: dept.id,
+          assignedBy: admin.id,
+          isCurrent: true,
+          // When the history says it was assigned: scorecards time from this.
+          createdAt: new Date(createdAt.getTime() + chain.indexOf('ASSIGNED') * HISTORY_STEP_MS),
+        },
       });
     }
 
