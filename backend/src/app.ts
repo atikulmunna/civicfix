@@ -36,6 +36,7 @@ import {
 } from './modules/admin/admin-crud.routes.js';
 import { analyticsRouter } from './modules/admin/analytics.routes.js';
 import { scorecardsRouter } from './modules/scorecards/scorecards.routes.js';
+import { hotspotsRouter, recurrenceRouter } from './modules/hotspots/hotspots.routes.js';
 
 /** A caller-supplied X-Request-Id is reused only if it looks like an id. */
 const REQUEST_ID_PATTERN = /^[\w-]{8,64}$/;
@@ -129,6 +130,7 @@ export function buildApp() {
   app.use('/api/v1/reports', communityRouter);
   app.use('/api/v1/reports', reportHistoryRouter);
   app.use('/api/v1/reports', fixChecksRouter);
+  app.use('/api/v1/reports', recurrenceRouter);
   app.use('/api/v1/comments', commentsRouter);
   app.use('/api/v1/admin/reports', adminReportsRouter);
   app.use('/api/v1/department', departmentRouter);
@@ -141,6 +143,7 @@ export function buildApp() {
   app.use('/api/v1/admin/departments', adminDepartmentsRouter);
   app.use('/api/v1/admin/analytics', analyticsRouter);
   app.use('/api/v1/scorecards', scorecardsRouter);
+  app.use('/api/v1/hotspots', hotspotsRouter);
 
   // 404 for unmatched routes.
   app.use((_req, res) => {
