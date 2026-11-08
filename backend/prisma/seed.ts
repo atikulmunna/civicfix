@@ -255,7 +255,12 @@ async function main(): Promise<void> {
     const createdAt = new Date(now - (STATUS_PLAN.length - i) * 2 * DAY);
     const assigned = ASSIGNED_STATES.includes(status);
     const dept = pick(departments, i);
-    const resolvedAt = status === 'RESOLVED' ? new Date(createdAt.getTime() + 3 * DAY) : null;
+    // Status history chain (BR-009 / STAT-002), one step every HISTORY_STEP_MS.
+    const chain = pathTo(status);
+    const stepTime = (to: ReportStatus) =>
+      new Date(createdAt.getTime() + chain.indexOf(to) * HISTORY_STEP_MS);
+    // Resolved when the history says so: report pages and scorecards read this.
+    const resolvedAt = status === 'RESOLVED' ? stepTime('RESOLVED') : null;
 
     const report = await prisma.report.create({
       data: {
@@ -278,8 +283,6 @@ async function main(): Promise<void> {
     reportIds.push(report.id);
     if (status === 'RESOLVED' && !firstResolvedId) firstResolvedId = report.id;
 
-    // Status history chain (BR-009 / STAT-002).
-    const chain = pathTo(status);
     await prisma.statusHistory.createMany({
       data: chain.map((to, idx) => ({
         reportId: report.id,
@@ -305,7 +308,7 @@ async function main(): Promise<void> {
           assignedBy: admin.id,
           isCurrent: true,
           // When the history says it was assigned: scorecards time from this.
-          createdAt: new Date(createdAt.getTime() + chain.indexOf('ASSIGNED') * HISTORY_STEP_MS),
+          createdAt: stepTime('ASSIGNED'),
         },
       });
     }
