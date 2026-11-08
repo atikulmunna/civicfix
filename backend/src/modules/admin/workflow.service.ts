@@ -37,6 +37,19 @@ export interface TransitionPayload {
 }
 
 /** Outcomes that change the reporter's trust score (F1). */
+/**
+ * Why a report cannot be merged into one that is closed. Into a fixed one
+ * least of all: a problem reported again after a fix has come back (F4).
+ */
+const CLOSED_ORIGINAL: Partial<Record<ReportStatus, string>> = {
+  RESOLVED:
+    'Merge into an open report: this one is already resolved. ' +
+    'A problem reported again after a fix is not a duplicate.',
+  REJECTED: 'Merge into an open report: this one was rejected.',
+  DUPLICATE: 'Merge into an open report: this one is already a duplicate.',
+  ARCHIVED: 'Merge into an open report: this one is archived.',
+};
+
 const TRUST_OUTCOMES: ReadonlySet<ReportStatus> = new Set<ReportStatus>([
   'VERIFIED',
   'RESOLVED',
@@ -77,6 +90,7 @@ export async function transitionStatus(
   }
 
   // Validate the payload satisfies the effect requirements.
+  let merge: { note: string; notice: string } | undefined;
   if (effects.requiresInternalNote && !payload.internalNote?.trim()) {
     throw new ApiError('VALIDATION_ERROR', 'An internal note is required for this action.');
   }
@@ -87,7 +101,19 @@ export async function transitionStatus(
     if (payload.duplicateOfReportId === reportId) {
       throw new ApiError('VALIDATION_ERROR', 'A report cannot be a duplicate of itself.');
     }
-    await assertReportExists(payload.duplicateOfReportId);
+    const original = await prisma.report.findUnique({
+      where: { id: payload.duplicateOfReportId },
+      select: { title: true, status: true },
+    });
+    if (!original) throw new ApiError('NOT_FOUND', 'The original report was not found.');
+    const closed = CLOSED_ORIGINAL[original.status];
+    if (closed) throw new ApiError('VALIDATION_ERROR', closed);
+    merge = {
+      note: payload.note?.trim() ? payload.note : `Merged into "${original.title}".`,
+      notice:
+        `Your report "${report.title}" was merged into "${original.title}", ` +
+        'which reports the same problem. You will get its updates from now on.',
+    };
   }
   if (effects.createsAssignment) {
     if (!payload.departmentId) {
@@ -99,8 +125,10 @@ export async function transitionStatus(
     }
   }
 
+  const toWrite = merge ? { ...payload, note: merge.note } : payload;
+  const options = merge ? { notice: merge.notice } : {};
   await prisma.$transaction((tx) =>
-    applyTransition(tx, report, toStatus, effects, actor.id, payload),
+    applyTransition(tx, report, toStatus, effects, actor.id, toWrite, options),
   );
 
   return getReportById(reportId, actor);
@@ -119,6 +147,8 @@ export async function applyTransition(
   effects: TransitionEffects,
   actorId: string,
   payload: TransitionPayload,
+  /** `notice` replaces the standard message to subscribers. */
+  options: { notice?: string } = {},
 ): Promise<void> {
   const reportId = report.id;
   const data: Prisma.ReportUpdateInput = { status: toStatus };
@@ -161,12 +191,17 @@ export async function applyTransition(
     },
   });
 
+  if (effects.requiresDuplicateTarget && payload.duplicateOfReportId) {
+    await followOriginal(tx, reportId, payload.duplicateOfReportId);
+  }
+
   // Notify subscribers of the change (§13.5, NOTIF-001/002/003).
   await createStatusChangeNotifications(tx, {
     reportId,
     reportTitle: report.title,
     newStatus: toStatus,
     actorId,
+    ...(options.notice && { message: options.notice }),
   });
 
   // Triage (F1), after the history row it counts: an outcome changes the
@@ -174,6 +209,31 @@ export async function applyTransition(
   // close or reopen this report's ranking.
   if (TRUST_OUTCOMES.has(toStatus)) await refreshReporterTrust(report.userId, tx);
   else await refreshPriority(reportId, tx);
+}
+
+/**
+ * Merging (F4): everyone following a duplicate follows its original too, so
+ * they hear when the problem is dealt with. They are ordinary follows, which
+ * they can stop like any other; the original's own reporter keeps theirs.
+ */
+async function followOriginal(
+  tx: Prisma.TransactionClient,
+  duplicateId: string,
+  originalId: string,
+): Promise<void> {
+  const followers = await tx.reportSubscription.findMany({
+    where: { reportId: duplicateId },
+    select: { userId: true },
+  });
+  if (followers.length === 0) return;
+  await tx.reportSubscription.createMany({
+    data: followers.map((f) => ({
+      reportId: originalId,
+      userId: f.userId,
+      source: 'explicit' as const,
+    })),
+    skipDuplicates: true,
+  });
 }
 
 export async function listAdminReports(input: AdminListInput) {

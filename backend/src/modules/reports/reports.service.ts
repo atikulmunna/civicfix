@@ -287,6 +287,35 @@ export async function checkDuplicates(input: CheckDuplicatesInput) {
   return { possibleDuplicates };
 }
 
+/**
+ * Likely originals of a report (F4): open reports of the same kind within the
+ * duplicate radius, made before it, nearest first. Only older ones: the first
+ * report of a problem is its original.
+ */
+export async function duplicateCandidates(reportId: string) {
+  const report = await prisma.report.findUnique({
+    where: { id: reportId },
+    select: { categoryId: true, latitude: true, longitude: true, createdAt: true },
+  });
+  if (!report) throw new ApiError('NOT_FOUND', 'Report not found.');
+
+  const radiusM = env.DUPLICATE_RADIUS_M;
+  const near = await findDuplicateIds(
+    report.categoryId,
+    Number(report.latitude),
+    Number(report.longitude),
+    radiusM,
+    reportId,
+  );
+  const byId = await hydrate(near.map((d) => d.id));
+  const candidates = near.flatMap((d) => {
+    const r = byId.get(d.id);
+    if (!r || r.createdAt.getTime() >= report.createdAt.getTime()) return [];
+    return [{ ...toPublicReport(r, true), distanceM: Math.round(d.distance_m) }];
+  });
+  return { radiusM, candidates };
+}
+
 export async function updateReport(id: string, actor: Actor, input: UpdateReportInput) {
   await loadForMutation(id, actor);
   if (input.categoryId) await assertCategoryExists(input.categoryId);

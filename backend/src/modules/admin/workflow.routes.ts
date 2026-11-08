@@ -8,6 +8,7 @@ import { parseInput, routeParam, sendSuccess } from '../../lib/http.js';
 import { authUser, optionalAuth, requireAuth, requireRole } from '../../middleware/require-auth.js';
 import { assertReportExists } from '../community/shared.js';
 import { prisma } from '../../lib/prisma.js';
+import { duplicateCandidates } from '../reports/reports.service.js';
 import { explainPriority } from '../reports/triage.service.js';
 import * as workflow from './workflow.service.js';
 import {
@@ -83,6 +84,16 @@ adminReportsRouter.post('/:id/duplicate', requireAuth, requireRole(...ADMIN), as
   );
   sendSuccess(res, { report });
 });
+
+// Likely originals to merge a report into (F4).
+adminReportsRouter.get(
+  '/:id/duplicate-candidates',
+  requireAuth,
+  requireRole(...ADMIN),
+  async (req, res) => {
+    sendSuccess(res, await duplicateCandidates(routeParam(req, 'id')));
+  },
+);
 
 // Why a report ranks where it does (F1); null when it is closed (not ranked).
 adminReportsRouter.get('/:id/priority', requireAuth, requireRole(...ADMIN), async (req, res) => {

@@ -24,7 +24,14 @@ function readableStatus(status: ReportStatus): string {
  */
 export async function createStatusChangeNotifications(
   db: Db,
-  params: { reportId: string; reportTitle: string; newStatus: ReportStatus; actorId: string },
+  params: {
+    reportId: string;
+    reportTitle: string;
+    newStatus: ReportStatus;
+    actorId: string;
+    /** Replaces the standard "is now <status>" message when there is more to say. */
+    message?: string;
+  },
 ): Promise<void> {
   const subs = await db.reportSubscription.findMany({
     where: { reportId: params.reportId },
@@ -39,7 +46,9 @@ export async function createStatusChangeNotifications(
       userId,
       reportId: params.reportId,
       title: 'Report status updated',
-      message: `Your report "${params.reportTitle}" is now ${readableStatus(params.newStatus)}.`,
+      message:
+        params.message ??
+        `Your report "${params.reportTitle}" is now ${readableStatus(params.newStatus)}.`,
       type: 'status_change' as const,
     })),
   });
