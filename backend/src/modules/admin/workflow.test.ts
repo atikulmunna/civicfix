@@ -158,6 +158,13 @@ describe('full lifecycle SUBMITTED -> RESOLVED (§26)', () => {
       'RESOLVED',
     ]);
     expect(hist.body.data.history.at(-1).changedBy.name).toBeDefined();
+
+    // The resolution date is the time the history records. The data migration
+    // align_seeded_resolution_times relies on the two being within a minute.
+    const gap =
+      Date.parse(resolve.body.data.report.resolvedAt) -
+      Date.parse(hist.body.data.history.at(-1).createdAt);
+    expect(Math.abs(gap)).toBeLessThan(60_000);
   });
 });
 
