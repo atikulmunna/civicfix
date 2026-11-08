@@ -7,6 +7,7 @@ export const queryKeys = {
   categories: ['categories'] as const,
   departments: ['departments'] as const,
   scorecards: ['scorecards'] as const,
+  hotspots: ['hotspots'] as const,
   /** Admin catalog lists include inactive items, so they are cached separately. */
   catalog: (listPath: string) => ['catalog', listPath] as const,
   reports: (params: Record<string, unknown>) => ['reports', 'list', params] as const,
@@ -14,6 +15,7 @@ export const queryKeys = {
   report: (id: string) => ['reports', 'detail', id] as const,
   reportHistory: (id: string) => ['reports', 'history', id] as const,
   fixChecks: (id: string) => ['reports', 'fix-checks', id] as const,
+  recurrence: (id: string) => ['reports', 'recurrence', id] as const,
   duplicates: (params: { categoryId: string; latitude: number; longitude: number } | null) =>
     ['reports', 'duplicates', params] as const,
   myReports: (page: number) => ['me', 'reports', page] as const,
@@ -38,4 +40,5 @@ export const reportListPrefixes = [
   ['me', 'reports'],
   ['admin', 'reports'],
   ['department', 'reports'],
+  ['hotspots'],
 ] as const;

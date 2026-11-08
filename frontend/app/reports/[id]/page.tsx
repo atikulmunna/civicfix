@@ -11,6 +11,7 @@ import { VoteBar } from '@/components/vote-bar';
 import { StatusTimeline } from '@/components/status-timeline';
 import { CommentSection } from '@/components/comment-section';
 import { FixChecks } from '@/components/fix-checks';
+import { RecurrenceNote } from '@/components/recurrence-note';
 import { Card, LoadError, Spinner } from '@/components/ui';
 
 /** Report detail for one id (separate from the page so it can be tested). */
@@ -68,6 +69,8 @@ export function ReportDetail({ id }: { id: string }) {
             📍 {[report.address, report.landmark].filter(Boolean).join(' · ')}
           </p>
         )}
+
+        <RecurrenceNote reportId={report.id} />
 
         <FixChecks reportId={report.id} resolved={report.status === 'RESOLVED'} />
 

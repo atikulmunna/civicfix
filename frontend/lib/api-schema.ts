@@ -3080,6 +3080,112 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/hotspots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Public hotspots: places where reports from the last 90 days cluster.
+         * @description No authentication.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Success */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @constant */
+                            success: true;
+                            data: components["schemas"]["Hotspots"];
+                        };
+                    };
+                };
+                /** @description Error (see ErrorCode) */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/{id}/recurrence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Earlier reports of the same kind nearby that were fixed before this one.
+         * @description No authentication.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Success */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @constant */
+                            success: true;
+                            data: components["schemas"]["Recurrence"];
+                        };
+                    };
+                };
+                /** @description Error (see ErrorCode) */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/analytics/summary": {
         parameters: {
             query?: never;
@@ -3556,6 +3662,58 @@ export interface components {
             /** Format: date-time */
             dueAt: string;
             hoursOverdue: number;
+        };
+        Hotspots: {
+            /** Format: date-time */
+            generatedAt: string;
+            windowDays: number;
+            radiusM: number;
+            minReports: number;
+            /** @description Most reports first, at most 50. */
+            hotspots: components["schemas"]["Hotspot"][];
+        };
+        Hotspot: {
+            latitude: number;
+            longitude: number;
+            /** @description From the centre to its farthest report. */
+            radiusM: number;
+            reportCount: number;
+            openCount: number;
+            /** @description Most reported first. */
+            categories: {
+                /** Format: uuid */
+                categoryId: string;
+                name: string;
+                count: number;
+            }[];
+            /** @description A problem of one kind was reported here again after an earlier one was fixed. */
+            recurring: boolean;
+            /** Format: date-time */
+            latestReportAt: string;
+            /** @description Newest first, at most 10. */
+            reports: {
+                /** Format: uuid */
+                id: string;
+                title: string;
+                status: components["schemas"]["ReportStatus"];
+                /** Format: date-time */
+                createdAt: string;
+            }[];
+        };
+        /** @description Earlier reports of the same kind nearby, fixed before this one was made. */
+        Recurrence: {
+            radiusM: number;
+            total: number;
+            /** @description Most recently fixed first, at most 10. */
+            earlier: {
+                /** Format: uuid */
+                id: string;
+                title: string;
+                status: components["schemas"]["ReportStatus"];
+                /** Format: date-time */
+                resolvedAt: string;
+                distanceM: number;
+            }[];
         };
         AnalyticsSummary: {
             totalReports: number;

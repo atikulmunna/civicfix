@@ -33,6 +33,9 @@ export type DepartmentScorecard = Schemas['DepartmentScorecard'];
 export type FixVerdict = Schemas['FixVerdict'];
 export type FixCheck = Schemas['FixCheck'];
 export type FixChecks = Schemas['FixChecks'];
+export type Hotspot = Schemas['Hotspot'];
+export type Hotspots = Schemas['Hotspots'];
+export type Recurrence = Schemas['Recurrence'];
 
 /** A page of items: the API's paginated shape (e.g. ReportPage), for any item type. */
 export type Paginated<T> = Omit<Schemas['ReportPage'], 'items'> & { items: T[] };

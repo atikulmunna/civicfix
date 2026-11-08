@@ -4,10 +4,20 @@ import 'leaflet/dist/leaflet.css';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { keepPreviousData, skipToken, useQuery } from '@tanstack/react-query';
-import { CircleMarker, MapContainer, Popup, TileLayer, useMapEvents } from 'react-leaflet';
+import {
+  Circle,
+  CircleMarker,
+  MapContainer,
+  Popup,
+  TileLayer,
+  useMap,
+  useMapEvents,
+} from 'react-leaflet';
 import { api, errorMessage } from '@/lib/api';
 import { asStatus, STATUS_OPTIONS, statusLabel } from '@/lib/format';
+import { hotspotCounts, hotspotKinds } from '@/lib/hotspots';
 import { bboxString, statusColor } from '@/lib/map';
+import type { Hotspot } from '@/lib/types';
 import { StatusBadge } from './badges';
 import { queryKeys } from '@/lib/query-keys';
 import { Select } from './ui';
@@ -43,7 +53,55 @@ function BoundsWatcher({ onChange }: { onChange: (bbox: string) => void }) {
   return null;
 }
 
-export function ReportsMap() {
+/** A place to move the map to; `seq` changes so the same place can be asked for twice. */
+export interface MapFocus {
+  latitude: number;
+  longitude: number;
+  seq: number;
+}
+
+/** Flies the map to the focus whenever a new one is asked for. */
+function FlyTo({ focus }: { focus: MapFocus | null }) {
+  const map = useMap();
+  // Moving Leaflet (an external system) to match React state: an effect's job.
+  useEffect(() => {
+    if (focus) map.flyTo([focus.latitude, focus.longitude], 16);
+  }, [focus, map]);
+  return null;
+}
+
+/** Shaded so the markers on top stay readable; red where a fixed problem came back. */
+function HotspotArea({ hotspot }: { hotspot: Hotspot }) {
+  const colour = hotspot.recurring ? '#dc2626' : '#d97706'; // red-600, amber-600
+  return (
+    <Circle
+      center={[hotspot.latitude, hotspot.longitude]}
+      // Padded so the circle covers its outermost reports.
+      radius={Math.max(hotspot.radiusM, 40) + 30}
+      pathOptions={{ color: colour, weight: 1.5, fillColor: colour, fillOpacity: 0.18 }}
+    >
+      <Popup>
+        <div className="flex flex-col gap-1">
+          <span className="font-medium text-slate-900">{hotspotKinds(hotspot)}</span>
+          <span className="text-sm text-slate-600">{hotspotCounts(hotspot)}</span>
+          {hotspot.recurring && (
+            <span className="text-sm text-red-700">A fixed problem came back here.</span>
+          )}
+        </div>
+      </Popup>
+    </Circle>
+  );
+}
+
+export function ReportsMap({
+  showHotspots,
+  onShowHotspotsChange,
+  focus,
+}: {
+  showHotspots: boolean;
+  onShowHotspotsChange: (show: boolean) => void;
+  focus: MapFocus | null;
+}) {
   const [status, setStatus] = useState('');
   const [categoryId, setCategoryId] = useState('');
   // Set by BoundsWatcher on mount and on every pan/zoom.
@@ -72,6 +130,13 @@ export function ReportsMap() {
     placeholderData: keepPreviousData,
   });
   const markers = markersQuery.data?.items ?? [];
+
+  // Shared with the hotspot list below the map (same key, one request).
+  const hotspotsQuery = useQuery({
+    queryKey: queryKeys.hotspots,
+    queryFn: showHotspots ? ({ signal }) => api.get('/hotspots', undefined, { signal }) : skipToken,
+  });
+  const hotspots = showHotspots ? (hotspotsQuery.data?.hotspots ?? []) : [];
 
   return (
     <div className="flex h-full flex-col gap-3">
@@ -102,6 +167,20 @@ export function ReportsMap() {
             ))}
           </Select>
         </div>
+        <label className="flex items-center gap-2 self-center text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={showHotspots}
+            onChange={(e) => onShowHotspotsChange(e.target.checked)}
+            className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-600"
+          />
+          Hotspots
+        </label>
+        {showHotspots && hotspotsQuery.isError && (
+          <span role="alert" className="self-center text-sm text-red-700">
+            {errorMessage(hotspotsQuery.error, 'Could not load the hotspots.')}
+          </span>
+        )}
         <span className="ml-auto self-center text-sm text-slate-500" aria-live="polite">
           {markersQuery.isError ? (
             <span role="alert" className="text-red-700">
@@ -122,6 +201,11 @@ export function ReportsMap() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <BoundsWatcher onChange={setBbox} />
+          <FlyTo focus={focus} />
+          {/* Before the markers, so they are drawn on top. */}
+          {hotspots.map((h) => (
+            <HotspotArea key={`${String(h.latitude)},${String(h.longitude)}`} hotspot={h} />
+          ))}
           {markers.map((m) => (
             <CircleMarker
               key={m.id}
