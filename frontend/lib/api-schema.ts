@@ -1849,7 +1849,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Mark as a duplicate of another report.
+         * Merge into an open original: its reporter and followers follow the original from then on.
          * @description Requires role: admin, super_admin.
          */
         post: {
@@ -1897,6 +1897,64 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/reports/{id}/duplicate-candidates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Likely originals: older open reports of the same kind nearby, nearest first.
+         * @description Requires role: admin, super_admin.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Success */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @constant */
+                            success: true;
+                            data: {
+                                radiusM: number;
+                                /** @description Each with distanceM, at most 10. */
+                                candidates: components["schemas"]["Report"][];
+                            };
+                        };
+                    };
+                };
+                /** @description Error (see ErrorCode) */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorEnvelope"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;

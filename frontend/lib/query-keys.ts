@@ -22,6 +22,8 @@ export const queryKeys = {
   adminReports: (params: Record<string, unknown>) => ['admin', 'reports', params] as const,
   /** Under ['admin', 'reports'], so moderation and votes refresh it with the lists. */
   reportPriority: (id: string) => ['admin', 'reports', 'priority', id] as const,
+  /** Under ['admin', 'reports'] too: a moderation action refreshes it. */
+  duplicateCandidates: (id: string) => ['admin', 'reports', 'duplicates', id] as const,
   adminUsers: (params: Record<string, unknown>) => ['admin', 'users', params] as const,
   reportComments: (id: string) => ['reports', 'comments', id] as const,
   notifications: ['notifications'] as const,
