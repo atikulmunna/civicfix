@@ -343,6 +343,65 @@ export const ScorecardsSchema = z
   .meta({ id: 'Scorecards', description: 'Target hours by severity; rates are 0 to 1.' });
 
 // ---------------------------------------------------------------------------
+// Hotspots and recurring problems (F4); see modules/hotspots/hotspot.ts
+
+const latitude = z.number().min(-90).max(90);
+const longitude = z.number().min(-180).max(180);
+
+export const HotspotSchema = z
+  .strictObject({
+    latitude,
+    longitude,
+    radiusM: count.meta({ description: 'From the centre to its farthest report.' }),
+    reportCount: count,
+    openCount: count,
+    categories: z
+      .array(z.strictObject({ categoryId: id, name: z.string(), count }))
+      .meta({ description: 'Most reported first.' }),
+    recurring: z.boolean().meta({
+      description: 'A problem of one kind was reported here again after an earlier one was fixed.',
+    }),
+    latestReportAt: timestamp,
+    reports: z
+      .array(
+        z.strictObject({ id, title: z.string(), status: ReportStatusSchema, createdAt: timestamp }),
+      )
+      .meta({ description: 'Newest first, at most 10.' }),
+  })
+  .meta({ id: 'Hotspot' });
+
+export const HotspotsSchema = z
+  .strictObject({
+    generatedAt: timestamp,
+    windowDays: z.number().int().positive(),
+    radiusM: z.number().int().positive(),
+    minReports: z.number().int().positive(),
+    hotspots: z.array(HotspotSchema).meta({ description: 'Most reports first, at most 50.' }),
+  })
+  .meta({ id: 'Hotspots' });
+
+export const RecurrenceSchema = z
+  .strictObject({
+    radiusM: z.number().int().positive(),
+    total: count,
+    earlier: z
+      .array(
+        z.strictObject({
+          id,
+          title: z.string(),
+          status: ReportStatusSchema,
+          resolvedAt: timestamp,
+          distanceM: count,
+        }),
+      )
+      .meta({ description: 'Most recently fixed first, at most 10.' }),
+  })
+  .meta({
+    id: 'Recurrence',
+    description: 'Earlier reports of the same kind nearby, fixed before this one was made.',
+  });
+
+// ---------------------------------------------------------------------------
 // Envelopes (SRS v1.1 §22.1)
 
 const pageFields = {
