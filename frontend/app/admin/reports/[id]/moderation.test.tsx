@@ -45,6 +45,8 @@ describe('Moderation panel', () => {
       if (path === '/departments')
         return Promise.resolve({ departments: [{ id: 'd1', name: 'Public Works' }] });
       if (path === '/admin/reports/r1/priority') return Promise.resolve({ priority: null });
+      if (path === '/admin/reports/r1/duplicate-candidates')
+        return Promise.resolve({ radiusM: 200, candidates: [] });
       return Promise.resolve({});
     });
   });

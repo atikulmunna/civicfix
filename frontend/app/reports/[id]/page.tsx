@@ -11,6 +11,7 @@ import { VoteBar } from '@/components/vote-bar';
 import { StatusTimeline } from '@/components/status-timeline';
 import { CommentSection } from '@/components/comment-section';
 import { FixChecks } from '@/components/fix-checks';
+import { MergedNotice } from '@/components/merged-notice';
 import { RecurrenceNote } from '@/components/recurrence-note';
 import { Card, LoadError, Spinner } from '@/components/ui';
 
@@ -45,6 +46,10 @@ export function ReportDetail({ id }: { id: string }) {
           <h1 className="mt-2 text-2xl font-bold text-slate-900">{report.title}</h1>
           <p className="mt-1 text-xs text-slate-400">Reported {formatDateTime(report.createdAt)}</p>
         </div>
+
+        {report.status === 'DUPLICATE' && report.duplicateOfReportId && (
+          <MergedNotice originalId={report.duplicateOfReportId} />
+        )}
 
         {report.images && report.images.length > 0 && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">

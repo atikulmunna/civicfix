@@ -410,12 +410,25 @@ export const routes: readonly ContractRoute[] = [
   {
     method: 'post',
     path: '/api/v1/admin/reports/{id}/duplicate',
-    summary: 'Mark as a duplicate of another report.',
+    summary:
+      'Merge into an open original: its reporter and followers follow the original from then on.',
     tag: 'Workflow',
     access: ADMIN,
     params: idParams,
     body: duplicateSchema,
     data: report,
+  },
+  {
+    method: 'get',
+    path: '/api/v1/admin/reports/{id}/duplicate-candidates',
+    summary: 'Likely originals: older open reports of the same kind nearby, nearest first.',
+    tag: 'Workflow',
+    access: ADMIN,
+    params: idParams,
+    data: z.strictObject({
+      radiusM: z.number().int().positive(),
+      candidates: z.array(ReportSchema).meta({ description: 'Each with distanceM, at most 10.' }),
+    }),
   },
   {
     method: 'get',

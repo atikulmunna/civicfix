@@ -10,9 +10,10 @@ import { queryKeys } from '@/lib/query-keys';
 import { SeverityBadge, StatusBadge } from '@/components/badges';
 import { StatusTimeline } from '@/components/status-timeline';
 import { RequireAuth } from '@/components/require-auth';
+import { DuplicateMerge } from '@/components/admin/duplicate-merge';
 import { PriorityCard } from '@/components/admin/priority-card';
 import { useToast } from '@/components/toast';
-import { Button, Card, Input, Label, LoadError, Select, Spinner, Textarea } from '@/components/ui';
+import { Button, Card, LoadError, Select, Spinner, Textarea } from '@/components/ui';
 
 interface ModerationAction {
   action: () => Promise<unknown>;
@@ -30,7 +31,6 @@ export function Moderation({ id }: { id: string }) {
   const [note, setNote] = useState('');
   const [internalNote, setInternalNote] = useState('');
   const [departmentId, setDepartmentId] = useState('');
-  const [duplicateOf, setDuplicateOf] = useState('');
 
   const reportQuery = useQuery({
     queryKey: queryKeys.report(id),
@@ -235,32 +235,23 @@ export function Moderation({ id }: { id: string }) {
             >
               Resolve
             </Button>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="dup">Mark as duplicate of</Label>
-              <Input
-                id="dup"
-                placeholder="Original report ID"
-                value={duplicateOf}
-                onChange={(e) => setDuplicateOf(e.target.value)}
-              />
-              <Button
-                variant="danger"
-                disabled={busy || !duplicateOf}
-                onClick={() =>
-                  run(
-                    () =>
-                      api.post(`/admin/reports/${id}/duplicate`, {
-                        duplicateOfReportId: duplicateOf,
-                      }),
-                    'Marked duplicate.',
-                  )
-                }
-              >
-                Mark duplicate
-              </Button>
-            </div>
           </div>
         </Card>
+
+        <DuplicateMerge
+          report={report}
+          busy={busy}
+          onMerge={(originalId) =>
+            run(
+              () =>
+                api.post(`/admin/reports/${id}/duplicate`, {
+                  duplicateOfReportId: originalId,
+                  note: note || undefined,
+                }),
+              'Merged into the original.',
+            )
+          }
+        />
       </aside>
     </div>
   );
