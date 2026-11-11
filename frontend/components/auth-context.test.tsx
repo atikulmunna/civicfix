@@ -3,11 +3,13 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithQuery } from '@/test-utils';
 
-const { get, post, refresh } = vi.hoisted(() => ({
+const { get, post, refresh, setLocale } = vi.hoisted(() => ({
   get: vi.fn(),
   post: vi.fn(),
   refresh: vi.fn(),
+  setLocale: vi.fn(),
 }));
+vi.mock('@/i18n/actions', () => ({ setLocale }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh }) }));
 vi.mock('@/lib/api', async () => {
   const actual = await vi.importActual<typeof import('@/lib/api')>('@/lib/api');
@@ -52,7 +54,7 @@ describe('AuthProvider', () => {
     get.mockReset();
     post.mockReset().mockResolvedValue({});
     refresh.mockReset();
-    document.cookie = 'locale=; Max-Age=0; Path=/';
+    setLocale.mockReset().mockResolvedValue(undefined);
   });
 
   it('treats AUTH_REQUIRED from /auth/me as signed out', async () => {
@@ -83,18 +85,18 @@ describe('AuthProvider', () => {
   it("switches to the account's language at sign-in", async () => {
     await signInAs('bn');
     await waitFor(() => expect(refresh).toHaveBeenCalled());
-    expect(document.cookie).toContain('locale=bn');
+    expect(setLocale).toHaveBeenCalledWith('bn');
   });
 
   it('leaves the language alone when the account has none', async () => {
     await signInAs(null);
     expect(refresh).not.toHaveBeenCalled();
-    expect(document.cookie).not.toContain('locale=');
+    expect(setLocale).not.toHaveBeenCalled();
   });
 
   it('leaves the language alone when the account has the one in use', async () => {
     await signInAs('en');
     expect(refresh).not.toHaveBeenCalled();
-    expect(document.cookie).not.toContain('locale=');
+    expect(setLocale).not.toHaveBeenCalled();
   });
 });

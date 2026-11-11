@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError } from '@/lib/api';
-import { setLocaleCookie } from '@/lib/i18n/cookie';
+import { setLocale } from '@/i18n/actions';
 import { queryKeys } from '@/lib/query-keys';
 import type { User } from '@/lib/types';
 
@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.setQueryData(queryKeys.me, user);
       // A language saved on the account follows it to this device (F5).
       if (user.language && user.language !== locale) {
-        setLocaleCookie(user.language);
+        await setLocale(user.language).catch(() => undefined);
         router.refresh();
       }
       return user;

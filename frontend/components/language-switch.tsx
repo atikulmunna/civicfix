@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
-import { setLocaleCookie } from '@/lib/i18n/cookie';
+import { setLocale } from '@/i18n/actions';
 import type { Locale } from '@/i18n/locale';
 import { useAuth } from './auth-context';
 
@@ -21,8 +21,9 @@ export function LanguageSwitch({ className = '' }: { className?: string }) {
   const { user } = useAuth();
   const other: Locale = locale === 'bn' ? 'en' : 'bn';
 
-  function choose() {
-    setLocaleCookie(other);
+  async function choose() {
+    // If this fails (offline), the refresh simply shows the same language.
+    await setLocale(other).catch(() => undefined);
     // Best effort: the device already keeps the choice if this fails.
     if (user) api.patch('/users/me', { language: other }).catch(() => undefined);
     router.refresh();
