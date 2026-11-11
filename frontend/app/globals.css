@@ -14,6 +14,15 @@
     var(--font-bengali), sans-serif;
 }
 
+/*
+ * Bangla (F5): letter spacing pulls apart the joined letters of Bangla words,
+ * so Tailwind's tracking utilities are reset in Bangla. Unlayered, so it wins
+ * over the utilities layer.
+ */
+:lang(bn) [class*='tracking-'] {
+  letter-spacing: normal;
+}
+
 body {
   color: var(--foreground);
   font-family: var(--font-sans);
