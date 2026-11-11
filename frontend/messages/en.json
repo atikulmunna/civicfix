@@ -162,5 +162,115 @@
     "previous": "Previous",
     "next": "Next",
     "none": "No reports match your filters."
+  },
+  "home": {
+    "hero": {
+      "eyebrow": "Community-powered civic reporting",
+      "titleLead": "Report civic issues.",
+      "titleAccent": "Track the fix.",
+      "body": "Residents report local problems (potholes, broken lights, garbage, flooding) with a photo and map location, then follow them from submission to resolution.",
+      "reportIssue": "Report an issue",
+      "exploreMap": "Explore the map",
+      "browse": "Browse reports",
+      "artLabel": "Animated map with a pulsing location pin",
+      "categories": "Issue categories",
+      "stages": "Status stages",
+      "freeValue": "Free",
+      "free": "No paid services"
+    },
+    "how": {
+      "eyebrow": "How it works",
+      "title": "From report to resolution in three steps",
+      "steps": {
+        "report": {
+          "title": "Report",
+          "body": "Describe the issue, add a photo, and drop a pin on the map."
+        },
+        "verify": {
+          "title": "Verify",
+          "body": "Neighbours confirm it and admins review and assign it to a department."
+        },
+        "resolve": {
+          "title": "Resolve",
+          "body": "Track status changes and get notified when it’s fixed."
+        }
+      }
+    },
+    "features": {
+      "eyebrow": "What you can do",
+      "title": "Everything a report needs to get fixed",
+      "items": {
+        "pin": {
+          "title": "Pin the exact spot",
+          "body": "Drop a marker on the map, and every report carries precise GPS coordinates."
+        },
+        "photo": {
+          "title": "Photo evidence",
+          "body": "Attach a picture so the problem is unmistakable. Image type is verified on the server."
+        },
+        "community": {
+          "title": "Community verification",
+          "body": "Neighbours upvote and confirm reports, surfacing what matters most."
+        },
+        "tracking": {
+          "title": "Transparent tracking",
+          "body": "Follow each report through a clear six-stage lifecycle, from submission to fix."
+        },
+        "routing": {
+          "title": "Routed to the right team",
+          "body": "Admins assign each issue to the department responsible for resolving it."
+        },
+        "notify": {
+          "title": "Stay in the loop",
+          "body": "Get notified the moment your report changes status or gets resolved."
+        }
+      }
+    },
+    "categories": {
+      "eyebrow": "What you can report",
+      "title": "Seven categories of civic issues",
+      "items": {
+        "roads": "Roads & Potholes",
+        "lighting": "Street Lighting",
+        "garbage": "Garbage & Sanitation",
+        "water": "Water & Drainage",
+        "safety": "Public Safety",
+        "parks": "Parks & Greenery",
+        "electricity": "Electricity"
+      }
+    },
+    "lifecycle": {
+      "eyebrow": "Every report, tracked",
+      "title": "A transparent status lifecycle"
+    },
+    "audiences": {
+      "eyebrow": "Built for both sides",
+      "title": "For the people who report, and the people who fix",
+      "residents": {
+        "title": "For residents",
+        "items": {
+          "report": "Report an issue in under a minute",
+          "map": "See what others have flagged nearby on the map",
+          "confirm": "Confirm and upvote to add weight to a report",
+          "track": "Track progress and get notified on every change"
+        }
+      },
+      "team": {
+        "title": "For departments & admins",
+        "items": {
+          "review": "Review and verify incoming reports",
+          "assign": "Assign work to the responsible department",
+          "workflow": "Move issues through the status workflow",
+          "trends": "Monitor trends on the analytics dashboard"
+        }
+      }
+    },
+    "cta": {
+      "eyebrow": "Get started",
+      "title": "Spotted something broken? Report it.",
+      "body": "It takes about a minute, and your neighbours can back you up. Every report is public and tracked to resolution.",
+      "reportIssue": "Report an issue",
+      "exploreMap": "Explore the map"
+    }
   }
 }

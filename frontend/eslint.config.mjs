@@ -20,6 +20,7 @@ const TRANSLATED_FILES = [
   'components/ui.tsx',
   'app/reports/page.tsx',
   'app/reports/[[]id]/page.tsx',
+  'app/page.tsx',
 ];
 
 /** Symbols and punctuation that read the same in every language. */
