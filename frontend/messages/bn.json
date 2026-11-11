@@ -22,5 +22,10 @@
     "medium": "মাঝারি",
     "high": "বেশি",
     "urgent": "জরুরি"
+  },
+  "format": {
+    "underAnHour": "১ ঘণ্টার কম",
+    "hours": "{count, plural, other {# ঘণ্টা}}",
+    "days": "{count, plural, other {# দিন}}"
   }
 }
