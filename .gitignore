@@ -35,6 +35,7 @@ task.md
 CLAUDE.md
 AGENTS.md
 docs/superpowers/
+.superpowers/
 .playwright-mcp/
 desktop.ini
 .neon
