@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import { api, errorMessage } from '@/lib/api';
-import { formatDate } from '@/lib/format';
+import { useFormat } from '@/lib/i18n/use-format';
 import { queryKeys } from '@/lib/query-keys';
 
 /**
@@ -12,6 +13,8 @@ import { queryKeys } from '@/lib/query-keys';
  * section, but a failure is still shown.
  */
 export function RecurrenceNote({ reportId }: { reportId: string }) {
+  const t = useTranslations('recurrence');
+  const f = useFormat();
   const query = useQuery({
     queryKey: queryKeys.recurrence(reportId),
     queryFn: ({ signal }) => api.get(`/reports/${reportId}/recurrence`, undefined, { signal }),
@@ -21,7 +24,7 @@ export function RecurrenceNote({ reportId }: { reportId: string }) {
   if (query.isError) {
     return (
       <p role="alert" className="text-sm text-red-700">
-        {errorMessage(query.error, 'Could not check for earlier reports here.')}
+        {errorMessage(query.error, t('loadError'))}
       </p>
     );
   }
@@ -34,26 +37,29 @@ export function RecurrenceNote({ reportId }: { reportId: string }) {
       className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
     >
       <h2 id="recurrence-heading" className="font-semibold">
-        This problem has come back
+        {t('heading')}
       </h2>
-      <p className="mt-1">
-        {total === 1
-          ? `An earlier report of the same kind within ${String(radiusM)} m was fixed before this one was made.`
-          : `${String(total)} earlier reports of the same kind within ${String(radiusM)} m were fixed before this one was made.`}
-      </p>
+      <p className="mt-1">{t('summary', { count: total, radius: radiusM })}</p>
       <ul className="mt-2 flex flex-col gap-1">
         {earlier.map((e) => (
           <li key={e.id}>
-            <Link href={`/reports/${e.id}`} className="font-medium underline hover:no-underline">
-              {e.title}
-            </Link>
-            , fixed {formatDate(e.resolvedAt)}, {e.distanceM} m away
+            {t.rich('item', {
+              title: e.title,
+              date: f.date(e.resolvedAt),
+              distance: e.distanceM,
+              link: (chunks) => (
+                <Link
+                  href={`/reports/${e.id}`}
+                  className="font-medium underline hover:no-underline"
+                >
+                  {chunks}
+                </Link>
+              ),
+            })}
           </li>
         ))}
       </ul>
-      {total > earlier.length && (
-        <p className="mt-2">Showing the {earlier.length} most recently fixed.</p>
-      )}
+      {total > earlier.length && <p className="mt-2">{t('cutShort', { shown: earlier.length })}</p>}
     </section>
   );
 }

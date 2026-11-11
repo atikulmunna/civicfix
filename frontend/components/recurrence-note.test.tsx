@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
-import { renderWithQuery } from '@/test-utils';
+import { messagesFor, renderWithQuery } from '@/test-utils';
 
 const { get } = vi.hoisted(() => ({ get: vi.fn() }));
 vi.mock('@/lib/api', async () => {
@@ -77,5 +77,18 @@ describe('RecurrenceNote', () => {
     get.mockRejectedValue(new ApiError('Service unavailable.', 'INTERNAL_ERROR', 503));
     renderWithQuery(<RecurrenceNote reportId="r1" />);
     expect(await screen.findByRole('alert')).toHaveTextContent('Service unavailable.');
+  });
+});
+
+describe('RecurrenceNote in Bangla', () => {
+  it('reads in Bangla with Bangla digits', async () => {
+    get.mockResolvedValue({ radiusM: 150, total: 1, earlier: [earlier('e1', 'Blocked drain')] });
+    renderWithQuery(<RecurrenceNote reportId="r1" />, undefined, { locale: 'bn' });
+    expect(
+      await screen.findByRole('heading', { name: messagesFor('bn').recurrence.heading }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Blocked drain' }).closest('li')).toHaveTextContent(
+      '৯০',
+    );
   });
 });

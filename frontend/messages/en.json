@@ -43,5 +43,22 @@
     "signOut": "Sign out",
     "signedOut": "Signed out.",
     "switchTo": "Change language to Bangla"
+  },
+  "report": {
+    "noHistory": "No history yet.",
+    "statusChange": "{from} → {to}",
+    "byLine": "{name} · {date}",
+    "priorityTitle": "Triage priority",
+    "priority": "Priority {score}",
+    "upvotes": "Upvotes",
+    "confirmations": "Confirmations",
+    "merged": "This report was merged into another report of the same problem. <link>See the original report</link> for its updates."
+  },
+  "recurrence": {
+    "heading": "This problem has come back",
+    "summary": "{count, plural, one {An earlier report of the same kind within {radius, number} m was fixed before this one was made.} other {# earlier reports of the same kind within {radius, number} m were fixed before this one was made.}}",
+    "item": "<link>{title}</link>, fixed {date}, {distance, number} m away",
+    "cutShort": "Showing the {shown, number} most recently fixed.",
+    "loadError": "Could not check for earlier reports here."
   }
 }

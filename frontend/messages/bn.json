@@ -43,5 +43,22 @@
     "signOut": "সাইন আউট",
     "signedOut": "সাইন আউট হয়েছে।",
     "switchTo": "ভাষা বদলে ইংরেজি করুন"
+  },
+  "report": {
+    "noHistory": "এখনো কোনো ইতিহাস নেই।",
+    "statusChange": "{from} → {to}",
+    "byLine": "{name} · {date}",
+    "priorityTitle": "কাজের অগ্রাধিকার",
+    "priority": "অগ্রাধিকার {score}",
+    "upvotes": "আপভোট",
+    "confirmations": "নিশ্চিত করেছেন",
+    "merged": "এই রিপোর্টটি একই সমস্যার আরেকটি রিপোর্টের সাথে একত্র করা হয়েছে। হালনাগাদ খবরের জন্য <link>মূল রিপোর্টটি দেখুন</link>।"
+  },
+  "recurrence": {
+    "heading": "এই সমস্যা আবার দেখা দিয়েছে",
+    "summary": "{count, plural, one {এই রিপোর্টের আগে {radius, number} মিটারের মধ্যে একই ধরনের আরেকটি সমস্যা সমাধান করা হয়েছিল।} other {এই রিপোর্টের আগে {radius, number} মিটারের মধ্যে একই ধরনের #টি সমস্যা সমাধান করা হয়েছিল।}}",
+    "item": "<link>{title}</link>, সমাধান হয়েছে {date}, {distance, number} মিটার দূরে",
+    "cutShort": "সবচেয়ে সাম্প্রতিক {shown, number}টি দেখানো হচ্ছে।",
+    "loadError": "এখানে আগের রিপোর্ট খোঁজা যায়নি।"
   }
 }

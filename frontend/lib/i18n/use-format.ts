@@ -1,5 +1,3 @@
-'use client';
-
 import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import type { ReportStatus, Severity } from '@/lib/types';
 import { deviceTimeZone } from './time-zone';

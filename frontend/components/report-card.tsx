@@ -2,7 +2,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { Report } from '@/lib/types';
 import { assetUrl } from '@/lib/api';
-import { formatDate } from '@/lib/format';
+import { useTranslations } from 'next-intl';
+import { useFormat } from '@/lib/i18n/use-format';
 import { SeverityBadge, StatusBadge } from './badges';
 
 export function ReportCard({
@@ -15,6 +16,8 @@ export function ReportCard({
   /** Show the triage score (admin queues; closed reports score 0 and show none). */
   showPriority?: boolean;
 }) {
+  const t = useTranslations('report');
+  const f = useFormat();
   const thumb = report.images?.[0]?.imageUrl;
   return (
     <Link
@@ -45,9 +48,9 @@ export function ReportCard({
           {showPriority && report.priorityScore > 0 && (
             <span
               className="ml-auto rounded-md bg-slate-900 px-1.5 py-0.5 text-xs font-semibold text-white tabular-nums"
-              title="Triage priority"
+              title={t('priorityTitle')}
             >
-              Priority {report.priorityScore}
+              {t('priority', { score: f.number(report.priorityScore) })}
             </span>
           )}
         </div>
@@ -60,20 +63,20 @@ export function ReportCard({
             <>
               <span
                 className="inline-flex items-center gap-1 rounded-md bg-teal-50 px-1.5 py-0.5 font-medium text-teal-700"
-                title="Upvotes"
+                title={t('upvotes')}
               >
-                ▲ {report.counts.upvotes}
+                ▲ {f.number(report.counts.upvotes)}
               </span>
               <span
                 className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 font-medium text-slate-700"
-                title="Confirmations"
+                title={t('confirmations')}
               >
-                ✓ {report.counts.confirms}
+                ✓ {f.number(report.counts.confirms)}
               </span>
             </>
           )}
           {report.address && <span className="truncate text-slate-400">{report.address}</span>}
-          <span className="ml-auto shrink-0 text-slate-400">{formatDate(report.createdAt)}</span>
+          <span className="ml-auto shrink-0 text-slate-400">{f.date(report.createdAt)}</span>
         </div>
       </div>
     </Link>
