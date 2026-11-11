@@ -3,7 +3,9 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 import { isAdmin, isStaff, useAuth } from './auth-context';
+import { LanguageSwitch } from './language-switch';
 import { useToast } from './toast';
 
 function NavLink({ href, children }: { href: string; children: ReactNode }) {
@@ -27,28 +29,29 @@ export function Navbar() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const t = useTranslations('nav');
 
   async function handleLogout() {
     await logout();
-    toast('Signed out.', 'success');
+    toast(t('signedOut'), 'success');
     router.push('/');
   }
 
   const links = (
     <>
-      <NavLink href="/reports">Reports</NavLink>
-      <NavLink href="/map">Map</NavLink>
-      <NavLink href="/scorecards">Scorecards</NavLink>
-      {user && <NavLink href="/reports/new">Report an issue</NavLink>}
-      {isStaff(user) && <NavLink href="/department">My queue</NavLink>}
-      {isAdmin(user) && <NavLink href="/admin">Admin</NavLink>}
+      <NavLink href="/reports">{t('reports')}</NavLink>
+      <NavLink href="/map">{t('map')}</NavLink>
+      <NavLink href="/scorecards">{t('scorecards')}</NavLink>
+      {user && <NavLink href="/reports/new">{t('reportIssue')}</NavLink>}
+      {isStaff(user) && <NavLink href="/department">{t('myQueue')}</NavLink>}
+      {isAdmin(user) && <NavLink href="/admin">{t('admin')}</NavLink>}
     </>
   );
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/80 backdrop-blur-md">
       <nav
-        aria-label="Main"
+        aria-label={t('main')}
         className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 sm:px-6"
       >
         <Link href="/" className="text-lg font-bold tracking-tight text-slate-900">
@@ -58,13 +61,14 @@ export function Navbar() {
         <div className="hidden items-center gap-1 text-sm text-slate-600 sm:flex">{links}</div>
 
         <div className="ml-auto flex items-center gap-2 text-sm">
+          <LanguageSwitch className="hidden sm:inline-flex" />
           {loading ? null : user ? (
             <>
               <Link
                 href="/notifications"
                 className="hidden rounded-lg px-3 py-1.5 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 sm:inline"
               >
-                Notifications
+                {t('notifications')}
               </Link>
               <Link
                 href="/me"
@@ -79,7 +83,7 @@ export function Navbar() {
                 onClick={handleLogout}
                 className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-medium text-slate-700 transition hover:bg-slate-50"
               >
-                Sign out
+                {t('signOut')}
               </button>
             </>
           ) : (
@@ -88,13 +92,13 @@ export function Navbar() {
                 href="/login"
                 className="rounded-lg px-3 py-1.5 font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
               >
-                Sign in
+                {t('signIn')}
               </Link>
               <Link
                 href="/register"
                 className="rounded-lg bg-slate-900 px-4 py-1.5 font-medium text-white transition hover:bg-slate-800"
               >
-                Sign up
+                {t('signUp')}
               </Link>
             </>
           )}
@@ -102,10 +106,11 @@ export function Navbar() {
       </nav>
       {/* Small screens: the same links in their own row, scrolling sideways if needed. */}
       <nav
-        aria-label="Sections"
+        aria-label={t('sections')}
         className="flex gap-1 overflow-x-auto whitespace-nowrap border-t border-slate-200/70 px-4 py-1.5 text-sm sm:hidden"
       >
         {links}
+        <LanguageSwitch className="ml-auto" />
       </nav>
     </header>
   );

@@ -27,5 +27,21 @@
     "underAnHour": "১ ঘণ্টার কম",
     "hours": "{count, plural, other {# ঘণ্টা}}",
     "days": "{count, plural, other {# দিন}}"
+  },
+  "nav": {
+    "main": "প্রধান মেনু",
+    "sections": "পাতাগুলো",
+    "reports": "রিপোর্ট",
+    "map": "মানচিত্র",
+    "scorecards": "স্কোরকার্ড",
+    "reportIssue": "সমস্যা জানান",
+    "myQueue": "আমার কাজ",
+    "admin": "অ্যাডমিন",
+    "notifications": "বিজ্ঞপ্তি",
+    "signIn": "সাইন ইন",
+    "signUp": "অ্যাকাউন্ট খুলুন",
+    "signOut": "সাইন আউট",
+    "signedOut": "সাইন আউট হয়েছে।",
+    "switchTo": "ভাষা বদলে ইংরেজি করুন"
   }
 }

@@ -27,5 +27,21 @@
     "underAnHour": "under 1 hour",
     "hours": "{count, plural, one {# hour} other {# hours}}",
     "days": "{count, plural, one {# day} other {# days}}"
+  },
+  "nav": {
+    "main": "Main",
+    "sections": "Sections",
+    "reports": "Reports",
+    "map": "Map",
+    "scorecards": "Scorecards",
+    "reportIssue": "Report an issue",
+    "myQueue": "My queue",
+    "admin": "Admin",
+    "notifications": "Notifications",
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "signOut": "Sign out",
+    "signedOut": "Signed out.",
+    "switchTo": "Change language to Bangla"
   }
 }

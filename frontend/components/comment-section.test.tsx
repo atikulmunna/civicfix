@@ -3,6 +3,8 @@ import { screen, waitFor } from '@testing-library/react';
 import { renderWithQuery } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 
+vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
+
 const { get, post, del } = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), del: vi.fn() }));
 vi.mock('@/lib/api', async () => {
   const actual = await vi.importActual<typeof import('@/lib/api')>('@/lib/api');
