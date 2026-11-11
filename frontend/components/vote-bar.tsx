@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, errorMessage } from '@/lib/api';
 import { invalidateReportLists } from '@/lib/query-client';
@@ -12,10 +13,11 @@ import { useToast } from './toast';
 
 type Vote = 'upvote' | 'confirm' | 'false-report';
 
-const VERB: Record<Vote, string> = {
-  upvote: 'upvote',
-  confirm: 'confirm',
-  'false-report': 'flag this report',
+/** Message keys for each vote's failure. */
+const FAILED: Record<Vote, 'upvoteFailed' | 'confirmFailed' | 'flagFailed'> = {
+  upvote: 'upvoteFailed',
+  confirm: 'confirmFailed',
+  'false-report': 'flagFailed',
 };
 
 /**
@@ -40,6 +42,7 @@ export function VoteBar({
   /** The signed-in viewer's votes and follow, from the report detail. */
   initialViewer?: ReportViewerState;
 }) {
+  const t = useTranslations('votes');
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -77,18 +80,18 @@ export function VoteBar({
             : { flagged: true },
         next,
       );
-      if (vote === 'false-report') toast('Flagged as possibly false. Thanks.', 'success');
+      if (vote === 'false-report') toast(t('flaggedToast'), 'success');
       // Every list showing counts or priority goes stale too.
       void invalidateReportLists(queryClient);
     },
-    onError: (err, { vote }) => toast(errorMessage(err, `Could not ${VERB[vote]}.`), 'error'),
+    onError: (err, { vote }) => toast(errorMessage(err, t(FAILED[vote])), 'error'),
   });
 
   const follow = useMutation({
     mutationFn: (undo: boolean) =>
       undo ? api.del(`/reports/${reportId}/follow`) : api.post(`/reports/${reportId}/follow`),
     onSuccess: ({ following }) => updateViewer({ following }),
-    onError: (err) => toast(errorMessage(err, 'Could not follow.'), 'error'),
+    onError: (err) => toast(errorMessage(err, t('followFailed')), 'error'),
   });
 
   const busy = castVote.isPending || follow.isPending;
@@ -96,13 +99,16 @@ export function VoteBar({
   if (!user) {
     return (
       <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600">
-        <Link href="/login" className="font-medium text-teal-700 hover:underline">
-          Sign in
-        </Link>{' '}
-        to upvote, confirm, or follow this report.
+        {t.rich('signInPrompt', {
+          link: (chunks) => (
+            <Link href="/login" className="font-medium text-teal-700 hover:underline">
+              {chunks}
+            </Link>
+          ),
+        })}
         <div className="mt-2 flex gap-4 text-slate-500">
-          <span>▲ {counts.upvotes} upvotes</span>
-          <span>✓ {counts.confirms} confirmations</span>
+          <span>▲ {t('upvotesCount', { count: counts.upvotes })}</span>
+          <span>✓ {t('confirmationsCount', { count: counts.confirms })}</span>
         </div>
       </div>
     );
@@ -123,7 +129,7 @@ export function VoteBar({
         aria-pressed={viewer.upvoted}
         className={`${btn} ${viewer.upvoted ? 'border-teal-600 bg-teal-50 text-teal-700' : 'border-slate-300 text-slate-700 hover:bg-slate-50'}`}
       >
-        ▲ Upvote · {counts.upvotes}
+        ▲ {t('upvote', { count: counts.upvotes })}
       </button>
       <button
         onClick={toggleConfirm}
@@ -131,7 +137,7 @@ export function VoteBar({
         aria-pressed={viewer.confirmed}
         className={`${btn} ${viewer.confirmed ? 'border-green-600 bg-green-50 text-green-700' : 'border-slate-300 text-slate-700 hover:bg-slate-50'}`}
       >
-        ✓ Confirm · {counts.confirms}
+        ✓ {t('confirm', { count: counts.confirms })}
       </button>
       <button
         onClick={toggleFollow}
@@ -139,7 +145,7 @@ export function VoteBar({
         aria-pressed={viewer.following}
         className={`${btn} ${viewer.following ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 text-slate-700 hover:bg-slate-50'}`}
       >
-        {viewer.following ? 'Following' : 'Follow'}
+        {viewer.following ? t('following') : t('follow')}
       </button>
       <button
         onClick={flagFalse}
@@ -147,7 +153,7 @@ export function VoteBar({
         disabled={busy || viewer.flagged}
         className={`${btn} border-slate-300 text-slate-500 hover:bg-slate-50`}
       >
-        {viewer.flagged ? 'Flagged' : 'Flag as false'}
+        {viewer.flagged ? t('flagged') : t('flag')}
       </button>
     </div>
   );

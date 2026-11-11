@@ -60,5 +60,72 @@
     "item": "<link>{title}</link>, fixed {date}, {distance, number} m away",
     "cutShort": "Showing the {shown, number} most recently fixed.",
     "loadError": "Could not check for earlier reports here."
+  },
+  "votes": {
+    "upvote": "Upvote · {count, number}",
+    "confirm": "Confirm · {count, number}",
+    "follow": "Follow",
+    "following": "Following",
+    "flag": "Flag as false",
+    "flagged": "Flagged",
+    "flaggedToast": "Flagged as possibly false. Thanks.",
+    "signInPrompt": "<link>Sign in</link> to upvote, confirm, or follow this report.",
+    "upvotesCount": "{count, number} upvotes",
+    "confirmationsCount": "{count, number} confirmations",
+    "upvoteFailed": "Could not upvote.",
+    "confirmFailed": "Could not confirm.",
+    "flagFailed": "Could not flag this report.",
+    "followFailed": "Could not follow."
+  },
+  "comments": {
+    "heading": "Comments ({count, number})",
+    "loading": "Loading comments…",
+    "loadError": "Failed to load comments.",
+    "none": "No comments yet.",
+    "delete": "Delete",
+    "placeholder": "Add a comment…",
+    "addLabel": "Add a comment",
+    "posting": "Posting…",
+    "post": "Post comment",
+    "signInPrompt": "<link>Sign in</link> to comment.",
+    "postError": "Could not post comment.",
+    "deleteError": "Could not delete comment."
+  },
+  "fixChecks": {
+    "loading": "Loading fix checks…",
+    "loadError": "Failed to load the fix checks.",
+    "headingOpen": "Is it fixed?",
+    "headingClosed": "Fix checks",
+    "markedResolved": "Marked resolved {date}. Residents check the fix with a photo, and {needed, number} disputes send it back to the department.",
+    "tally": "{confirmed, number} confirmed, {disputed, number} disputed",
+    "signInPrompt": "<link>Sign in</link> to check this fix.",
+    "staffNote": "Fixes are checked by residents, not by admins or the department that made them.",
+    "noneYet": "No one has checked this fix yet.",
+    "yourCheck": "Your check",
+    "photoLabel": "Photo of how it looks now",
+    "photoHint": "Take it from about where the report's photo was taken, so the two compare.",
+    "addPhoto": "Add a photo of how it looks now.",
+    "tooBig": "This photo is {size, number} MB, over the {limit, number} MB limit. Choose a smaller one.",
+    "sending": "Sending…",
+    "cancel": "Cancel",
+    "sendError": "Could not send your check.",
+    "sentConfirmed": "Confirmation sent. Thanks for checking.",
+    "sentDisputed": "Dispute sent. Thanks for checking.",
+    "reopened": "Dispute sent. With {needed, number} disputes, the report goes back to the department.",
+    "photoAlt": "Photo from {name}, open full size",
+    "earlierFixDate": "{date}, of an earlier fix",
+    "cutShort": "Showing the {shown, number} newest of {total, number}.",
+    "confirmed": {
+      "ask": "Yes, it's fixed",
+      "send": "Send confirmation",
+      "mine": "You confirmed this fix.",
+      "listed": "Confirmed the fix"
+    },
+    "disputed": {
+      "ask": "No, still a problem",
+      "send": "Send dispute",
+      "mine": "You disputed this fix.",
+      "listed": "Disputed the fix"
+    }
   }
 }

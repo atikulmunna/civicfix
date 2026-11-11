@@ -14,6 +14,9 @@ const TRANSLATED_FILES = [
   'components/report-card.tsx',
   'components/merged-notice.tsx',
   'components/recurrence-note.tsx',
+  'components/vote-bar.tsx',
+  'components/comment-section.tsx',
+  'components/fix-checks.tsx',
 ];
 
 /** Symbols and punctuation that read the same in every language. */

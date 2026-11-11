@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
-import { renderWithQuery } from '@/test-utils';
+import { messagesFor, renderWithQuery } from '@/test-utils';
+import type { Locale } from '@/i18n/locale';
 import userEvent from '@testing-library/user-event';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
@@ -17,13 +18,15 @@ import { CommentSection } from './comment-section';
 
 const ME = { id: 'u1', name: 'Me', email: 'me@e.com', role: 'citizen' };
 
-function setup() {
+function setup(locale: Locale = 'en') {
   return renderWithQuery(
     <ToastProvider>
       <AuthProvider>
         <CommentSection reportId="r1" />
       </AuthProvider>
     </ToastProvider>,
+    undefined,
+    { locale },
   );
 }
 
@@ -79,5 +82,14 @@ describe('CommentSection', () => {
       expect(post).toHaveBeenCalledWith('/reports/r1/comments', { content: 'My new comment' }),
     );
     expect(await screen.findByText('My new comment')).toBeInTheDocument();
+  });
+
+  it('reads in Bangla', async () => {
+    const t = messagesFor('bn').comments;
+    setup('bn');
+    expect(await screen.findByText('Existing comment')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2 }).textContent).not.toMatch(/[A-Za-z]/);
+    expect(await screen.findByLabelText(t.addLabel)).toHaveAttribute('placeholder', t.placeholder);
+    expect(screen.getByRole('button', { name: t.post })).toBeInTheDocument();
   });
 });

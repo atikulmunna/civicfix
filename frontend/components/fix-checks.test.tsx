@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
+import { createTranslator } from 'next-intl';
 import userEvent from '@testing-library/user-event';
-import { createTestQueryClient, renderWithQuery } from '@/test-utils';
+import { createTestQueryClient, messagesFor, renderWithQuery } from '@/test-utils';
+import type { Locale } from '@/i18n/locale';
 
 const { get, postForm, useAuth } = vi.hoisted(() => ({
   get: vi.fn(),
@@ -44,7 +46,14 @@ function data(over: Partial<FixChecksData> = {}): FixChecksData {
   };
 }
 
-function setup(response: FixChecksData, { resolved = true, user = CITIZEN as unknown } = {}) {
+function setup(
+  response: FixChecksData,
+  {
+    resolved = true,
+    user = CITIZEN as unknown,
+    locale = 'en' as Locale,
+  }: { resolved?: boolean; user?: unknown; locale?: Locale } = {},
+) {
   useAuth.mockReturnValue({ user });
   get.mockResolvedValue(response);
   const client = createTestQueryClient();
@@ -54,6 +63,7 @@ function setup(response: FixChecksData, { resolved = true, user = CITIZEN as unk
       <FixChecks reportId="r1" resolved={resolved} />
     </ToastProvider>,
     client,
+    { locale },
   );
 }
 
@@ -213,5 +223,23 @@ describe('FixChecks', () => {
       </ToastProvider>,
     );
     expect(await screen.findByRole('alert')).toHaveTextContent('Service unavailable.');
+  });
+
+  it('asks and answers in Bangla', async () => {
+    const t = messagesFor('bn').fixChecks;
+    const user = userEvent.setup();
+    setup(data({ current: { resolvedAt: FIX, confirmed: 2, disputed: 1 } }), { locale: 'bn' });
+    expect(await screen.findByRole('heading', { name: t.headingOpen })).toBeInTheDocument();
+    const bn = createTranslator({
+      locale: 'bn',
+      messages: messagesFor('bn'),
+      namespace: 'fixChecks',
+    });
+    expect(screen.getByText(bn('tally', { confirmed: 2, disputed: 1 }))).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: t.disputed.ask }));
+    await user.upload(screen.getByLabelText(t.photoLabel), photo());
+    postForm.mockResolvedValue({ fixCheck: check({ verdict: 'disputed' }), reopened: false });
+    await user.click(screen.getByRole('button', { name: t.disputed.send }));
+    expect(await screen.findByText(t.sentDisputed)).toBeInTheDocument();
   });
 });
