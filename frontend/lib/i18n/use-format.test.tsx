@@ -57,4 +57,11 @@ describe('useFormat', () => {
     deviceTimeZone.mockReturnValue('UTC');
     expect(show((f) => f.dateTime('2026-11-11T09:05:00.000Z'))).toBe('Nov 11, 2026, 09:05 AM');
   });
+
+  it('gives Bangla times in Bangla words, with no Latin AM or PM', () => {
+    const morning = show((f) => f.dateTime('2026-11-11T04:00:00.000Z'), 'bn');
+    expect(morning).toContain('১০:০০');
+    expect(morning).not.toMatch(/[A-Za-z0-9]/);
+    expect(show((f) => f.dateTime('2026-11-11T17:45:00.000Z'), 'bn')).not.toMatch(/[A-Za-z]/);
+  });
 });

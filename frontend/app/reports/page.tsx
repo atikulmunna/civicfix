@@ -1,34 +1,26 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api, errorMessage } from '@/lib/api';
-import {
-  asSeverity,
-  asStatus,
-  SEVERITY_OPTIONS,
-  STATUS_OPTIONS,
-  severityLabel,
-  statusLabel,
-} from '@/lib/format';
+import { asSeverity, asStatus, SEVERITY_OPTIONS, STATUS_OPTIONS } from '@/lib/format';
+import { useFormat } from '@/lib/i18n/use-format';
 import { queryKeys } from '@/lib/query-keys';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { ReportCard } from '@/components/report-card';
 import { Button, Card, Input, LoadError, PageHeader, Select, Spinner } from '@/components/ui';
 
-const SORTS = [
-  { value: 'newest', label: 'Newest' },
-  { value: 'oldest', label: 'Oldest' },
-  { value: 'priority', label: 'Highest priority' },
-  { value: 'most_confirmed', label: 'Most confirmed' },
-] as const;
+const SORTS = ['newest', 'oldest', 'priority', 'most_confirmed'] as const;
 
 /** The selected sort, or the default for anything unknown. */
 function asSort(value: string) {
-  return SORTS.find((s) => s.value === value)?.value ?? 'newest';
+  return SORTS.find((s) => s === value) ?? 'newest';
 }
 
 export default function ReportsPage() {
+  const t = useTranslations('reports');
+  const f = useFormat();
   const [filters, setFilters] = useState({
     categoryId: '',
     status: '',
@@ -69,28 +61,24 @@ export default function ReportsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader
-        eyebrow="Community reports"
-        title="Reports"
-        subtitle="Browse and track issues reported across the city."
-      />
+      <PageHeader eyebrow={t('eyebrow')} title={t('title')} subtitle={t('subtitle')} />
 
       <Card className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <Input
-          placeholder="Search title or description…"
+          placeholder={t('searchPlaceholder')}
           value={searchInput}
           onChange={(e) => {
             setSearchInput(e.target.value);
             setFilters((f) => ({ ...f, page: 1 }));
           }}
-          aria-label="Search"
+          aria-label={t('search')}
         />
         <Select
           value={filters.categoryId}
           onChange={(e) => setFilter('categoryId', e.target.value)}
-          aria-label="Category"
+          aria-label={t('category')}
         >
-          <option value="">All categories</option>
+          <option value="">{t('allCategories')}</option>
           {(categories.data ?? []).map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -100,35 +88,35 @@ export default function ReportsPage() {
         <Select
           value={filters.status}
           onChange={(e) => setFilter('status', e.target.value)}
-          aria-label="Status"
+          aria-label={t('status')}
         >
-          <option value="">All statuses</option>
+          <option value="">{t('allStatuses')}</option>
           {STATUS_OPTIONS.map((s) => (
             <option key={s} value={s}>
-              {statusLabel(s)}
+              {f.status(s)}
             </option>
           ))}
         </Select>
         <Select
           value={filters.severity}
           onChange={(e) => setFilter('severity', e.target.value)}
-          aria-label="Severity"
+          aria-label={t('severity')}
         >
-          <option value="">All severities</option>
+          <option value="">{t('allSeverities')}</option>
           {SEVERITY_OPTIONS.map((s) => (
             <option key={s} value={s}>
-              {severityLabel(s)}
+              {f.severity(s)}
             </option>
           ))}
         </Select>
         <Select
           value={filters.sort}
           onChange={(e) => setFilter('sort', e.target.value)}
-          aria-label="Sort"
+          aria-label={t('sort')}
         >
           {SORTS.map((s) => (
-            <option key={s.value} value={s.value}>
-              {s.label}
+            <option key={s} value={s}>
+              {t(`sorts.${s}`)}
             </option>
           ))}
         </Select>
@@ -137,7 +125,7 @@ export default function ReportsPage() {
       {reports.isPending ? (
         <Spinner />
       ) : reports.isError ? (
-        <LoadError>{errorMessage(reports.error, 'Failed to load reports.')}</LoadError>
+        <LoadError>{errorMessage(reports.error, t('loadError'))}</LoadError>
       ) : data && data.items.length > 0 ? (
         <>
           <div className="grid gap-4 md:grid-cols-2">
@@ -147,7 +135,11 @@ export default function ReportsPage() {
           </div>
           <div className="flex items-center justify-between pt-2">
             <span className="text-sm text-slate-500">
-              Page {data.page} of {Math.max(data.totalPages, 1)} · {data.total} total
+              {t('pageOf', {
+                page: data.page,
+                pages: Math.max(data.totalPages, 1),
+                total: data.total,
+              })}
             </span>
             <div className="flex gap-2">
               <Button
@@ -155,20 +147,20 @@ export default function ReportsPage() {
                 disabled={data.page <= 1}
                 onClick={() => setFilters((f) => ({ ...f, page: f.page - 1 }))}
               >
-                Previous
+                {t('previous')}
               </Button>
               <Button
                 variant="secondary"
                 disabled={data.page >= data.totalPages}
                 onClick={() => setFilters((f) => ({ ...f, page: f.page + 1 }))}
               >
-                Next
+                {t('next')}
               </Button>
             </div>
           </div>
         </>
       ) : (
-        <p className="py-10 text-center text-sm text-slate-500">No reports match your filters.</p>
+        <p className="py-10 text-center text-sm text-slate-500">{t('none')}</p>
       )}
     </div>
   );

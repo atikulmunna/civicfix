@@ -17,6 +17,9 @@ const TRANSLATED_FILES = [
   'components/vote-bar.tsx',
   'components/comment-section.tsx',
   'components/fix-checks.tsx',
+  'components/ui.tsx',
+  'app/reports/page.tsx',
+  'app/reports/[[]id]/page.tsx',
 ];
 
 /** Symbols and punctuation that read the same in every language. */

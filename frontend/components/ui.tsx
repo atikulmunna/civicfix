@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import type {
   ButtonHTMLAttributes,
   InputHTMLAttributes,
@@ -108,8 +109,9 @@ export function FieldError({ children }: { children?: ReactNode }) {
   return <p className="mt-2 text-sm text-red-700">{children}</p>;
 }
 
-export function Spinner({ label = 'Loading…' }: { label?: string }) {
-  return <p className="py-10 text-center text-sm text-slate-500">{label}</p>;
+export function Spinner({ label }: { label?: string }) {
+  const t = useTranslations('common');
+  return <p className="py-10 text-center text-sm text-slate-500">{label ?? t('loading')}</p>;
 }
 
 /** Full-width message shown when a page's data failed to load. */

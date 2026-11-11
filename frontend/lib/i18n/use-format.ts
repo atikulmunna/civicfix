@@ -36,8 +36,11 @@ export function useFormat(): Format {
     dateTime: (iso) =>
       format.dateTime(new Date(iso), {
         ...day,
-        hour: '2-digit',
-        minute: '2-digit',
+        // Bangla's locale data writes a Latin AM/PM; its own day periods
+        // (সকাল, দুপুর, বিকাল, রাত) keep the line in Bangla.
+        ...(locale === 'bn'
+          ? { hour: 'numeric', minute: '2-digit', dayPeriod: 'short' }
+          : { hour: '2-digit', minute: '2-digit' }),
         timeZone: deviceTimeZone(),
       }),
     number: (n) => format.number(n),

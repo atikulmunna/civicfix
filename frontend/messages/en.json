@@ -3,7 +3,8 @@
     "meta": {
       "title": "CivicFix: Community Problem Reporting",
       "description": "Report local civic issues, track their status, and help your community."
-    }
+    },
+    "loading": "Loading…"
   },
   "status": {
     "SUBMITTED": "Submitted",
@@ -52,7 +53,16 @@
     "priority": "Priority {score}",
     "upvotes": "Upvotes",
     "confirmations": "Confirmations",
-    "merged": "This report was merged into another report of the same problem. <link>See the original report</link> for its updates."
+    "merged": "This report was merged into another report of the same problem. <link>See the original report</link> for its updates.",
+    "reportedOn": "Reported {date}",
+    "loadError": "Failed to load report.",
+    "historyHeading": "Status history",
+    "historyLoadError": "Failed to load the status history.",
+    "photo": {
+      "evidence": "evidence photo",
+      "before": "before photo",
+      "after": "after photo"
+    }
   },
   "recurrence": {
     "heading": "This problem has come back",
@@ -127,5 +137,30 @@
       "mine": "You disputed this fix.",
       "listed": "Disputed the fix"
     }
+  },
+  "reports": {
+    "eyebrow": "Community reports",
+    "title": "Reports",
+    "subtitle": "Browse and track issues reported across the city.",
+    "search": "Search",
+    "searchPlaceholder": "Search title or description…",
+    "category": "Category",
+    "allCategories": "All categories",
+    "status": "Status",
+    "allStatuses": "All statuses",
+    "severity": "Severity",
+    "allSeverities": "All severities",
+    "sort": "Sort",
+    "sorts": {
+      "newest": "Newest",
+      "oldest": "Oldest",
+      "priority": "Highest priority",
+      "most_confirmed": "Most confirmed"
+    },
+    "loadError": "Failed to load reports.",
+    "pageOf": "Page {page, number} of {pages, number} · {total, number} total",
+    "previous": "Previous",
+    "next": "Next",
+    "none": "No reports match your filters."
   }
 }

@@ -2,10 +2,11 @@
 
 import { use } from 'react';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import { api, assetUrl, errorMessage } from '@/lib/api';
 import { queryKeys } from '@/lib/query-keys';
-import { formatDateTime } from '@/lib/format';
+import { useFormat } from '@/lib/i18n/use-format';
 import { SeverityBadge, StatusBadge } from '@/components/badges';
 import { VoteBar } from '@/components/vote-bar';
 import { StatusTimeline } from '@/components/status-timeline';
@@ -17,6 +18,8 @@ import { Card, LoadError, Spinner } from '@/components/ui';
 
 /** Report detail for one id (separate from the page so it can be tested). */
 export function ReportDetail({ id }: { id: string }) {
+  const t = useTranslations('report');
+  const f = useFormat();
   const reportQuery = useQuery({
     queryKey: queryKeys.report(id),
     queryFn: ({ signal }) => api.get(`/reports/${id}`, undefined, { signal }),
@@ -28,7 +31,7 @@ export function ReportDetail({ id }: { id: string }) {
 
   if (reportQuery.isPending) return <Spinner />;
   if (reportQuery.isError) {
-    return <LoadError>{errorMessage(reportQuery.error, 'Failed to load report.')}</LoadError>;
+    return <LoadError>{errorMessage(reportQuery.error, t('loadError'))}</LoadError>;
   }
   const report = reportQuery.data.report;
 
@@ -44,7 +47,9 @@ export function ReportDetail({ id }: { id: string }) {
             )}
           </div>
           <h1 className="mt-2 text-2xl font-bold text-slate-900">{report.title}</h1>
-          <p className="mt-1 text-xs text-slate-400">Reported {formatDateTime(report.createdAt)}</p>
+          <p className="mt-1 text-xs text-slate-400">
+            {t('reportedOn', { date: f.dateTime(report.createdAt) })}
+          </p>
         </div>
 
         {report.status === 'DUPLICATE' && report.duplicateOfReportId && (
@@ -57,7 +62,7 @@ export function ReportDetail({ id }: { id: string }) {
               <div key={img.id} className="relative aspect-square w-full">
                 <Image
                   src={assetUrl(img.imageUrl)}
-                  alt={`${img.imageType} photo`}
+                  alt={t(`photo.${img.imageType}`)}
                   fill
                   sizes="(min-width: 1024px) 22vw, (min-width: 640px) 33vw, 50vw"
                   className="rounded-md object-cover"
@@ -91,13 +96,11 @@ export function ReportDetail({ id }: { id: string }) {
 
       <aside className="flex flex-col gap-4">
         <Card>
-          <h2 className="mb-3 text-lg font-semibold text-slate-900">Status history</h2>
+          <h2 className="mb-3 text-lg font-semibold text-slate-900">{t('historyHeading')}</h2>
           {historyQuery.isPending ? (
             <Spinner />
           ) : historyQuery.isError ? (
-            <LoadError>
-              {errorMessage(historyQuery.error, 'Failed to load the status history.')}
-            </LoadError>
+            <LoadError>{errorMessage(historyQuery.error, t('historyLoadError'))}</LoadError>
           ) : (
             <StatusTimeline entries={historyQuery.data.history} />
           )}
