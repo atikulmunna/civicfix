@@ -19,11 +19,13 @@
     "@tanstack/react-query": "^5.105.1",
     "leaflet": "^1.9.4",
     "next": "16.4.3",
+    "next-intl": "4.14.9",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "react-leaflet": "^5.0.0"
   },
   "devDependencies": {
+    "@formatjs/icu-messageformat-parser": "3.5.18",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.3",
@@ -48,6 +50,8 @@
   "overrides": {
     "openapi-typescript": {
       "typescript": "$typescript"
-    }
+    },
+    "use-intl": "4.14.9",
+    "icu-minify": "4.14.9"
   }
 }

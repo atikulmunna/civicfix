@@ -1,5 +1,6 @@
 import path from 'node:path';
 import type { NextConfig } from 'next';
+import createNextIntlPlugin from 'next-intl/plugin';
 
 // In production we proxy the API + uploads through this app so the browser only
 // talks to one origin, which keeps the httpOnly auth cookies same-site.
@@ -39,4 +40,7 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Translations (F5): i18n/request.ts picks each request's language and messages.
+const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
+
+export default withNextIntl(nextConfig);

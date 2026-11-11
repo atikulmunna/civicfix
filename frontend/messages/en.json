@@ -1,0 +1,26 @@
+{
+  "common": {
+    "meta": {
+      "title": "CivicFix: Community Problem Reporting",
+      "description": "Report local civic issues, track their status, and help your community."
+    }
+  },
+  "status": {
+    "SUBMITTED": "Submitted",
+    "UNDER_REVIEW": "Under Review",
+    "VERIFIED": "Verified",
+    "ASSIGNED": "Assigned",
+    "IN_PROGRESS": "In Progress",
+    "RESOLVED": "Resolved",
+    "REJECTED": "Rejected",
+    "DUPLICATE": "Duplicate",
+    "NEEDS_MORE_INFO": "Needs More Info",
+    "ARCHIVED": "Archived"
+  },
+  "severity": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "urgent": "Urgent"
+  }
+}

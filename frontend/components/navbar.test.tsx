@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
+import { renderWithIntl } from '@/test-utils';
 
 const { useAuth } = vi.hoisted(() => ({ useAuth: vi.fn() }));
 vi.mock('next/navigation', () => ({
@@ -18,7 +19,7 @@ import { Navbar } from './navbar';
 
 function sections(user: { name: string; role: string } | null) {
   useAuth.mockReturnValue({ user, loading: false, logout: vi.fn() });
-  render(<Navbar />);
+  renderWithIntl(<Navbar />);
   // The row for small screens (CSS shows one set of links at a time).
   const row = screen.getByRole('navigation', { name: 'Sections' });
   return within(row)
