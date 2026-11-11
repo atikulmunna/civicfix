@@ -67,7 +67,7 @@ describe('message catalogs', () => {
 
   it('use no em or en dashes', () => {
     for (const [key, text] of [...english, ...bangla]) {
-      expect({ key, dash: /[–—]/.test(text) }).toEqual({ key, dash: false });
+      expect({ key, dash: /[\u2013\u2014]/.test(text) }).toEqual({ key, dash: false });
     }
   });
 });
