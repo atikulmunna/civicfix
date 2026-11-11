@@ -21,6 +21,8 @@ export interface PublicUser {
   trustScore: number;
   phone: string | null;
   phoneIsPublic: boolean;
+  /** Chosen interface language (F5), or null until one is picked. */
+  language: 'en' | 'bn' | null;
   /** True after an admin reset: the client should ask for a new password. */
   mustChangePassword: boolean;
   createdAt: Date;
@@ -36,6 +38,8 @@ export function toPublicUser(u: User): PublicUser {
     trustScore: u.trustScore,
     phone: u.phone,
     phoneIsPublic: u.phoneIsPublic,
+    // Only the API writes this column, through a checked enum.
+    language: u.language === 'en' || u.language === 'bn' ? u.language : null,
     mustChangePassword: u.mustChangePassword,
     createdAt: u.createdAt,
   };
