@@ -4,12 +4,13 @@ import { useQuery } from '@tanstack/react-query';
 import { api, errorMessage } from '@/lib/api';
 import { queryKeys } from '@/lib/query-keys';
 import type { ReportStatus, Severity } from '@/lib/types';
-import { severityLabel, statusLabel } from '@/lib/format';
+import { useFormat } from '@/lib/i18n/use-format';
 import { RequireAuth } from '@/components/require-auth';
-import { BarChart } from '@/components/bar-chart';
+import { BarChart } from '@/components/admin/bar-chart';
 import { Card, LoadError, PageHeader, Spinner, StatTile } from '@/components/ui';
 
 function Analytics() {
+  const f = useFormat();
   const summaryQuery = useQuery({
     queryKey: queryKeys.analytics('summary'),
     queryFn: ({ signal }) => api.get('/admin/analytics/summary', undefined, { signal }),
@@ -67,7 +68,7 @@ function Analytics() {
           <BarChart
             data={Object.entries(summary.byStatus)
               .filter(([, v]) => v > 0)
-              .map(([k, v]) => ({ label: statusLabel(k as ReportStatus), value: v }))}
+              .map(([k, v]) => ({ label: f.status(k as ReportStatus), value: v }))}
           />
         </Card>
         <Card>
@@ -75,7 +76,7 @@ function Analytics() {
           <BarChart
             color="bg-slate-700"
             data={Object.entries(summary.bySeverity).map(([k, v]) => ({
-              label: severityLabel(k as Severity),
+              label: f.severity(k as Severity),
               value: v,
             }))}
           />

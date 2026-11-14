@@ -2,6 +2,7 @@
 
 import { useEffect, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { isAdmin, isStaff, useAuth } from './auth-context';
 import { Spinner } from './ui';
 
@@ -19,6 +20,7 @@ export function RequireAuth({
   require?: Requirement;
   children: ReactNode;
 }) {
+  const t = useTranslations('auth.gate');
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -29,15 +31,15 @@ export function RequireAuth({
     }
   }, [loading, user, router, pathname]);
 
-  if (loading) return <Spinner label="Checking your session…" />;
+  if (loading) return <Spinner label={t('checking')} />;
   if (!user) return null;
 
   const allowed = require === 'auth' || (require === 'admin' ? isAdmin(user) : isStaff(user));
   if (!allowed) {
     return (
       <div className="py-16 text-center">
-        <h1 className="text-xl font-semibold text-slate-900">Access denied</h1>
-        <p className="mt-2 text-sm text-slate-600">You don’t have permission to view this page.</p>
+        <h1 className="text-xl font-semibold text-slate-900">{t('deniedTitle')}</h1>
+        <p className="mt-2 text-sm text-slate-600">{t('deniedBody')}</p>
       </div>
     );
   }

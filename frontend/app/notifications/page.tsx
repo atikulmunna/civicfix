@@ -1,10 +1,11 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorMessage } from '@/lib/api';
 import type { Notification, Paginated } from '@/lib/types';
-import { formatDateTime } from '@/lib/format';
+import { useFormat } from '@/lib/i18n/use-format';
 import { queryKeys } from '@/lib/query-keys';
 import { RequireAuth } from '@/components/require-auth';
 import { useToast } from '@/components/toast';
@@ -15,6 +16,8 @@ interface NotificationsData extends Paginated<Notification> {
 }
 
 function NotificationsList() {
+  const t = useTranslations('notifications');
+  const f = useFormat();
   const router = useRouter();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -37,13 +40,13 @@ function NotificationsList() {
           : d,
       );
     },
-    onError: (err) => toast(errorMessage(err, 'Could not mark the notification as read.'), 'error'),
+    onError: (err) => toast(errorMessage(err, t('markReadFailed')), 'error'),
   });
 
   const markAll = useMutation({
     mutationFn: () => api.patch('/notifications/read-all'),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.notifications }),
-    onError: (err) => toast(errorMessage(err, 'Could not mark notifications as read.'), 'error'),
+    onError: (err) => toast(errorMessage(err, t('markAllFailed')), 'error'),
   });
 
   function open(n: Notification) {
@@ -53,21 +56,19 @@ function NotificationsList() {
 
   if (notifications.isPending) return <Spinner />;
   if (notifications.isError) {
-    return (
-      <LoadError>{errorMessage(notifications.error, 'Failed to load notifications.')}</LoadError>
-    );
+    return <LoadError>{errorMessage(notifications.error, t('loadError'))}</LoadError>;
   }
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4">
       <PageHeader
-        eyebrow="Account"
+        eyebrow={t('eyebrow')}
         title={
           <>
-            Notifications
+            {t('title')}
             {data && data.unreadCount > 0 && (
               <span className="ml-2 align-middle rounded-full bg-teal-600 px-2 py-0.5 text-base font-semibold text-white">
-                {data.unreadCount}
+                {f.number(data.unreadCount)}
               </span>
             )}
           </>
@@ -79,7 +80,7 @@ function NotificationsList() {
               disabled={markAll.isPending}
               onClick={() => markAll.mutate()}
             >
-              Mark all read
+              {t('markAll')}
             </Button>
           ) : undefined
         }
@@ -97,7 +98,7 @@ function NotificationsList() {
               >
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-slate-900">{n.title}</span>
-                  <span className="text-xs text-slate-400">{formatDateTime(n.createdAt)}</span>
+                  <span className="text-xs text-slate-400">{f.dateTime(n.createdAt)}</span>
                 </div>
                 <p className="mt-0.5 text-sm text-slate-600">{n.message}</p>
               </button>
@@ -105,7 +106,7 @@ function NotificationsList() {
           ))}
         </ul>
       ) : (
-        <p className="py-10 text-center text-sm text-slate-500">No notifications yet.</p>
+        <p className="py-10 text-center text-sm text-slate-500">{t('empty')}</p>
       )}
     </div>
   );

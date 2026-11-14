@@ -4,7 +4,16 @@
       "title": "CivicFix: Community Problem Reporting",
       "description": "Report local civic issues, track their status, and help your community."
     },
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "pageOf": "Page {page, number} of {pages, number} · {total, number} total",
+    "previous": "Previous",
+    "next": "Next",
+    "photoPicker": {
+      "chooseOne": "Choose a photo",
+      "chooseMany": "Choose photos",
+      "none": "No photo chosen",
+      "chosen": "{count, plural, one {# photo chosen} other {# photos chosen}}"
+    }
   },
   "status": {
     "SUBMITTED": "Submitted",
@@ -43,7 +52,7 @@
     "signUp": "Sign up",
     "signOut": "Sign out",
     "signedOut": "Signed out.",
-    "switchTo": "Change language to Bangla"
+    "switchTo": "{language} (change language to Bangla)"
   },
   "report": {
     "noHistory": "No history yet.",
@@ -158,9 +167,6 @@
       "most_confirmed": "Most confirmed"
     },
     "loadError": "Failed to load reports.",
-    "pageOf": "Page {page, number} of {pages, number} · {total, number} total",
-    "previous": "Previous",
-    "next": "Next",
     "none": "No reports match your filters."
   },
   "home": {
@@ -271,6 +277,222 @@
       "body": "It takes about a minute, and your neighbours can back you up. Every report is public and tracked to resolution.",
       "reportIssue": "Report an issue",
       "exploreMap": "Explore the map"
+    }
+  },
+  "map": {
+    "eyebrow": "Live map",
+    "title": "Map",
+    "subtitle": "Every reported issue, plotted by location. Shaded areas are hotspots, where reports cluster.",
+    "status": "Status",
+    "allStatuses": "All statuses",
+    "category": "Category",
+    "allCategories": "All categories",
+    "categoriesUnavailable": "Categories unavailable",
+    "hotspotsToggle": "Hotspots",
+    "hotspotsError": "Could not load the hotspots.",
+    "markersError": "Could not load reports for this area.",
+    "loadingReports": "Loading reports…",
+    "inView": "{count, number} in view",
+    "viewReport": "View report",
+    "cameBack": "A fixed problem came back here."
+  },
+  "hotspots": {
+    "heading": "Hotspots",
+    "loading": "Loading hotspots…",
+    "loadError": "Failed to load the hotspots.",
+    "intro": "Places with at least {min, number} reports within {radius, number} m of each other in the last {days, number} days, fixed ones included. Most reports first.",
+    "none": "No hotspots right now: no place has {min, number} or more reports this close together.",
+    "recurring": "Keeps coming back",
+    "latest": "Latest {date}.",
+    "showOnMap": "Show on map",
+    "kindsUnknown": "Reports",
+    "kindsMore": "{top} and {others, plural, one {# other kind} other {# other kinds}}",
+    "counts": "{reports, number} reports within {reach, number} m, {open}.",
+    "openAll": "all fixed",
+    "openNone": "none fixed yet",
+    "openSome": "{count, number} still open"
+  },
+  "scorecards": {
+    "eyebrow": "Accountability",
+    "title": "Department scorecards",
+    "subtitle": "How quickly each department responds to and resolves the reports assigned to it.",
+    "loading": "Loading scorecards…",
+    "loadError": "Failed to load the scorecards.",
+    "none": "Scorecards appear here once departments are set up.",
+    "statement": "{count, plural, =0 {No report is past its resolution target right now.} one {# report is past its resolution target right now.} other {# reports are past their resolution target right now.}}",
+    "region": "Scores by department",
+    "columns": {
+      "department": "Department",
+      "overdueNow": "Overdue now",
+      "resolved": "Resolved",
+      "respondedOnTime": "First response on time",
+      "resolvedOnTime": "Resolved on time",
+      "typicalResponse": "Typical first response",
+      "typicalResolve": "Typical time to resolve"
+    },
+    "noData": "No data",
+    "resolvedOf": "{resolved, number} of {assigned, number} assigned",
+    "overdueHeading": "Overdue reports",
+    "cutShort": "Showing the {shown, number} most overdue of {total, number}.",
+    "overTarget": "{duration} over target",
+    "method": {
+      "heading": "How this is measured",
+      "caption": "Targets by severity",
+      "severity": "Severity",
+      "responseWithin": "First response within",
+      "resolvedWithin": "Resolved within",
+      "notes": {
+        "clock": "The clock starts when a report is assigned to a department, so time waiting for review does not count against it. A reassigned report counts for its current department.",
+        "firstResponse": "First response is the department's first status change after assignment.",
+        "window": "Scores cover reports assigned in the last {days, number} days. A report still within its target counts neither way. Overdue reports are counted whatever their age.",
+        "excluded": "Reports rejected or marked as duplicates had nothing to resolve, so they are left out of the resolved percentages.",
+        "disputed": "A fix that residents dispute with photos goes back to the department, and the report counts as unresolved again.",
+        "median": "Typical means the median: half of reports were faster, half slower."
+      }
+    }
+  },
+  "newReport": {
+    "eyebrow": "New report",
+    "title": "Report an issue",
+    "subtitle": "Add a photo and drop a pin so it can be found and fixed.",
+    "loadingMap": "Loading map…",
+    "fields": {
+      "title": "Title",
+      "description": "Description",
+      "category": "Category",
+      "choose": "Select…",
+      "severity": "Severity",
+      "location": "Location",
+      "address": "Address (optional)",
+      "landmark": "Landmark (optional)",
+      "photos": "Photos"
+    },
+    "photosHint": "Up to {max, number} photos. Large photos are resized before upload.",
+    "duplicates": "{count, plural, one {Possible duplicate nearby:} other {Possible duplicates nearby:}}",
+    "duplicatesNote": "You can still submit if yours is different.",
+    "errors": {
+      "tooManyPhotos": "Choose up to {max, number} photos.",
+      "noLocation": "Please select a location on the map.",
+      "noPhoto": "Please add at least one photo.",
+      "tooLarge": "These photos add up to {size, number} MB, over the {limit, number} MB limit. Remove a photo or choose smaller ones.",
+      "submitFailed": "Could not submit the report.",
+      "titleTooShort": "The title must be at least {min, number} characters.",
+      "descriptionTooShort": "The description must be at least {min, number} characters.",
+      "noCategory": "Choose a category."
+    },
+    "preparing": "Preparing photos…",
+    "submitting": "Submitting…",
+    "submit": "Submit report",
+    "submitted": "Report submitted. Thank you!",
+    "picker": {
+      "selected": "Selected: {lat}, {lng}",
+      "prompt": "Click the map to set the location.",
+      "useMine": "Use my location"
+    }
+  },
+  "auth": {
+    "fields": {
+      "name": "Name",
+      "email": "Email",
+      "password": "Password",
+      "phone": "Phone (optional)"
+    },
+    "unexpected": "Something went wrong. Please try again.",
+    "login": {
+      "eyebrow": "Welcome back",
+      "title": "Sign in",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "noAccount": "No account?",
+      "createOne": "Create one",
+      "signedIn": "Signed in.",
+      "mustChange": "Please choose a new password.",
+      "missing": "Enter your email and password."
+    },
+    "register": {
+      "eyebrow": "Get started",
+      "title": "Create your account",
+      "passwordHint": "At least {min, number} characters.",
+      "submit": "Create account",
+      "submitting": "Creating…",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "created": "Account created. Welcome to CivicFix!",
+      "missingName": "Enter your name.",
+      "badEmail": "Enter a valid email address.",
+      "passwordTooShort": "Your password must be at least {min, number} characters."
+    },
+    "password": {
+      "heading": "Change password",
+      "resetNotice": "An administrator reset your password. Choose a new one to finish signing in safely.",
+      "staySignedIn": "You will stay signed in here and be signed out everywhere else.",
+      "current": "Current password",
+      "new": "New password",
+      "confirm": "Confirm new password",
+      "submit": "Change password",
+      "submitting": "Changing…",
+      "tooShort": "Your new password must be at least {min, number} characters.",
+      "mismatch": "The new passwords do not match.",
+      "changed": "Password changed. You were signed out on your other devices.",
+      "failed": "Could not change your password.",
+      "currentMissing": "Enter your current password."
+    },
+    "banner": {
+      "text": "You are using a temporary password set by an administrator.",
+      "link": "Choose a new password"
+    },
+    "gate": {
+      "checking": "Checking your session…",
+      "deniedTitle": "Access denied",
+      "deniedBody": "You don’t have permission to view this page."
+    }
+  },
+  "notifications": {
+    "eyebrow": "Account",
+    "title": "Notifications",
+    "markAll": "Mark all read",
+    "empty": "No notifications yet.",
+    "loadError": "Failed to load notifications.",
+    "markReadFailed": "Could not mark the notification as read.",
+    "markAllFailed": "Could not mark notifications as read."
+  },
+  "me": {
+    "eyebrow": "Account",
+    "roles": {
+      "citizen": "Citizen",
+      "department_worker": "Department worker",
+      "admin": "Admin",
+      "super_admin": "Super admin"
+    },
+    "profile": {
+      "title": "My profile",
+      "myReports": "My reports →",
+      "email": "Email",
+      "role": "Role",
+      "trustScore": "Trust score",
+      "name": "Name",
+      "phone": "Phone",
+      "phonePublic": "Show my phone number publicly",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "saved": "Profile updated.",
+      "saveFailed": "Could not update profile.",
+      "nameMissing": "Enter your name."
+    },
+    "reports": {
+      "title": "My reports",
+      "reportIssue": "Report an issue",
+      "loadError": "Failed to load your reports.",
+      "empty": "You haven’t reported anything yet. <link>Report an issue</link>."
+    }
+  },
+  "errors": {
+    "page": {
+      "title": "Something went wrong",
+      "body": "This page hit an unexpected error. Try again, or go back to the home page.",
+      "reference": "Reference",
+      "retry": "Try again",
+      "home": "Home"
     }
   }
 }

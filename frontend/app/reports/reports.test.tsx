@@ -77,6 +77,7 @@ describe('ReportsPage', () => {
 
 describe('ReportsPage in Bangla', () => {
   const t = messagesFor('bn').reports;
+  const paging = messagesFor('bn').common;
 
   it('labels its filters, sorts and pages in Bangla', async () => {
     get.mockImplementation((path: string) => {
@@ -95,8 +96,8 @@ describe('ReportsPage in Bangla', () => {
     expect(screen.getByLabelText(t.search)).toHaveAttribute('placeholder', t.searchPlaceholder);
     expect(screen.getByRole('option', { name: t.allStatuses })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: t.sorts.most_confirmed })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: t.next })).toBeInTheDocument();
-    const pager = screen.getByRole('button', { name: t.next }).closest('div')!.parentElement!;
+    expect(screen.getByRole('button', { name: paging.next })).toBeInTheDocument();
+    const pager = screen.getByRole('button', { name: paging.next }).closest('div')!.parentElement!;
     expect(pager.firstElementChild?.textContent).not.toMatch(/[A-Za-z0-9]/);
   });
 

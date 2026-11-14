@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, within } from '@testing-library/react';
+import { createTranslator } from 'next-intl';
 import userEvent from '@testing-library/user-event';
-import { renderWithQuery } from '@/test-utils';
+import { messagesFor, renderWithQuery } from '@/test-utils';
 
 const { get } = vi.hoisted(() => ({ get: vi.fn() }));
 vi.mock('@/lib/api', async () => {
@@ -104,5 +105,28 @@ describe('HotspotList', () => {
     get.mockRejectedValue(new ApiError('Service unavailable.', 'INTERNAL_ERROR', 503));
     renderWithQuery(<HotspotList onShow={vi.fn()} />);
     expect(await screen.findByRole('alert')).toHaveTextContent('Service unavailable.');
+  });
+
+  it('reads in Bangla', async () => {
+    const t = messagesFor('bn').hotspots;
+    respond([spot({ recurring: true })]);
+    renderWithQuery(<HotspotList onShow={vi.fn()} />, undefined, { locale: 'bn' });
+    expect(screen.getByRole('heading', { name: t.heading })).toBeInTheDocument();
+    // The heading shows while loading; wait for the list itself.
+    expect(await screen.findByText(t.recurring)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: t.showOnMap })).toBeInTheDocument();
+    expect(screen.getByText(/১৫০/)).toBeInTheDocument();
+  });
+
+  it('says in Bangla when there are none', async () => {
+    respond([]);
+    renderWithQuery(<HotspotList onShow={vi.fn()} />, undefined, { locale: 'bn' });
+    const bn = createTranslator({
+      locale: 'bn',
+      messages: messagesFor('bn'),
+      namespace: 'hotspots',
+    });
+    expect(await screen.findByText(bn('none', { min: 3 }))).toBeInTheDocument();
+    expect(screen.queryByRole('button')).toBeNull();
   });
 });

@@ -10,7 +10,6 @@ vi.mock('@/lib/api', async () => {
 });
 
 import { ApiError } from '@/lib/api';
-import { formatDate } from '@/lib/format';
 import type { Report } from '@/lib/types';
 import { MergedNotice } from '../merged-notice';
 import { DuplicateMerge } from './duplicate-merge';
@@ -60,8 +59,7 @@ describe('DuplicateMerge', () => {
     const onMerge = setup(report({}));
     const user = userEvent.setup();
 
-    const reported = formatDate('2026-11-01T10:00:00.000Z');
-    expect(await screen.findByText(`48 m away, reported ${reported}`)).toBeInTheDocument();
+    expect(await screen.findByText('48 m away, reported Nov 1, 2026')).toBeInTheDocument();
     expect(screen.getByText(/within 200 m, made before this one/)).toBeInTheDocument();
     expect(get).toHaveBeenCalledWith(
       '/admin/reports/r1/duplicate-candidates',

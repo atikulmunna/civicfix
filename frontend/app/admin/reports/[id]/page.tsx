@@ -5,7 +5,8 @@ import { use, useState } from 'react';
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError, assetUrl, errorMessage } from '@/lib/api';
-import { asStatus, STATUS_OPTIONS, formatDateTime, statusLabel } from '@/lib/format';
+import { asStatus, STATUS_OPTIONS } from '@/lib/format';
+import { useFormat } from '@/lib/i18n/use-format';
 import { queryKeys } from '@/lib/query-keys';
 import { SeverityBadge, StatusBadge } from '@/components/badges';
 import { StatusTimeline } from '@/components/status-timeline';
@@ -21,6 +22,7 @@ interface ModerationAction {
 }
 
 export function Moderation({ id }: { id: string }) {
+  const f = useFormat();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -94,7 +96,7 @@ export function Moderation({ id }: { id: string }) {
             )}
           </div>
           <h1 className="mt-2 text-2xl font-bold text-slate-900">{report.title}</h1>
-          <p className="text-xs text-slate-400">Reported {formatDateTime(report.createdAt)}</p>
+          <p className="text-xs text-slate-400">Reported {f.dateTime(report.createdAt)}</p>
         </div>
 
         {report.images && report.images.length > 0 && (
@@ -148,7 +150,7 @@ export function Moderation({ id }: { id: string }) {
               <option value="">Select status…</option>
               {STATUS_OPTIONS.filter((s) => s !== report.status).map((s) => (
                 <option key={s} value={s}>
-                  {statusLabel(s)}
+                  {f.status(s)}
                 </option>
               ))}
             </Select>

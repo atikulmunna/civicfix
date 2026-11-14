@@ -96,6 +96,55 @@ export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={fieldClass} {...props} />;
 }
 
+/**
+ * A photo file input whose button and status come from the catalog: the
+ * browser draws its own file control in the browser's language, not the
+ * page's (F5). The real input stays in place, visually hidden but focusable,
+ * so keyboards, screen readers and the field's Label work as before.
+ */
+export function PhotoPicker({
+  id,
+  files,
+  multiple = false,
+  'aria-describedby': describedBy,
+  ...props
+}: Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'id' | 'className'> & {
+  id: string;
+  /** What is chosen now; the parent owns it. */
+  files: readonly File[];
+}) {
+  const t = useTranslations('common.photoPicker');
+  const statusId = `${id}-chosen`;
+  const [only] = files;
+  const status =
+    files.length === 0
+      ? t('none')
+      : files.length === 1 && only
+        ? only.name
+        : t('chosen', { count: files.length });
+  return (
+    <div className="relative flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+      <input
+        id={id}
+        type="file"
+        multiple={multiple}
+        aria-describedby={[describedBy, statusId].filter(Boolean).join(' ')}
+        className="peer sr-only"
+        {...props}
+      />
+      <label
+        htmlFor={id}
+        className="cursor-pointer rounded-md bg-slate-100 px-3 py-2 text-sm font-medium text-slate-800 transition hover:bg-slate-200 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-teal-600"
+      >
+        {multiple ? t('chooseMany') : t('chooseOne')}
+      </label>
+      <span id={statusId} className="min-w-0 truncate text-sm text-slate-600">
+        {status}
+      </span>
+    </div>
+  );
+}
+
 export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return <textarea className={fieldClass} {...props} />;
 }

@@ -3,17 +3,19 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { skipToken, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorMessage } from '@/lib/api';
 import type { Report } from '@/lib/types';
-import { SEVERITY_OPTIONS, severityLabel } from '@/lib/format';
+import { SEVERITY_OPTIONS } from '@/lib/format';
+import { useFormat } from '@/lib/i18n/use-format';
 import { invalidateReportLists } from '@/lib/query-client';
 import { queryKeys } from '@/lib/query-keys';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import {
   MAX_PHOTOS,
   UPLOAD_BUDGET_BYTES,
-  formatMegabytes,
+  megabytes,
   prepareImages,
   totalBytes,
 } from '@/lib/resize-image';
@@ -26,6 +28,7 @@ import {
   Input,
   Label,
   PageHeader,
+  PhotoPicker,
   Select,
   Spinner,
   Textarea,
@@ -33,12 +36,23 @@ import {
 import type { LatLng } from '@/components/location-picker';
 import Link from 'next/link';
 
+/** Match the API (backend reports.schemas.ts), so the reader learns before the upload. */
+const TITLE_MIN = 3;
+const DESCRIPTION_MIN = 10;
+
+function MapLoading() {
+  const t = useTranslations('newReport');
+  return <Spinner label={t('loadingMap')} />;
+}
+
 const LocationPicker = dynamic(
   () => import('@/components/location-picker').then((m) => m.LocationPicker),
-  { ssr: false, loading: () => <Spinner label="Loading map…" /> },
+  { ssr: false, loading: MapLoading },
 );
 
 function NewReportForm() {
+  const t = useTranslations('newReport');
+  const f = useFormat();
   const router = useRouter();
   const { toast } = useToast();
   const [form, setForm] = useState({
@@ -60,10 +74,10 @@ function NewReportForm() {
     onSuccess: async ({ report }) => {
       // The new report belongs in every list (yours, the public one, the map).
       await invalidateReportLists(queryClient);
-      toast('Report submitted. Thank you!', 'success');
+      toast(t('submitted'), 'success');
       router.push(`/reports/${report.id}`);
     },
-    onError: (err) => setError(errorMessage(err, 'Could not submit the report.')),
+    onError: (err) => setError(errorMessage(err, t('errors.submitFailed'))),
   });
   const busy = preparing || submit.isPending;
 
@@ -96,7 +110,7 @@ function NewReportForm() {
   const duplicates: Report[] = dupParams && debouncedDupParams ? (duplicatesQuery.data ?? []) : [];
 
   const previews = useMemo(
-    () => files.map((f) => ({ name: f.name, url: URL.createObjectURL(f) })),
+    () => files.map((file) => ({ name: file.name, url: URL.createObjectURL(file) })),
     [files],
   );
   useEffect(() => () => previews.forEach((p) => URL.revokeObjectURL(p.url)), [previews]);
@@ -106,7 +120,7 @@ function NewReportForm() {
     if (picked.length > MAX_PHOTOS) {
       e.target.value = '';
       setFiles([]);
-      setError(`Choose up to ${String(MAX_PHOTOS)} photos.`);
+      setError(t('errors.tooManyPhotos', { max: MAX_PHOTOS }));
       return;
     }
     setError(null);
@@ -115,14 +129,21 @@ function NewReportForm() {
 
   function update(key: keyof typeof form) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
-      setForm((f) => ({ ...f, [key]: e.target.value }));
+      setForm((current) => ({ ...current, [key]: e.target.value }));
   }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!location) return setError('Please select a location on the map.');
-    if (files.length === 0) return setError('Please add at least one photo.');
+    if (form.title.trim().length < TITLE_MIN) {
+      return setError(t('errors.titleTooShort', { min: TITLE_MIN }));
+    }
+    if (form.description.trim().length < DESCRIPTION_MIN) {
+      return setError(t('errors.descriptionTooShort', { min: DESCRIPTION_MIN }));
+    }
+    if (!form.categoryId) return setError(t('errors.noCategory'));
+    if (!location) return setError(t('errors.noLocation'));
+    if (files.length === 0) return setError(t('errors.noPhoto'));
 
     setPreparing(true);
     const images = await prepareImages(files);
@@ -130,7 +151,7 @@ function NewReportForm() {
     const size = totalBytes(images);
     if (size > UPLOAD_BUDGET_BYTES) {
       return setError(
-        `These photos add up to ${formatMegabytes(size)}, over the ${formatMegabytes(UPLOAD_BUDGET_BYTES)} limit. Remove a photo or choose smaller ones.`,
+        t('errors.tooLarge', { size: megabytes(size), limit: megabytes(UPLOAD_BUDGET_BYTES) }),
       );
     }
 
@@ -151,15 +172,15 @@ function NewReportForm() {
   return (
     <div className="mx-auto max-w-2xl">
       <PageHeader
-        eyebrow="New report"
-        title="Report an issue"
-        subtitle="Add a photo and drop a pin so it can be found and fixed."
+        eyebrow={t('eyebrow')}
+        title={t('title')}
+        subtitle={t('subtitle')}
         className="mb-6"
       />
       <Card>
         <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
           <div>
-            <Label htmlFor="title">Title</Label>
+            <Label htmlFor="title">{t('fields.title')}</Label>
             <Input
               id="title"
               value={form.title}
@@ -169,7 +190,7 @@ function NewReportForm() {
             />
           </div>
           <div>
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">{t('fields.description')}</Label>
             <Textarea
               id="description"
               rows={4}
@@ -180,14 +201,14 @@ function NewReportForm() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <Label htmlFor="category">Category</Label>
+              <Label htmlFor="category">{t('fields.category')}</Label>
               <Select
                 id="category"
                 value={form.categoryId}
                 onChange={update('categoryId')}
                 required
               >
-                <option value="">Select…</option>
+                <option value="">{t('fields.choose')}</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
@@ -196,11 +217,11 @@ function NewReportForm() {
               </Select>
             </div>
             <div>
-              <Label htmlFor="severity">Severity</Label>
+              <Label htmlFor="severity">{t('fields.severity')}</Label>
               <Select id="severity" value={form.severity} onChange={update('severity')}>
                 {SEVERITY_OPTIONS.map((s) => (
                   <option key={s} value={s}>
-                    {severityLabel(s)}
+                    {f.severity(s)}
                   </option>
                 ))}
               </Select>
@@ -208,14 +229,14 @@ function NewReportForm() {
           </div>
 
           <div>
-            <Label>Location</Label>
+            <Label>{t('fields.location')}</Label>
             <LocationPicker value={location} onChange={setLocation} />
           </div>
 
           {duplicates.length > 0 && (
             <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm">
               <p className="font-medium text-amber-800">
-                Possible duplicate{duplicates.length > 1 ? 's' : ''} nearby:
+                {t('duplicates', { count: duplicates.length })}
               </p>
               <ul className="mt-1 list-disc pl-5 text-amber-900">
                 {duplicates.slice(0, 3).map((d) => (
@@ -226,34 +247,33 @@ function NewReportForm() {
                   </li>
                 ))}
               </ul>
-              <p className="mt-1 text-amber-700">You can still submit if yours is different.</p>
+              <p className="mt-1 text-amber-700">{t('duplicatesNote')}</p>
             </div>
           )}
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <Label htmlFor="address">Address (optional)</Label>
+              <Label htmlFor="address">{t('fields.address')}</Label>
               <Input id="address" value={form.address} onChange={update('address')} />
             </div>
             <div>
-              <Label htmlFor="landmark">Landmark (optional)</Label>
+              <Label htmlFor="landmark">{t('fields.landmark')}</Label>
               <Input id="landmark" value={form.landmark} onChange={update('landmark')} />
             </div>
           </div>
 
           <div>
-            <Label htmlFor="images">Photos</Label>
+            <Label htmlFor="images">{t('fields.photos')}</Label>
             <p id="images-hint" className="mb-1 text-xs text-slate-500">
-              Up to {MAX_PHOTOS} photos. Large photos are resized before upload.
+              {t('photosHint', { max: MAX_PHOTOS })}
             </p>
-            <input
+            <PhotoPicker
               id="images"
-              type="file"
+              files={files}
               accept="image/png,image/jpeg,image/webp"
               multiple
               aria-describedby="images-hint"
               onChange={pickPhotos}
-              className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium hover:file:bg-slate-200"
             />
             {previews.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-2">
@@ -275,7 +295,7 @@ function NewReportForm() {
           <FieldError>{error}</FieldError>
           <div>
             <Button type="submit" disabled={busy}>
-              {preparing ? 'Preparing photos…' : submit.isPending ? 'Submitting…' : 'Submit report'}
+              {preparing ? t('preparing') : submit.isPending ? t('submitting') : t('submit')}
             </Button>
           </div>
         </form>

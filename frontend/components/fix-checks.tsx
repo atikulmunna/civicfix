@@ -9,19 +9,16 @@ import { api, assetUrl, errorMessage } from '@/lib/api';
 import { useFormat } from '@/lib/i18n/use-format';
 import { invalidateReportLists } from '@/lib/query-client';
 import { queryKeys } from '@/lib/query-keys';
-import { resizeImage, UPLOAD_BUDGET_BYTES } from '@/lib/resize-image';
+import { megabytes, resizeImage, UPLOAD_BUDGET_BYTES } from '@/lib/resize-image';
 import type { FixCheck, FixChecks as FixChecksData, FixVerdict } from '@/lib/types';
 import { useAuth } from './auth-context';
 import { useToast } from './toast';
-import { Button, FieldError, Label, LoadError, Spinner } from './ui';
+import { Button, FieldError, Label, LoadError, PhotoPicker, Spinner } from './ui';
 
 const VERDICT_STYLES: Record<FixVerdict, { pressed: string; text: string }> = {
   confirmed: { pressed: 'border-green-600 bg-green-50 text-green-700', text: 'text-green-700' },
   disputed: { pressed: 'border-red-600 bg-red-50 text-red-700', text: 'text-red-700' },
 };
-
-/** Megabytes to one decimal, for upload size messages. */
-const megabytes = (bytes: number) => Math.round((bytes / (1024 * 1024)) * 10) / 10;
 
 function CheckForm({ reportId, disputesToReopen }: { reportId: string; disputesToReopen: number }) {
   const t = useTranslations('fixChecks');
@@ -110,13 +107,12 @@ function CheckForm({ reportId, disputesToReopen }: { reportId: string; disputesT
         <>
           <div>
             <Label htmlFor="fix-photo">{t('photoLabel')}</Label>
-            <input
+            <PhotoPicker
               id="fix-photo"
-              type="file"
+              files={photo ? [photo] : []}
               accept="image/png,image/jpeg,image/webp"
               aria-describedby="fix-photo-hint"
               onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
-              className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium hover:file:bg-slate-200"
             />
             <p id="fix-photo-hint" className="mt-1 text-xs text-slate-500">
               {t('photoHint')}

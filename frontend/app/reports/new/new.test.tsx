@@ -1,6 +1,8 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
-import { renderWithQuery } from '@/test-utils';
+import { createTranslator } from 'next-intl';
+import { messagesFor, renderWithQuery } from '@/test-utils';
+import type { Locale } from '@/i18n/locale';
 import userEvent from '@testing-library/user-event';
 
 const { get, post, postForm, push } = vi.hoisted(() => ({
@@ -37,31 +39,40 @@ import NewReportPage from './page';
 
 const ME = { id: 'u1', name: 'Me', email: 'me@e.com', role: 'citizen' };
 
-describe('NewReportPage', () => {
-  beforeEach(() => {
-    get.mockReset();
-    post.mockReset();
-    postForm.mockReset();
-    push.mockClear();
-    get.mockImplementation((path: string) => {
-      if (path === '/auth/me') return Promise.resolve({ user: ME });
-      if (path === '/categories')
-        return Promise.resolve({ categories: [{ id: 'c1', name: 'Roads' }] });
-      return Promise.resolve({});
-    });
-    post.mockResolvedValue({ possibleDuplicates: [] });
-    postForm.mockResolvedValue({ report: { id: 'new1' } });
+beforeEach(() => {
+  get.mockReset();
+  post.mockReset();
+  postForm.mockReset();
+  push.mockClear();
+  get.mockImplementation((path: string) => {
+    if (path === '/auth/me') return Promise.resolve({ user: ME });
+    if (path === '/categories')
+      return Promise.resolve({ categories: [{ id: 'c1', name: 'Roads' }] });
+    return Promise.resolve({});
   });
+  post.mockResolvedValue({ possibleDuplicates: [] });
+  postForm.mockResolvedValue({ report: { id: 'new1' } });
+});
 
+function renderPage(locale: Locale = 'en') {
+  return renderWithQuery(
+    <ToastProvider>
+      <AuthProvider>
+        <NewReportPage />
+      </AuthProvider>
+    </ToastProvider>,
+    undefined,
+    { locale },
+  );
+}
+
+const png = (bytes: number, name: string) =>
+  new File([new Uint8Array(bytes)], name, { type: 'image/png' });
+
+describe('NewReportPage', () => {
   it('submits a multipart report and redirects to the new report', async () => {
     const user = userEvent.setup();
-    const { client } = renderWithQuery(
-      <ToastProvider>
-        <AuthProvider>
-          <NewReportPage />
-        </AuthProvider>
-      </ToastProvider>,
-    );
+    const { client } = renderPage();
 
     // A list cached before the submit must not keep showing the old reports.
     client.setQueryData(queryKeys.reports({ page: 1 }), { items: [] });
@@ -88,21 +99,12 @@ describe('NewReportPage', () => {
 
   /** Fills every required field except photos. */
   async function fillForm(user: ReturnType<typeof userEvent.setup>) {
-    renderWithQuery(
-      <ToastProvider>
-        <AuthProvider>
-          <NewReportPage />
-        </AuthProvider>
-      </ToastProvider>,
-    );
+    renderPage();
     await user.type(await screen.findByLabelText('Title'), 'Broken light');
     await user.type(screen.getByLabelText('Description'), 'The light is out completely.');
     await user.selectOptions(screen.getByLabelText('Category'), 'c1');
     await user.click(await screen.findByText('set-location'));
   }
-
-  const png = (bytes: number, name: string) =>
-    new File([new Uint8Array(bytes)], name, { type: 'image/png' });
 
   it('refuses more photos than a report can hold', async () => {
     const user = userEvent.setup();
@@ -133,5 +135,142 @@ describe('NewReportPage', () => {
     ).toBeInTheDocument();
     expect(postForm).not.toHaveBeenCalled();
     expect(screen.getByRole('button', { name: /submit report/i })).toBeEnabled();
+  });
+});
+
+describe('NewReportPage in Bangla', () => {
+  const bn = createTranslator({
+    locale: 'bn',
+    messages: messagesFor('bn'),
+    namespace: 'newReport',
+  });
+  const severity = createTranslator({
+    locale: 'bn',
+    messages: messagesFor('bn'),
+    namespace: 'severity',
+  });
+
+  it('labels every field and choice in Bangla, with the photo limit in Bangla digits', async () => {
+    renderPage('bn');
+    expect(await screen.findByLabelText(bn('fields.title'))).toBeInTheDocument();
+    for (const label of [
+      bn('fields.description'),
+      bn('fields.category'),
+      bn('fields.severity'),
+      bn('fields.address'),
+      bn('fields.landmark'),
+      bn('fields.photos'),
+    ]) {
+      expect(screen.getByLabelText(label)).toBeInTheDocument();
+    }
+    expect(screen.getByText(bn('fields.location'))).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: bn('fields.choose') })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: severity('urgent') })).toBeInTheDocument();
+    expect(screen.getByText(bn('photosHint', { max: 5 }))).toHaveTextContent('৫');
+    const picker = createTranslator({
+      locale: 'bn',
+      messages: messagesFor('bn'),
+      namespace: 'common.photoPicker',
+    });
+    expect(screen.getByText(picker('chooseMany'))).toBeInTheDocument();
+    expect(screen.getByText(picker('none'))).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: bn('title') })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: bn('submit') })).toBeInTheDocument();
+  });
+
+  it('warns about possible duplicates in Bangla', async () => {
+    post.mockResolvedValue({ possibleDuplicates: [{ id: 'd1', title: 'Dark street' }] });
+    const user = userEvent.setup();
+    renderPage('bn');
+    await screen.findByRole('option', { name: 'Roads' });
+    await user.selectOptions(screen.getByLabelText(bn('fields.category')), 'c1');
+    await user.click(screen.getByText('set-location'));
+
+    expect(await screen.findByText(bn('duplicates', { count: 1 }))).toBeInTheDocument();
+    expect(screen.getByText(bn('duplicatesNote'))).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Dark street' })).toHaveAttribute(
+      'href',
+      '/reports/d1',
+    );
+  });
+
+  it('explains location and photo problems in Bangla, with Bangla digits', async () => {
+    const user = userEvent.setup();
+    renderPage('bn');
+    await screen.findByRole('option', { name: 'Roads' });
+    const submit = screen.getByRole('button', { name: bn('submit') });
+
+    await user.type(screen.getByLabelText(bn('fields.title')), 'Broken light');
+    await user.type(screen.getByLabelText(bn('fields.description')), 'The light is out.');
+    await user.selectOptions(screen.getByLabelText(bn('fields.category')), 'c1');
+    await user.click(submit);
+    expect(await screen.findByText(bn('errors.noLocation'))).toBeInTheDocument();
+
+    await user.click(screen.getByText('set-location'));
+    const photos = screen.getByLabelText(bn('fields.photos'));
+    await user.upload(
+      photos,
+      Array.from({ length: 6 }, (_, i) => png(10, `p${String(i)}.png`)),
+    );
+    expect(screen.getByText(bn('errors.tooManyPhotos', { max: 5 }))).toHaveTextContent('৫');
+
+    await user.click(submit);
+    expect(await screen.findByText(bn('errors.noPhoto'))).toBeInTheDocument();
+
+    await user.upload(photos, [png(2 * 1024 * 1024, 'a.png'), png(2 * 1024 * 1024, 'b.png')]);
+    await user.click(submit);
+    expect(
+      await screen.findByText(bn('errors.tooLarge', { size: 4, limit: 3.5 })),
+    ).toHaveTextContent('৩.৫');
+    expect(postForm).not.toHaveBeenCalled();
+  });
+
+  /** Fills the whole form, a photo included, through its Bangla labels. */
+  async function fillInBangla(user: ReturnType<typeof userEvent.setup>) {
+    renderPage('bn');
+    await user.type(await screen.findByLabelText(bn('fields.title')), 'Broken light');
+    await user.type(screen.getByLabelText(bn('fields.description')), 'The light is out.');
+    await screen.findByRole('option', { name: 'Roads' });
+    await user.selectOptions(screen.getByLabelText(bn('fields.category')), 'c1');
+    await user.click(screen.getByText('set-location'));
+    await user.upload(screen.getByLabelText(bn('fields.photos')), png(10, 'p.png'));
+    await user.click(screen.getByRole('button', { name: bn('submit') }));
+  }
+
+  it('thanks the resident in Bangla once the report is in', async () => {
+    const user = userEvent.setup();
+    await fillInBangla(user);
+    expect(await screen.findByText(bn('submitted'))).toBeInTheDocument();
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/reports/new1'));
+  });
+
+  it('says in Bangla when the report could not be sent', async () => {
+    postForm.mockRejectedValue(new Error('network down'));
+    const user = userEvent.setup();
+    await fillInBangla(user);
+    expect(await screen.findByText(bn('errors.submitFailed'))).toBeInTheDocument();
+  });
+
+  it('checks the title, description and category in Bangla, with Bangla digits', async () => {
+    const user = userEvent.setup();
+    renderPage('bn');
+    await screen.findByRole('option', { name: 'Roads' });
+    const submit = screen.getByRole('button', { name: bn('submit') });
+
+    await user.type(screen.getByLabelText(bn('fields.title')), 'ab');
+    await user.click(submit);
+    expect(await screen.findByText(bn('errors.titleTooShort', { min: 3 }))).toHaveTextContent('৩');
+
+    await user.type(screen.getByLabelText(bn('fields.title')), 'c');
+    await user.type(screen.getByLabelText(bn('fields.description')), 'too short');
+    await user.click(submit);
+    expect(
+      await screen.findByText(bn('errors.descriptionTooShort', { min: 10 })),
+    ).toHaveTextContent('১০');
+
+    await user.type(screen.getByLabelText(bn('fields.description')), ' now');
+    await user.click(submit);
+    expect(await screen.findByText(bn('errors.noCategory'))).toBeInTheDocument();
+    expect(postForm).not.toHaveBeenCalled();
   });
 });

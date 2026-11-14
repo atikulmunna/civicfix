@@ -14,8 +14,10 @@ import {
   useMapEvents,
 } from 'react-leaflet';
 import { api, errorMessage } from '@/lib/api';
-import { asStatus, STATUS_OPTIONS, statusLabel } from '@/lib/format';
-import { hotspotCounts, hotspotKinds } from '@/lib/hotspots';
+import { asStatus, STATUS_OPTIONS } from '@/lib/format';
+import { useFormat } from '@/lib/i18n/use-format';
+import { useHotspotText } from '@/lib/hotspots';
+import { useTranslations } from 'next-intl';
 import { bboxString, statusColor } from '@/lib/map';
 import type { Hotspot } from '@/lib/types';
 import { StatusBadge } from './badges';
@@ -72,6 +74,8 @@ function FlyTo({ focus }: { focus: MapFocus | null }) {
 
 /** Shaded so the markers on top stay readable; red where a fixed problem came back. */
 function HotspotArea({ hotspot }: { hotspot: Hotspot }) {
+  const t = useTranslations('map');
+  const text = useHotspotText();
   const colour = hotspot.recurring ? '#dc2626' : '#d97706'; // red-600, amber-600
   return (
     <Circle
@@ -82,11 +86,9 @@ function HotspotArea({ hotspot }: { hotspot: Hotspot }) {
     >
       <Popup>
         <div className="flex flex-col gap-1">
-          <span className="font-medium text-slate-900">{hotspotKinds(hotspot)}</span>
-          <span className="text-sm text-slate-600">{hotspotCounts(hotspot)}</span>
-          {hotspot.recurring && (
-            <span className="text-sm text-red-700">A fixed problem came back here.</span>
-          )}
+          <span className="font-medium text-slate-900">{text.kinds(hotspot)}</span>
+          <span className="text-sm text-slate-600">{text.counts(hotspot)}</span>
+          {hotspot.recurring && <span className="text-sm text-red-700">{t('cameBack')}</span>}
         </div>
       </Popup>
     </Circle>
@@ -102,6 +104,8 @@ export function ReportsMap({
   onShowHotspotsChange: (show: boolean) => void;
   focus: MapFocus | null;
 }) {
+  const t = useTranslations('map');
+  const f = useFormat();
   const [status, setStatus] = useState('');
   const [categoryId, setCategoryId] = useState('');
   // Set by BoundsWatcher on mount and on every pan/zoom.
@@ -142,11 +146,15 @@ export function ReportsMap({
     <div className="flex h-full flex-col gap-3">
       <div className="flex flex-wrap gap-3">
         <div className="w-48">
-          <Select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Status">
-            <option value="">All statuses</option>
+          <Select
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            aria-label={t('status')}
+          >
+            <option value="">{t('allStatuses')}</option>
             {STATUS_OPTIONS.map((s) => (
               <option key={s} value={s}>
-                {statusLabel(s)}
+                {f.status(s)}
               </option>
             ))}
           </Select>
@@ -155,10 +163,10 @@ export function ReportsMap({
           <Select
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
-            aria-label="Category"
+            aria-label={t('category')}
           >
             <option value="">
-              {categoriesQuery.isError ? 'Categories unavailable' : 'All categories'}
+              {categoriesQuery.isError ? t('categoriesUnavailable') : t('allCategories')}
             </option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
@@ -174,22 +182,22 @@ export function ReportsMap({
             onChange={(e) => onShowHotspotsChange(e.target.checked)}
             className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-600"
           />
-          Hotspots
+          {t('hotspotsToggle')}
         </label>
         {showHotspots && hotspotsQuery.isError && (
           <span role="alert" className="self-center text-sm text-red-700">
-            {errorMessage(hotspotsQuery.error, 'Could not load the hotspots.')}
+            {errorMessage(hotspotsQuery.error, t('hotspotsError'))}
           </span>
         )}
         <span className="ml-auto self-center text-sm text-slate-500" aria-live="polite">
           {markersQuery.isError ? (
             <span role="alert" className="text-red-700">
-              {errorMessage(markersQuery.error, 'Could not load reports for this area.')}
+              {errorMessage(markersQuery.error, t('markersError'))}
             </span>
           ) : markersQuery.isPending ? (
-            'Loading reports…'
+            t('loadingReports')
           ) : (
-            `${String(markers.length)} in view`
+            t('inView', { count: markers.length })
           )}
         </span>
       </div>
@@ -222,7 +230,7 @@ export function ReportsMap({
                   <StatusBadge status={m.status} />
                   <span className="font-medium text-slate-900">{m.title}</span>
                   <Link href={`/reports/${m.id}`} className="text-sm text-teal-700 hover:underline">
-                    View report →
+                    {t('viewReport')} →
                   </Link>
                 </div>
               </Popup>

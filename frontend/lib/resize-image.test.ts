@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   MAX_EDGE,
   fitWithin,
-  formatMegabytes,
+  megabytes,
   prepareImages,
   resizeImage,
   totalBytes,
@@ -129,8 +129,9 @@ describe('upload helpers', () => {
     expect(totalBytes(prepared)).toBe(2000);
   });
 
-  it('formats sizes in megabytes with one decimal', () => {
-    expect(formatMegabytes(3.5 * 1024 * 1024)).toBe('3.5 MB');
-    expect(formatMegabytes(4 * 1024 * 1024)).toBe('4 MB');
+  it('counts sizes in megabytes to one decimal', () => {
+    expect(megabytes(3.5 * 1024 * 1024)).toBe(3.5);
+    expect(megabytes(4 * 1024 * 1024)).toBe(4);
+    expect(megabytes(1.26 * 1024 * 1024)).toBe(1.3);
   });
 });

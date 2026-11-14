@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { api, errorMessage } from '@/lib/api';
-import { severityLabel } from '@/lib/format';
+import { useFormat, type Format } from '@/lib/i18n/use-format';
 import { queryKeys } from '@/lib/query-keys';
 import type { PriorityExplanation } from '@/lib/types';
 import { Card, LoadError, Spinner } from '@/components/ui';
@@ -13,9 +13,9 @@ export function formatPoints(points: number): string {
 }
 
 /** Each part of the score with the input behind it. */
-function rows(p: PriorityExplanation): [label: string, points: number][] {
+function rows(p: PriorityExplanation, f: Format): [label: string, points: number][] {
   return [
-    [`Severity (${severityLabel(p.inputs.severity)})`, p.severity],
+    [`Severity (${f.severity(p.inputs.severity)})`, p.severity],
     [`Confirmations (${String(p.inputs.confirms)})`, p.confirmations],
     [`Days open (${String(p.daysOpen)})`, p.waiting],
     [`False-report flags (${String(p.inputs.falseReports)})`, p.flags],
@@ -28,6 +28,7 @@ function rows(p: PriorityExplanation): [label: string, points: number][] {
  * and the input behind it, as computed by the API.
  */
 export function PriorityCard({ reportId }: { reportId: string }) {
+  const f = useFormat();
   const query = useQuery({
     queryKey: queryKeys.reportPriority(reportId),
     queryFn: ({ signal }) => api.get(`/admin/reports/${reportId}/priority`, undefined, { signal }),
@@ -49,7 +50,7 @@ export function PriorityCard({ reportId }: { reportId: string }) {
         <table className="w-full text-sm">
           <caption className="sr-only">Priority score breakdown</caption>
           <tbody className="divide-y divide-slate-100">
-            {rows(query.data).map(([label, points]) => (
+            {rows(query.data, f).map(([label, points]) => (
               <tr key={label}>
                 <th scope="row" className="py-1.5 text-left font-normal text-slate-600">
                   {label}

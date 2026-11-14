@@ -4,14 +4,8 @@ import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api, errorMessage } from '@/lib/api';
-import {
-  asSeverity,
-  asStatus,
-  SEVERITY_OPTIONS,
-  STATUS_OPTIONS,
-  severityLabel,
-  statusLabel,
-} from '@/lib/format';
+import { asSeverity, asStatus, SEVERITY_OPTIONS, STATUS_OPTIONS } from '@/lib/format';
+import { useFormat } from '@/lib/i18n/use-format';
 import { queryKeys } from '@/lib/query-keys';
 import { RequireAuth } from '@/components/require-auth';
 import { ReportCard } from '@/components/report-card';
@@ -29,6 +23,7 @@ function asAdminSort(value: string) {
 }
 
 function AdminReportsList() {
+  const f = useFormat();
   const searchParams = useSearchParams();
   const [filters, setFilters] = useState({
     status: searchParams.get('status') ?? '',
@@ -81,7 +76,7 @@ function AdminReportsList() {
           <option value="">All statuses</option>
           {STATUS_OPTIONS.map((s) => (
             <option key={s} value={s}>
-              {statusLabel(s)}
+              {f.status(s)}
             </option>
           ))}
         </Select>
@@ -105,7 +100,7 @@ function AdminReportsList() {
           <option value="">All severities</option>
           {SEVERITY_OPTIONS.map((s) => (
             <option key={s} value={s}>
-              {severityLabel(s)}
+              {f.severity(s)}
             </option>
           ))}
         </Select>

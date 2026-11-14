@@ -119,7 +119,7 @@ export function totalBytes(files: readonly File[]): number {
   return files.reduce((sum, file) => sum + file.size, 0);
 }
 
-/** "3.5 MB" style label for upload messages. */
-export function formatMegabytes(bytes: number): string {
-  return `${String(Math.round((bytes / (1024 * 1024)) * 10) / 10)} MB`;
+/** Megabytes to one decimal, for upload size messages (the message formats the digits). */
+export function megabytes(bytes: number): number {
+  return Math.round((bytes / (1024 * 1024)) * 10) / 10;
 }
