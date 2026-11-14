@@ -265,6 +265,8 @@ describe('POST /reports/:id/fix-checks', () => {
       oldStatus: 'RESOLVED',
       newStatus: 'IN_PROGRESS',
       note: 'Reopened: 2 residents disputed the fix with photos.',
+      noteKey: 'report.reopenedByDisputes',
+      noteParams: { count: 2 },
       changedBy: { id: await userId('second') },
     });
 

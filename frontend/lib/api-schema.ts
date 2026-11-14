@@ -3537,6 +3537,11 @@ export interface components {
             oldStatus: components["schemas"]["ReportStatus"] | null;
             newStatus: components["schemas"]["ReportStatus"];
             note: string | null;
+            /** @description Automatic notes only (F5): the web app words them from this key. */
+            noteKey: components["schemas"]["HistoryNoteKey"] | null;
+            noteParams: {
+                [key: string]: string | number;
+            } | null;
             changedBy: {
                 /** Format: uuid */
                 id: string;
@@ -3546,6 +3551,8 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
         };
+        /** @enum {string} */
+        HistoryNoteKey: "report.submitted" | "report.merged" | "report.reopenedByDisputes";
         Comment: {
             /** Format: uuid */
             id: string;

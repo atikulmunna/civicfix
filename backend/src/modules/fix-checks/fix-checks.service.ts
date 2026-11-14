@@ -167,7 +167,8 @@ async function reopen(tx: Db, report: CheckedReport, actorId: string): Promise<v
     'IN_PROGRESS',
     transitionEffects('RESOLVED', 'IN_PROGRESS'),
     actorId,
-    { note: `Reopened: ${String(DISPUTES_TO_REOPEN)} residents disputed the fix with photos.` },
+    {},
+    { autoNote: { key: 'report.reopenedByDisputes', params: { count: DISPUTES_TO_REOPEN } } },
   );
 
   // The report is back in the department's queue; tell its staff why.

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { createTranslator } from 'next-intl';
 import { screen } from '@testing-library/react';
 import { messagesFor, renderWithIntl } from '@/test-utils';
 import type { Report, StatusHistoryEntry } from '@/lib/types';
@@ -17,6 +18,8 @@ const entry = (over: Partial<StatusHistoryEntry>): StatusHistoryEntry => ({
   oldStatus: null,
   newStatus: 'SUBMITTED',
   note: null,
+  noteKey: null,
+  noteParams: null,
   changedBy: { id: 'u1', name: 'Rina', role: 'citizen' },
   createdAt: '2026-11-11T04:00:00.000Z',
   ...over,
@@ -88,5 +91,38 @@ describe('ReportCard in Bangla', () => {
     renderWithIntl(<ReportCard report={report} />, { locale: 'bn' });
     expect(screen.getByText(/১১ নভেম্বর/)).toBeInTheDocument();
     expect(screen.getByTitle(bn.report.upvotes)).toHaveTextContent('১২');
+  });
+});
+
+describe('StatusTimeline notes (F5)', () => {
+  const reopen = entry({
+    id: 'h9',
+    oldStatus: 'RESOLVED',
+    newStatus: 'IN_PROGRESS',
+    note: 'Reopened: 2 residents disputed the fix with photos.',
+    noteKey: 'report.reopenedByDisputes',
+    noteParams: { count: 2 },
+  });
+  const typed = entry({ id: 'h10', note: 'Crew sent on Monday.' });
+
+  it('words automatic notes in Bangla and shows typed notes as written', () => {
+    renderWithIntl(<StatusTimeline entries={[reopen, typed]} />, { locale: 'bn' });
+    const bnHistory = createTranslator({
+      locale: 'bn',
+      messages: messagesFor('bn'),
+      namespace: 'history.notes',
+    });
+    expect(
+      screen.getByText(bnHistory('report.reopenedByDisputes', { count: 2 })),
+    ).toHaveTextContent('২');
+    expect(screen.queryByText(/Reopened:/)).toBeNull();
+    expect(screen.getByText('Crew sent on Monday.')).toBeInTheDocument();
+  });
+
+  it('shows what the server wrote, in English', () => {
+    renderWithIntl(<StatusTimeline entries={[reopen]} />);
+    expect(
+      screen.getByText('Reopened: 2 residents disputed the fix with photos.'),
+    ).toBeInTheDocument();
   });
 });

@@ -12,6 +12,7 @@ import { ApiError } from '../../lib/errors.js';
 import { assertReportExists } from '../community/shared.js';
 import { getVoteCounts } from '../community/votes.service.js';
 import { createStatusChangeNotifications } from '../notifications/notifications.service.js';
+import { historyNoteEnglish, readHistoryNote, type HistoryNote } from './history-notes.js';
 import {
   getReportById,
   REPORT_IMAGES,
@@ -90,7 +91,7 @@ export async function transitionStatus(
   }
 
   // Validate the payload satisfies the effect requirements.
-  let merge: { note: string; mergedInto: string } | undefined;
+  let merge: { mergedInto: string; typedNote: boolean } | undefined;
   if (effects.requiresInternalNote && !payload.internalNote?.trim()) {
     throw new ApiError('VALIDATION_ERROR', 'An internal note is required for this action.');
   }
@@ -108,10 +109,7 @@ export async function transitionStatus(
     if (!original) throw new ApiError('NOT_FOUND', 'The original report was not found.');
     const closed = CLOSED_ORIGINAL[original.status];
     if (closed) throw new ApiError('VALIDATION_ERROR', closed);
-    merge = {
-      note: payload.note?.trim() ? payload.note : `Merged into "${original.title}".`,
-      mergedInto: original.title,
-    };
+    merge = { mergedInto: original.title, typedNote: Boolean(payload.note?.trim()) };
   }
   if (effects.createsAssignment) {
     if (!payload.departmentId) {
@@ -123,10 +121,22 @@ export async function transitionStatus(
     }
   }
 
-  const toWrite = merge ? { ...payload, note: merge.note } : payload;
-  const options = merge ? { mergedInto: merge.mergedInto } : {};
+  // A merge the admin did not explain gets the automatic note; a typed one is kept as typed.
+  const options = merge
+    ? {
+        mergedInto: merge.mergedInto,
+        ...(merge.typedNote
+          ? {}
+          : {
+              autoNote: {
+                key: 'report.merged' as const,
+                params: { originalTitle: merge.mergedInto },
+              },
+            }),
+      }
+    : {};
   await prisma.$transaction((tx) =>
-    applyTransition(tx, report, toStatus, effects, actor.id, toWrite, options),
+    applyTransition(tx, report, toStatus, effects, actor.id, payload, options),
   );
 
   return getReportById(reportId, actor);
@@ -145,8 +155,11 @@ export async function applyTransition(
   effects: TransitionEffects,
   actorId: string,
   payload: TransitionPayload,
-  /** `mergedInto`: the original's title, when this change merges the report (F4). */
-  options: { mergedInto?: string } = {},
+  /**
+   * `mergedInto`: the original's title, when this change merges the report (F4).
+   * `autoNote`: a note the server writes itself (F5); it replaces payload.note.
+   */
+  options: { mergedInto?: string; autoNote?: HistoryNote } = {},
 ): Promise<void> {
   const reportId = report.id;
   const data: Prisma.ReportUpdateInput = { status: toStatus };
@@ -185,7 +198,13 @@ export async function applyTransition(
       oldStatus: report.status,
       newStatus: toStatus,
       changedBy: actorId,
-      note: payload.note ?? null,
+      ...(options.autoNote
+        ? {
+            note: historyNoteEnglish(options.autoNote),
+            noteKey: options.autoNote.key,
+            noteParams: options.autoNote.params,
+          }
+        : { note: payload.note ?? null }),
     },
   });
 
@@ -321,6 +340,7 @@ export async function getStatusHistory(reportId: string) {
     oldStatus: h.oldStatus,
     newStatus: h.newStatus,
     note: h.note,
+    ...readHistoryNote(h.noteKey, h.noteParams),
     changedBy: { id: h.changer.id, name: h.changer.name, role: h.changer.role },
     createdAt: h.createdAt,
   }));

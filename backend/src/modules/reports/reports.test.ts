@@ -137,6 +137,8 @@ describe('POST /reports (create)', () => {
     expect(history).toHaveLength(1);
     expect(history[0]!.oldStatus).toBeNull();
     expect(history[0]!.newStatus).toBe('SUBMITTED');
+    // F5: the web app words the automatic note from its key.
+    expect(history[0]).toMatchObject({ note: 'Report submitted.', noteKey: 'report.submitted' });
   });
 
   it('rejects creation with no image (REP-003)', async () => {

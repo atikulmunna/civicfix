@@ -299,13 +299,17 @@ model Vote {
 }
 
 model StatusHistory {
-  id        String        @id @default(uuid()) @db.Uuid
-  reportId  String        @map("report_id") @db.Uuid
-  oldStatus ReportStatus? @map("old_status")
-  newStatus ReportStatus  @map("new_status")
-  changedBy String        @map("changed_by") @db.Uuid
-  note      String?
-  createdAt DateTime      @default(now()) @map("created_at")
+  id         String        @id @default(uuid()) @db.Uuid
+  reportId   String        @map("report_id") @db.Uuid
+  oldStatus  ReportStatus? @map("old_status")
+  newStatus  ReportStatus  @map("new_status")
+  changedBy  String        @map("changed_by") @db.Uuid
+  note       String?
+  /// Automatic notes only (F5): the web app words them in the reader's language.
+  /// Null on notes people typed, which are shown as written.
+  noteKey    String?       @map("note_key") @db.VarChar(40)
+  noteParams Json?         @map("note_params")
+  createdAt  DateTime      @default(now()) @map("created_at")
 
   report  Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
   changer User   @relation("StatusChanger", fields: [changedBy], references: [id])

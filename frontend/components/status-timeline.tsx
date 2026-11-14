@@ -1,8 +1,23 @@
 import type { StatusHistoryEntry } from '@/lib/types';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useFormat } from '@/lib/i18n/use-format';
 
+/**
+ * A history entry's note for the reader (F5). English shows what the server
+ * wrote; Bangla words automatic notes from their key. Notes people typed have
+ * no key and are shown as written.
+ */
+function useNoteText(): (e: StatusHistoryEntry) => string | null {
+  const locale = useLocale();
+  const t = useTranslations('history.notes');
+  return (e) => {
+    if (locale === 'en' || e.noteKey === null) return e.note;
+    return t(e.noteKey, e.noteParams ?? {});
+  };
+}
+
 export function StatusTimeline({ entries }: { entries: StatusHistoryEntry[] }) {
+  const noteOf = useNoteText();
   const t = useTranslations('report');
   const f = useFormat();
   if (entries.length === 0) return <p className="text-sm text-slate-500">{t('noHistory')}</p>;
@@ -16,8 +31,7 @@ export function StatusTimeline({ entries }: { entries: StatusHistoryEntry[] }) {
               ? t('statusChange', { from: f.status(e.oldStatus), to: f.status(e.newStatus) })
               : f.status(e.newStatus)}
           </p>
-          {/* Notes are people's words: shown as written. */}
-          {e.note && <p className="text-sm text-slate-600">{e.note}</p>}
+          {noteOf(e) && <p className="text-sm text-slate-600">{noteOf(e)}</p>}
           <p className="text-xs text-slate-400">
             {t('byLine', { name: e.changedBy.name, date: f.dateTime(e.createdAt) })}
           </p>

@@ -21,6 +21,10 @@ import type {
   NearbyInput,
   UpdateReportInput,
 } from './reports.schemas.js';
+import { historyNoteEnglish, type HistoryNote } from '../admin/history-notes.js';
+
+/** The first history row's automatic note (F5). */
+const SUBMITTED_NOTE: HistoryNote = { key: 'report.submitted', params: {} };
 
 /** Minimal actor identity needed for authorization decisions. */
 export interface Actor {
@@ -127,7 +131,9 @@ export async function createReport(
         oldStatus: null,
         newStatus: 'SUBMITTED',
         changedBy: userId,
-        note: 'Report submitted.',
+        note: historyNoteEnglish(SUBMITTED_NOTE),
+        noteKey: SUBMITTED_NOTE.key,
+        noteParams: SUBMITTED_NOTE.params,
       },
     });
 

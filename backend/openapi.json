@@ -5781,6 +5781,36 @@
               "null"
             ]
           },
+          "noteKey": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HistoryNoteKey"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Automatic notes only (F5): the web app words them from this key."
+          },
+          "noteParams": {
+            "anyOf": [
+              {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": [
+                    "string",
+                    "number"
+                  ]
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "changedBy": {
             "type": "object",
             "properties": {
@@ -5814,10 +5844,20 @@
           "oldStatus",
           "newStatus",
           "note",
+          "noteKey",
+          "noteParams",
           "changedBy",
           "createdAt"
         ],
         "additionalProperties": false
+      },
+      "HistoryNoteKey": {
+        "type": "string",
+        "enum": [
+          "report.submitted",
+          "report.merged",
+          "report.reopenedByDisputes"
+        ]
       },
       "Comment": {
         "type": "object",

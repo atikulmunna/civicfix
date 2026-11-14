@@ -587,5 +587,14 @@
       "INTERNAL_ERROR": "Something went wrong. Please try again.",
       "NETWORK_ERROR": "Could not reach CivicFix. Check your connection and try again."
     }
+  },
+  "history": {
+    "notes": {
+      "report": {
+        "submitted": "Report submitted.",
+        "merged": "Merged into \"{originalTitle}\".",
+        "reopenedByDisputes": "Reopened: {count, number} residents disputed the fix with photos."
+      }
+    }
   }
 }

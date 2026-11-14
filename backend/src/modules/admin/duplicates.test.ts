@@ -199,7 +199,11 @@ describe('merging a duplicate into its original', () => {
 
     const history = (await request(app).get(`/api/v1/reports/${duplicate}/history`)).body.data
       .history;
-    expect(history.at(-1).note).toBe('Merged into "Lamp post dark all week".');
+    expect(history.at(-1)).toMatchObject({
+      note: 'Merged into "Lamp post dark all week".',
+      noteKey: 'report.merged',
+      noteParams: { originalTitle: 'Lamp post dark all week' },
+    });
 
     // They do get the original's updates now.
     const review = await request(app)
@@ -229,7 +233,12 @@ describe('merging a duplicate into its original', () => {
     expect(res.status).toBe(200);
     const history = (await request(app).get(`/api/v1/reports/${duplicate}/history`)).body.data
       .history;
-    expect(history.at(-1).note).toBe('Same lamp, reported twice.');
+    expect(history.at(-1)).toMatchObject({
+      note: 'Same lamp, reported twice.',
+      // The admin's own words: no key, shown as written in every language.
+      noteKey: null,
+      noteParams: null,
+    });
   });
 
   it('only merges into an open report', async () => {

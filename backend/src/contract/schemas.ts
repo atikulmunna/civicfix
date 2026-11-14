@@ -168,12 +168,27 @@ export const MapMarkerSchema = z
   })
   .meta({ id: 'MapMarker', description: 'Lightweight report marker for the map viewport.' });
 
+/** The values each automatic history note's wording needs (F5). */
+export const HISTORY_NOTE_PARAMS = {
+  'report.submitted': z.strictObject({}),
+  'report.merged': z.strictObject({ originalTitle: z.string() }),
+  'report.reopenedByDisputes': z.strictObject({ count: z.number().int() }),
+};
+
+export const HistoryNoteKeySchema = z
+  .enum(['report.submitted', 'report.merged', 'report.reopenedByDisputes'])
+  .meta({ id: 'HistoryNoteKey' });
+
 export const StatusHistoryEntrySchema = z
   .strictObject({
     id,
     oldStatus: ReportStatusSchema.nullable(),
     newStatus: ReportStatusSchema,
     note: z.string().nullable(),
+    noteKey: HistoryNoteKeySchema.nullable().meta({
+      description: 'Automatic notes only (F5): the web app words them from this key.',
+    }),
+    noteParams: z.record(z.string(), z.union([z.string(), z.number()])).nullable(),
     changedBy: z.strictObject({ id, name: z.string(), role: RoleSchema }),
     createdAt: timestamp,
   })
