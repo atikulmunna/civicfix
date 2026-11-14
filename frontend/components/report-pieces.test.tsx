@@ -146,3 +146,22 @@ describe('ReportCard category name (F5)', () => {
     expect(screen.queryByText('Street Lighting')).toBeNull();
   });
 });
+
+describe('StatusTimeline before the API sends note keys (F5)', () => {
+  it('shows notes as stored, never a catalog path, when the fields are absent', () => {
+    // The web deploys before the API: for a while entries arrive without noteKey.
+    const legacy: Partial<StatusHistoryEntry> = entry({ id: 'h20', note: 'Report submitted.' });
+    delete legacy.noteKey;
+    delete legacy.noteParams;
+    const silent: Partial<StatusHistoryEntry> = entry({ id: 'h21', note: null });
+    delete silent.noteKey;
+    delete silent.noteParams;
+    renderWithIntl(
+      // The old API's shape: the cast stands in for an older contract.
+      <StatusTimeline entries={[legacy, silent] as StatusHistoryEntry[]} />,
+      { locale: 'bn' },
+    );
+    expect(screen.getByText('Report submitted.')).toBeInTheDocument();
+    expect(screen.queryByText(/history\.notes/)).toBeNull();
+  });
+});

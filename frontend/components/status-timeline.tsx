@@ -11,7 +11,8 @@ function useNoteText(): (e: StatusHistoryEntry) => string | null {
   const locale = useLocale();
   const t = useTranslations('history.notes');
   return (e) => {
-    if (locale === 'en' || e.noteKey === null) return e.note;
+    // `== null`: an API older than the web app sends no key at all (deploy window).
+    if (locale === 'en' || e.noteKey == null) return e.note;
     return t(e.noteKey, e.noteParams ?? {});
   };
 }
