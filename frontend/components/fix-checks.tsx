@@ -9,7 +9,7 @@ import { api, assetUrl, errorMessage } from '@/lib/api';
 import { useFormat } from '@/lib/i18n/use-format';
 import { invalidateReportLists } from '@/lib/query-client';
 import { queryKeys } from '@/lib/query-keys';
-import { resizeImage, UPLOAD_BUDGET_BYTES } from '@/lib/resize-image';
+import { megabytes, resizeImage, UPLOAD_BUDGET_BYTES } from '@/lib/resize-image';
 import type { FixCheck, FixChecks as FixChecksData, FixVerdict } from '@/lib/types';
 import { useAuth } from './auth-context';
 import { useToast } from './toast';
@@ -19,9 +19,6 @@ const VERDICT_STYLES: Record<FixVerdict, { pressed: string; text: string }> = {
   confirmed: { pressed: 'border-green-600 bg-green-50 text-green-700', text: 'text-green-700' },
   disputed: { pressed: 'border-red-600 bg-red-50 text-red-700', text: 'text-red-700' },
 };
-
-/** Megabytes to one decimal, for upload size messages. */
-const megabytes = (bytes: number) => Math.round((bytes / (1024 * 1024)) * 10) / 10;
 
 function CheckForm({ reportId, disputesToReopen }: { reportId: string; disputesToReopen: number }) {
   const t = useTranslations('fixChecks');

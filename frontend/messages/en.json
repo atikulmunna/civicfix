@@ -344,5 +344,41 @@
         "median": "Typical means the median: half of reports were faster, half slower."
       }
     }
+  },
+  "newReport": {
+    "eyebrow": "New report",
+    "title": "Report an issue",
+    "subtitle": "Add a photo and drop a pin so it can be found and fixed.",
+    "loadingMap": "Loading map…",
+    "fields": {
+      "title": "Title",
+      "description": "Description",
+      "category": "Category",
+      "choose": "Select…",
+      "severity": "Severity",
+      "location": "Location",
+      "address": "Address (optional)",
+      "landmark": "Landmark (optional)",
+      "photos": "Photos"
+    },
+    "photosHint": "Up to {max, number} photos. Large photos are resized before upload.",
+    "duplicates": "{count, plural, one {Possible duplicate nearby:} other {Possible duplicates nearby:}}",
+    "duplicatesNote": "You can still submit if yours is different.",
+    "errors": {
+      "tooManyPhotos": "Choose up to {max, number} photos.",
+      "noLocation": "Please select a location on the map.",
+      "noPhoto": "Please add at least one photo.",
+      "tooLarge": "These photos add up to {size, number} MB, over the {limit, number} MB limit. Remove a photo or choose smaller ones.",
+      "submitFailed": "Could not submit the report."
+    },
+    "preparing": "Preparing photos…",
+    "submitting": "Submitting…",
+    "submit": "Submit report",
+    "submitted": "Report submitted. Thank you!",
+    "picker": {
+      "selected": "Selected: {lat}, {lng}",
+      "prompt": "Click the map to set the location.",
+      "useMine": "Use my location"
+    }
   }
 }

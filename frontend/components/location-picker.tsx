@@ -2,6 +2,7 @@
 
 import 'leaflet/dist/leaflet.css';
 import { useRef } from 'react';
+import { useFormatter, useTranslations } from 'next-intl';
 import type { Map as LeafletMap } from 'leaflet';
 import { CircleMarker, MapContainer, TileLayer, useMapEvents } from 'react-leaflet';
 import { Button } from './ui';
@@ -27,7 +28,11 @@ export function LocationPicker({
   value: LatLng | null;
   onChange: (p: LatLng) => void;
 }) {
+  const t = useTranslations('newReport.picker');
+  const format = useFormatter();
   const mapRef = useRef<LeafletMap | null>(null);
+  const coordinate = (n: number) =>
+    format.number(n, { minimumFractionDigits: 5, maximumFractionDigits: 5 });
 
   function useMyLocation() {
     if (!navigator.geolocation) return;
@@ -43,11 +48,11 @@ export function LocationPicker({
       <div className="flex items-center justify-between">
         <p className="text-sm text-slate-600">
           {value
-            ? `Selected: ${value.lat.toFixed(5)}, ${value.lng.toFixed(5)}`
-            : 'Click the map to set the location.'}
+            ? t('selected', { lat: coordinate(value.lat), lng: coordinate(value.lng) })
+            : t('prompt')}
         </p>
         <Button type="button" variant="secondary" onClick={useMyLocation}>
-          Use my location
+          {t('useMine')}
         </Button>
       </div>
       <div className="h-72 overflow-hidden rounded-md border border-slate-200">

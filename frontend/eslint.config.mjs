@@ -25,6 +25,8 @@ const TRANSLATED_FILES = [
   'components/reports-map.tsx',
   'components/hotspot-list.tsx',
   'app/scorecards/page.tsx',
+  'app/reports/new/page.tsx',
+  'components/location-picker.tsx',
 ];
 
 /** Symbols and punctuation that read the same in every language. */
