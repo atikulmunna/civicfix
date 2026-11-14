@@ -301,7 +301,10 @@ async function main(): Promise<void> {
         oldStatus: idx === 0 ? null : chain[idx - 1],
         newStatus: to,
         changedBy: idx === 0 ? reporter.id : changerFor(to),
-        note: idx === 0 ? 'Report submitted.' : null,
+        // The first row is the server's own note, with its key (F5), as the API writes it.
+        ...(idx === 0
+          ? { note: 'Report submitted.', noteKey: 'report.submitted', noteParams: {} }
+          : { note: null }),
         createdAt: new Date(createdAt.getTime() + idx * HISTORY_STEP_MS),
       })),
     });
