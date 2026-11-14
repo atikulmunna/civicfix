@@ -454,7 +454,21 @@
     "empty": "No notifications yet.",
     "loadError": "Failed to load notifications.",
     "markReadFailed": "Could not mark the notification as read.",
-    "markAllFailed": "Could not mark notifications as read."
+    "markAllFailed": "Could not mark notifications as read.",
+    "kinds": {
+      "status_changed": {
+        "title": "Report status updated",
+        "message": "Your report \"{reportTitle}\" is now {status}."
+      },
+      "report_merged": {
+        "title": "Report status updated",
+        "message": "Your report \"{reportTitle}\" was merged into \"{originalTitle}\", which reports the same problem. You will get its updates from now on."
+      },
+      "fix_disputed": {
+        "title": "Fix disputed",
+        "message": "Residents disputed the fix for \"{reportTitle}\". It is back in progress."
+      }
+    }
   },
   "me": {
     "eyebrow": "Account",

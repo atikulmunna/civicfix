@@ -188,6 +188,13 @@ describe('merging a duplicate into its original', () => {
         'Your report "Light broken near the bridge" was merged into "Lamp post dark all week", ' +
           'which reports the same problem. You will get its updates from now on.',
       );
+      expect(told).toMatchObject({
+        kind: 'report_merged',
+        params: {
+          reportTitle: 'Light broken near the bridge',
+          originalTitle: 'Lamp post dark all week',
+        },
+      });
     }
 
     const history = (await request(app).get(`/api/v1/reports/${duplicate}/history`)).body.data

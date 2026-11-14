@@ -90,7 +90,7 @@ export async function transitionStatus(
   }
 
   // Validate the payload satisfies the effect requirements.
-  let merge: { note: string; notice: string } | undefined;
+  let merge: { note: string; mergedInto: string } | undefined;
   if (effects.requiresInternalNote && !payload.internalNote?.trim()) {
     throw new ApiError('VALIDATION_ERROR', 'An internal note is required for this action.');
   }
@@ -110,9 +110,7 @@ export async function transitionStatus(
     if (closed) throw new ApiError('VALIDATION_ERROR', closed);
     merge = {
       note: payload.note?.trim() ? payload.note : `Merged into "${original.title}".`,
-      notice:
-        `Your report "${report.title}" was merged into "${original.title}", ` +
-        'which reports the same problem. You will get its updates from now on.',
+      mergedInto: original.title,
     };
   }
   if (effects.createsAssignment) {
@@ -126,7 +124,7 @@ export async function transitionStatus(
   }
 
   const toWrite = merge ? { ...payload, note: merge.note } : payload;
-  const options = merge ? { notice: merge.notice } : {};
+  const options = merge ? { mergedInto: merge.mergedInto } : {};
   await prisma.$transaction((tx) =>
     applyTransition(tx, report, toStatus, effects, actor.id, toWrite, options),
   );
@@ -147,8 +145,8 @@ export async function applyTransition(
   effects: TransitionEffects,
   actorId: string,
   payload: TransitionPayload,
-  /** `notice` replaces the standard message to subscribers. */
-  options: { notice?: string } = {},
+  /** `mergedInto`: the original's title, when this change merges the report (F4). */
+  options: { mergedInto?: string } = {},
 ): Promise<void> {
   const reportId = report.id;
   const data: Prisma.ReportUpdateInput = { status: toStatus };
@@ -201,7 +199,7 @@ export async function applyTransition(
     reportTitle: report.title,
     newStatus: toStatus,
     actorId,
-    ...(options.notice && { message: options.notice }),
+    ...(options.mergedInto && { mergedInto: options.mergedInto }),
   });
 
   // Triage (F1), after the history row it counts: an outcome changes the

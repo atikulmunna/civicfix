@@ -356,6 +356,11 @@ model Notification {
   title     String           @db.VarChar(180)
   message   String
   type      NotificationType
+  /// What happened, so the web app can word it in the reader's language (F5).
+  /// Null on rows stored before kinds; those show their stored English.
+  kind      String?          @db.VarChar(40)
+  /// The values the kind's wording needs (see modules/notifications/kinds.ts).
+  params    Json?
   isRead    Boolean          @default(false) @map("is_read")
   createdAt DateTime         @default(now()) @map("created_at")
 

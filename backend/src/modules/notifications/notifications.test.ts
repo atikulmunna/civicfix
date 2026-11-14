@@ -127,6 +127,11 @@ describe('status-change emission (§13.5)', () => {
     expect(author.body.data.items[0].message).toContain(TITLE);
     expect(author.body.data.items[0].message).toContain('under review');
     expect(author.body.data.items[0].type).toBe('status_change');
+    // F5: the web app words it from its kind and params.
+    expect(author.body.data.items[0]).toMatchObject({
+      kind: 'status_changed',
+      params: { reportTitle: TITLE, status: 'UNDER_REVIEW' },
+    });
 
     const voter = await request(app)
       .get('/api/v1/notifications')
@@ -199,5 +204,39 @@ describe('mark read (NOTIF-004)', () => {
       .get('/api/v1/notifications')
       .set(...bearer(authorToken));
     expect(after.body.data.unreadCount).toBe(0);
+  });
+});
+
+describe('notification kinds (F5)', () => {
+  it('reads rows from before kinds, or with params that do not fit, as having no kind', async () => {
+    const old = await prisma.notification.create({
+      data: {
+        userId: authorId,
+        // On the author's report, so cleanup cascades with it.
+        reportId,
+        title: 'Old style',
+        message: 'Stored before kinds existed.',
+        type: 'status_change',
+      },
+    });
+    const odd = await prisma.notification.create({
+      data: {
+        userId: authorId,
+        // On the author's report, so cleanup cascades with it.
+        reportId,
+        title: 'Odd params',
+        message: 'Params do not fit the kind.',
+        type: 'status_change',
+        kind: 'status_changed',
+        params: { reportTitle: 42 },
+      },
+    });
+    const res = await request(app)
+      .get('/api/v1/notifications')
+      .set(...bearer(authorToken));
+    expect(res.status).toBe(200);
+    const byId = new Map((res.body.data.items as { id: string }[]).map((n) => [n.id, n] as const));
+    expect(byId.get(old.id)).toMatchObject({ kind: null, params: null, title: 'Old style' });
+    expect(byId.get(odd.id)).toMatchObject({ kind: null, params: null, title: 'Odd params' });
   });
 });

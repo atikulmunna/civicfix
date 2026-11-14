@@ -3637,6 +3637,61 @@ export interface components {
             isRead: boolean;
             /** Format: date-time */
             createdAt: string;
+            /** @constant */
+            kind: "status_changed";
+            params: {
+                reportTitle: string;
+                status: components["schemas"]["ReportStatus"];
+            };
+        } | {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            userId: string;
+            reportId: string | null;
+            title: string;
+            message: string;
+            type: components["schemas"]["NotificationType"];
+            isRead: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** @constant */
+            kind: "report_merged";
+            params: {
+                reportTitle: string;
+                originalTitle: string;
+            };
+        } | {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            userId: string;
+            reportId: string | null;
+            title: string;
+            message: string;
+            type: components["schemas"]["NotificationType"];
+            isRead: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** @constant */
+            kind: "fix_disputed";
+            params: {
+                reportTitle: string;
+            };
+        } | {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            userId: string;
+            reportId: string | null;
+            title: string;
+            message: string;
+            type: components["schemas"]["NotificationType"];
+            isRead: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            kind: null;
+            params: null;
         };
         /** @enum {string} */
         NotificationType: "status_change" | "comment" | "assignment" | "system";

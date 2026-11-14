@@ -273,6 +273,8 @@ describe('POST /reports/:id/fix-checks', () => {
       where: { reportId: id, userId: await userId('worker') },
     });
     expect(told.map((n) => n.title)).toEqual(['Fix disputed']);
+    const { title } = await prisma.report.findUniqueOrThrow({ where: { id } });
+    expect(told[0]).toMatchObject({ kind: 'fix_disputed', params: { reportTitle: title } });
     const reporterNews = await prisma.notification.findMany({
       where: { reportId: id, userId: await userId('reporter') },
       orderBy: { createdAt: 'asc' },

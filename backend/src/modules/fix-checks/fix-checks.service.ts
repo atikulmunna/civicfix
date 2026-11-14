@@ -10,6 +10,7 @@
 import type { FixVerdict, Prisma, Report } from '../../generated/prisma/client.js';
 import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../lib/errors.js';
+import { notificationEnglish } from '../notifications/kinds.js';
 import { message } from '../../lib/messages.js';
 import type { StoredImage } from '../../lib/uploads.js';
 import { applyTransition } from '../admin/workflow.service.js';
@@ -180,13 +181,17 @@ async function reopen(tx: Db, report: CheckedReport, actorId: string): Promise<v
     select: { id: true },
   });
   if (staff.length === 0) return;
+  const notice = { kind: 'fix_disputed', params: { reportTitle: report.title } } as const;
+  const { title, message } = notificationEnglish(notice);
   await tx.notification.createMany({
     data: staff.map((s) => ({
       userId: s.id,
       reportId: report.id,
-      title: 'Fix disputed',
-      message: `Residents disputed the fix for "${report.title}". It is back in progress.`,
+      title,
+      message,
       type: 'status_change' as const,
+      kind: notice.kind,
+      params: notice.params,
     })),
   });
 }

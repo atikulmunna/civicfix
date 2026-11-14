@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import type { Notification, Paginated } from '@/lib/types';
@@ -16,7 +16,41 @@ interface NotificationsData extends Paginated<Notification> {
   unreadCount: number;
 }
 
+/**
+ * A notification's title and message for the reader (F5). English shows what
+ * the server wrote; Bangla words a kinded notification from its params. Rows
+ * stored before kinds keep their English.
+ */
+function useNotificationText(): (n: Notification) => { title: string; message: string } {
+  const locale = useLocale();
+  const t = useTranslations('notifications.kinds');
+  const f = useFormat();
+  return (n) => {
+    if (locale === 'en') return { title: n.title, message: n.message };
+    switch (n.kind) {
+      case 'status_changed':
+        return {
+          title: t('status_changed.title'),
+          message: t('status_changed.message', {
+            reportTitle: n.params.reportTitle,
+            status: f.status(n.params.status),
+          }),
+        };
+      case 'report_merged':
+        return {
+          title: t('report_merged.title'),
+          message: t('report_merged.message', n.params),
+        };
+      case 'fix_disputed':
+        return { title: t('fix_disputed.title'), message: t('fix_disputed.message', n.params) };
+      default:
+        return { title: n.title, message: n.message };
+    }
+  };
+}
+
 function NotificationsList() {
+  const wordOf = useNotificationText();
   const errorText = useErrorMessage();
   const t = useTranslations('notifications');
   const f = useFormat();
@@ -99,10 +133,10 @@ function NotificationsList() {
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-slate-900">{n.title}</span>
+                  <span className="text-sm font-medium text-slate-900">{wordOf(n).title}</span>
                   <span className="text-xs text-slate-400">{f.dateTime(n.createdAt)}</span>
                 </div>
-                <p className="mt-0.5 text-sm text-slate-600">{n.message}</p>
+                <p className="mt-0.5 text-sm text-slate-600">{wordOf(n).message}</p>
               </button>
             </li>
           ))}

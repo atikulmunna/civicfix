@@ -6,17 +6,18 @@
  * notification per subscriber. Creation runs inside the workflow transaction
  * (accepts a tx client) so notifications are atomic with the status change.
  */
-import type { Prisma, PrismaClient, ReportStatus } from '../../generated/prisma/client.js';
+import type {
+  Notification,
+  Prisma,
+  PrismaClient,
+  ReportStatus,
+} from '../../generated/prisma/client.js';
 import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../lib/errors.js';
+import { notificationEnglish, readKind, type KindedNotice } from './kinds.js';
 import { message } from '../../lib/messages.js';
 
 type Db = PrismaClient | Prisma.TransactionClient;
-
-/** Human-readable status for notification messages. */
-function readableStatus(status: ReportStatus): string {
-  return status.toLowerCase().replace(/_/g, ' ');
-}
 
 /**
  * Create status-change notifications for every subscriber of a report except
@@ -30,8 +31,8 @@ export async function createStatusChangeNotifications(
     reportTitle: string;
     newStatus: ReportStatus;
     actorId: string;
-    /** Replaces the standard "is now <status>" message when there is more to say. */
-    message?: string;
+    /** The original's title when this change merged the report into it (F4). */
+    mergedInto?: string;
   },
 ): Promise<void> {
   const subs = await db.reportSubscription.findMany({
@@ -42,17 +43,33 @@ export async function createStatusChangeNotifications(
   const recipients = subs.map((s) => s.userId).filter((id) => id !== params.actorId);
   if (recipients.length === 0) return;
 
+  const notice: KindedNotice = params.mergedInto
+    ? {
+        kind: 'report_merged',
+        params: { reportTitle: params.reportTitle, originalTitle: params.mergedInto },
+      }
+    : {
+        kind: 'status_changed',
+        params: { reportTitle: params.reportTitle, status: params.newStatus },
+      };
+  const { title, message } = notificationEnglish(notice);
   await db.notification.createMany({
     data: recipients.map((userId) => ({
       userId,
       reportId: params.reportId,
-      title: 'Report status updated',
-      message:
-        params.message ??
-        `Your report "${params.reportTitle}" is now ${readableStatus(params.newStatus)}.`,
+      title,
+      message,
       type: 'status_change' as const,
+      kind: notice.kind,
+      params: notice.params,
     })),
   });
+}
+
+/** A row as the API sends it: its kind and params only when they fit (F5). */
+function toPublicNotification(row: Notification) {
+  const { kind, params, ...rest } = row;
+  return { ...rest, ...(readKind(kind, params) ?? { kind: null, params: null }) };
 }
 
 export interface ListNotificationsInput {
@@ -77,7 +94,7 @@ export async function listNotifications(userId: string, input: ListNotifications
   ]);
 
   return {
-    items,
+    items: items.map(toPublicNotification),
     unreadCount,
     page: input.page,
     limit: input.limit,

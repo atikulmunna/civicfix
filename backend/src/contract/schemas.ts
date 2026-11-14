@@ -248,17 +248,45 @@ export const FixChecksSchema = z
   })
   .meta({ id: 'FixChecks' });
 
+/** The values each notification kind's wording needs (F5). */
+export const NOTIFICATION_PARAMS = {
+  status_changed: z.strictObject({ reportTitle: z.string(), status: ReportStatusSchema }),
+  report_merged: z.strictObject({ reportTitle: z.string(), originalTitle: z.string() }),
+  fix_disputed: z.strictObject({ reportTitle: z.string() }),
+};
+
+const notificationFields = {
+  id,
+  userId: id,
+  reportId: id.nullable(),
+  title: z.string(),
+  message: z.string(),
+  type: NotificationTypeSchema,
+  isRead: z.boolean(),
+  createdAt: timestamp,
+};
+
 export const NotificationSchema = z
-  .strictObject({
-    id,
-    userId: id,
-    reportId: id.nullable(),
-    title: z.string(),
-    message: z.string(),
-    type: NotificationTypeSchema,
-    isRead: z.boolean(),
-    createdAt: timestamp,
-  })
+  .union([
+    z.strictObject({
+      ...notificationFields,
+      kind: z.literal('status_changed'),
+      params: NOTIFICATION_PARAMS.status_changed,
+    }),
+    z.strictObject({
+      ...notificationFields,
+      kind: z.literal('report_merged'),
+      params: NOTIFICATION_PARAMS.report_merged,
+    }),
+    z.strictObject({
+      ...notificationFields,
+      kind: z.literal('fix_disputed'),
+      params: NOTIFICATION_PARAMS.fix_disputed,
+    }),
+    z.strictObject({ ...notificationFields, kind: z.null(), params: z.null() }).meta({
+      description: 'Stored before kinds (F5): show title and message as stored.',
+    }),
+  ])
   .meta({ id: 'Notification' });
 
 // ---------------------------------------------------------------------------
