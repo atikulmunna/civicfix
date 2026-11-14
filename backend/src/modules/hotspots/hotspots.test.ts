@@ -97,6 +97,12 @@ async function hotspotOf(ids: string[]): Promise<HotspotBody | undefined> {
 }
 
 beforeAll(async () => {
+  // This area is this suite's alone. Reports an earlier run left behind (a test
+  // worker that crashed before afterAll) would join these clusters and change
+  // every count, so start from an empty area.
+  await prisma.report.deleteMany({
+    where: { latitude: { gte: 22.29, lte: 22.47 }, longitude: { gte: 91.79, lte: 91.81 } },
+  });
   roads = (await prisma.category.create({ data: { name: `Kerbs ${stamp}`, icon: 'road' } })).id;
   water = (await prisma.category.create({ data: { name: `Mains ${stamp}`, icon: 'water' } })).id;
   deptId = (await prisma.department.create({ data: { name: `Highways ${stamp}` } })).id;
