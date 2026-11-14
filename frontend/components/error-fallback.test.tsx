@@ -1,12 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { screen } from '@testing-library/react';
-import { renderWithIntl } from '@/test-utils';
+import { render, screen } from '@testing-library/react';
+import { createTranslator } from 'next-intl';
+import { messagesFor, renderWithIntl } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 
 const { reportClientError } = vi.hoisted(() => ({ reportClientError: vi.fn() }));
 vi.mock('@/lib/report-error', () => ({ reportClientError }));
 
 import RouteError from '@/app/error';
+import { ErrorFallback, GLOBAL_ERROR_TEXT } from './error-fallback';
 
 describe('route error boundary', () => {
   beforeEach(() => {
@@ -39,5 +41,46 @@ describe('route error boundary', () => {
     renderWithIntl(<RouteError error="plain string" retry={vi.fn()} />);
     expect(screen.getByRole('alert')).toHaveTextContent('Something went wrong');
     expect(screen.queryByText(/Reference/)).toBeNull();
+  });
+});
+
+describe('route error boundary in Bangla', () => {
+  it('explains the failure and offers the way out in Bangla', () => {
+    const bn = createTranslator({
+      locale: 'bn',
+      messages: messagesFor('bn'),
+      namespace: 'errors.page',
+    });
+    const fromServer = Object.assign(new Error('internal'), { digest: '2817443' });
+    renderWithIntl(<RouteError error={fromServer} retry={vi.fn()} />, { locale: 'bn' });
+
+    expect(screen.getByRole('heading', { name: bn('title') })).toBeInTheDocument();
+    expect(screen.getByText(bn('body'))).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: bn('retry') })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: bn('home') })).toHaveAttribute('href', '/');
+    expect(screen.getByText(new RegExp(bn('reference')))).toHaveTextContent('2817443');
+  });
+});
+
+describe('root error boundary', () => {
+  it("uses the catalogs' own words, English first", () => {
+    expect(GLOBAL_ERROR_TEXT.map((text) => text.lang)).toEqual(['en', 'bn']);
+    for (const { lang, ...words } of GLOBAL_ERROR_TEXT) {
+      expect(words).toEqual(messagesFor(lang).errors.page);
+    }
+  });
+
+  it('speaks both languages without a translation provider', async () => {
+    const retry = vi.fn();
+    const [en, bn] = GLOBAL_ERROR_TEXT;
+    render(
+      <ErrorFallback error={new Error('layout failed')} retry={retry} texts={GLOBAL_ERROR_TEXT} />,
+    );
+
+    expect(screen.getByRole('heading', { name: en?.title })).toBeInTheDocument();
+    expect(screen.getByText(bn?.body ?? '').closest('[lang]')).toHaveAttribute('lang', 'bn');
+    const button = screen.getByRole('button', { name: `${en?.retry ?? ''} / ${bn?.retry ?? ''}` });
+    await userEvent.setup().click(button);
+    expect(retry).toHaveBeenCalledTimes(1);
   });
 });

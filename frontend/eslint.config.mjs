@@ -35,6 +35,10 @@ const TRANSLATED_FILES = [
   'app/notifications/page.tsx',
   'app/me/reports/page.tsx',
   'app/me/page.tsx',
+  'app/error.tsx',
+  'app/global-error.tsx',
+  'components/error-fallback.tsx',
+  'components/toast.tsx',
 ];
 
 /** Symbols and punctuation that read the same in every language. */

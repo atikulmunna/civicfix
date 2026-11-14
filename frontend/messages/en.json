@@ -470,5 +470,14 @@
       "loadError": "Failed to load your reports.",
       "empty": "You haven’t reported anything yet. <link>Report an issue</link>."
     }
+  },
+  "errors": {
+    "page": {
+      "title": "Something went wrong",
+      "body": "This page hit an unexpected error. Try again, or go back to the home page.",
+      "reference": "Reference",
+      "retry": "Try again",
+      "home": "Home"
+    }
   }
 }
