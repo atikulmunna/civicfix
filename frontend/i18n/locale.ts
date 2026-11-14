@@ -29,7 +29,7 @@ function acceptsBangla(header: string | null): boolean {
   return header.split(',').some((part) => {
     const [tag = '', ...params] = part.split(';');
     if (tag.trim().toLowerCase().split('-')[0] !== 'bn') return false;
-    const quality = params.map((p) => p.trim()).find((p) => p.startsWith('q='));
+    const quality = params.map((p) => p.trim()).find((p) => p.toLowerCase().startsWith('q='));
     if (quality === undefined) return true;
     const q = Number(quality.slice(2));
     return Number.isFinite(q) && q > 0;

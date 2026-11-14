@@ -43,7 +43,7 @@
     "signUp": "Sign up",
     "signOut": "Sign out",
     "signedOut": "Signed out.",
-    "switchTo": "Change language to Bangla"
+    "switchTo": "{language} (change language to Bangla)"
   },
   "report": {
     "noHistory": "No history yet.",

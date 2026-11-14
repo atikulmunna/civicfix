@@ -30,6 +30,7 @@ describe('resolveLocale', () => {
   it('does not take Bangla the browser marks as not acceptable', () => {
     expect(resolveLocale(undefined, 'en-US, bn;q=0')).toBe('en');
     expect(resolveLocale(undefined, 'en-US, bn;q=0.000')).toBe('en');
+    expect(resolveLocale(undefined, 'en-US, bn;Q=0')).toBe('en');
   });
 
   it('falls back to English', () => {

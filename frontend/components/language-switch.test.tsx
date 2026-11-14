@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { messagesFor, renderWithIntl } from '@/test-utils';
+import { renderWithIntl } from '@/test-utils';
 
 const { refresh, patch, useAuth, setLocale } = vi.hoisted(() => ({
   refresh: vi.fn(),
@@ -31,7 +31,8 @@ describe('LanguageSwitch', () => {
 
   it('offers Bangla in its own name, and switches the device to it', async () => {
     renderWithIntl(<LanguageSwitch />);
-    const button = screen.getByRole('button', { name: messagesFor('en').nav.switchTo });
+    // Label in Name (WCAG 2.5.3): the accessible name starts with the visible word.
+    const button = screen.getByRole('button', { name: /^বাংলা/ });
     expect(button).toHaveTextContent('বাংলা');
     expect(button.querySelector('[lang="bn"]')).not.toBeNull();
 
@@ -43,7 +44,7 @@ describe('LanguageSwitch', () => {
 
   it('offers English from Bangla', async () => {
     renderWithIntl(<LanguageSwitch />, { locale: 'bn' });
-    const button = screen.getByRole('button', { name: messagesFor('bn').nav.switchTo });
+    const button = screen.getByRole('button', { name: /^English/ });
     expect(button).toHaveTextContent('English');
     await userEvent.setup().click(button);
     expect(setLocale).toHaveBeenCalledWith('en');

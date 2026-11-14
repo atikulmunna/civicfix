@@ -16,10 +16,10 @@
 
 /*
  * Bangla (F5): letter spacing pulls apart the joined letters of Bangla words,
- * so Tailwind's tracking utilities are reset in Bangla. Unlayered, so it wins
- * over the utilities layer.
+ * so Tailwind's tracking utilities are reset on Bangla elements (English parts
+ * marked lang="en" keep theirs). Unlayered, so it wins over the utilities layer.
  */
-:lang(bn) [class*='tracking-'] {
+[class*='tracking-']:lang(bn) {
   letter-spacing: normal;
 }
 

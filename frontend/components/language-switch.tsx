@@ -33,7 +33,7 @@ export function LanguageSwitch({ className = '' }: { className?: string }) {
     <button
       type="button"
       onClick={choose}
-      aria-label={t('switchTo')}
+      aria-label={t('switchTo', { language: OWN_NAME[other] })}
       className={`rounded-lg px-3 py-1.5 font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 ${className}`}
     >
       <span lang={other}>{OWN_NAME[other]}</span>

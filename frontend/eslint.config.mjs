@@ -42,7 +42,7 @@ const eslintConfig = defineConfig([
         'error',
         {
           selector:
-            "JSXAttribute[name.name=/^(placeholder|aria-label|title)$/] > Literal, JSXAttribute[name.name='alt'] > Literal[value!='']",
+            "JSXAttribute[name.name=/^(placeholder|aria-label|title|eyebrow|subtitle|label)$/] > Literal, JSXAttribute[name.name='alt'] > Literal[value!=''], CallExpression[callee.name='toast'] > Literal:first-child",
           message: 'Text people read or hear comes from messages/*.json (F5).',
         },
       ],

@@ -13,6 +13,8 @@ const bengali = Noto_Sans_Bengali({
   subsets: ['bengali'],
   variable: '--font-bengali',
   display: 'swap',
+  // Only fetched when Bangla text appears (its unicode-range), not on every page.
+  preload: false,
 });
 
 export async function generateMetadata(): Promise<Metadata> {

@@ -62,6 +62,6 @@ describe('Navbar on small screens', () => {
       t.reportIssue,
     ]);
     const row = screen.getByRole('navigation', { name: t.sections });
-    expect(within(row).getByRole('button', { name: t.switchTo })).toHaveTextContent('English');
+    expect(within(row).getByRole('button', { name: /^English/ })).toHaveTextContent('English');
   });
 });
