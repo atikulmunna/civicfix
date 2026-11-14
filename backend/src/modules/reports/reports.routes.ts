@@ -5,6 +5,7 @@
 import { Router } from 'express';
 import { parseInput, routeParam, sendSuccess } from '../../lib/http.js';
 import { ApiError } from '../../lib/errors.js';
+import { message } from '../../lib/messages.js';
 import { authUser, optionalAuth, requireAuth } from '../../middleware/require-auth.js';
 import { reportLimiter } from '../../middleware/rate-limit.js';
 import { deleteStoredImages, storeImages, upload } from '../../lib/uploads.js';
@@ -28,7 +29,7 @@ reportsRouter.post('/', requireAuth, reportLimiter, upload.array('images', 5), a
   const input = parseInput(createReportSchema, req.body);
   const files = (req.files as Express.Multer.File[] | undefined) ?? [];
   if (files.length === 0) {
-    throw new ApiError('VALIDATION_ERROR', 'At least one image is required.');
+    throw new ApiError('VALIDATION_ERROR', message('report.imageRequired'));
   }
   const images = await storeImages(files);
   try {

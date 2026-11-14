@@ -6,6 +6,7 @@
 import type { Comment, User } from '../../generated/prisma/client.js';
 import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../lib/errors.js';
+import { message } from '../../lib/messages.js';
 import { sanitizeText } from '../../lib/sanitize.js';
 import { assertReportExists } from './shared.js';
 
@@ -31,7 +32,7 @@ export async function addComment(reportId: string, userId: string, contentRaw: s
   await assertReportExists(reportId);
   const content = sanitizeText(contentRaw.trim());
   if (content.length === 0) {
-    throw new ApiError('VALIDATION_ERROR', 'Comment cannot be empty.');
+    throw new ApiError('VALIDATION_ERROR', message('comment.empty'));
   }
   const comment = await prisma.comment.create({
     data: { reportId, userId, content },
@@ -53,11 +54,11 @@ export async function listComments(reportId: string) {
 export async function deleteComment(commentId: string, actor: Actor): Promise<void> {
   const comment = await prisma.comment.findUnique({ where: { id: commentId } });
   if (!comment || comment.isDeleted) {
-    throw new ApiError('NOT_FOUND', 'Comment not found.');
+    throw new ApiError('NOT_FOUND', message('comment.notFound'));
   }
   const isAdmin = actor.role === 'admin' || actor.role === 'super_admin';
   if (comment.userId !== actor.id && !isAdmin) {
-    throw new ApiError('FORBIDDEN', 'You can only delete your own comments.');
+    throw new ApiError('FORBIDDEN', message('comment.notOwner'));
   }
   await prisma.comment.update({ where: { id: commentId }, data: { isDeleted: true } });
 }

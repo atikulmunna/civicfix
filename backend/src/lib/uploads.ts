@@ -18,6 +18,7 @@ import { fileTypeFromBuffer } from 'file-type';
 import sharp from 'sharp';
 import { env } from '../config/env.js';
 import { ApiError } from './errors.js';
+import { message } from './messages.js';
 import { logger } from './logger.js';
 import { objectStore } from './storage.js';
 
@@ -66,7 +67,7 @@ export interface NormalizedImage {
 export async function normalizeImage(input: Buffer): Promise<NormalizedImage> {
   const sniffed = await fileTypeFromBuffer(input);
   if (!sniffed || !ALLOWED_INPUT.has(sniffed.mime)) {
-    throw new ApiError('VALIDATION_ERROR', 'Only JPEG, PNG, or WebP images are allowed.');
+    throw new ApiError('VALIDATION_ERROR', message('upload.type'));
   }
   try {
     const { data, info } = await sharp(input, { limitInputPixels: MAX_INPUT_PIXELS })
@@ -91,8 +92,8 @@ export async function normalizeImage(input: Buffer): Promise<NormalizedImage> {
     throw new ApiError(
       'VALIDATION_ERROR',
       tooLarge
-        ? `Image dimensions are too large (max ${String(MAX_INPUT_PIXELS / 1_000_000)} megapixels).`
-        : 'The image could not be read. Please upload a valid photo.',
+        ? message('upload.tooManyPixels', { megapixels: MAX_INPUT_PIXELS / 1_000_000 })
+        : message('upload.unreadable'),
     );
   }
 }

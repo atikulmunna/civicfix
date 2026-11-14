@@ -6,6 +6,7 @@
 import { Router } from 'express';
 import { parseInput, readCookie, sendSuccess } from '../../lib/http.js';
 import { ApiError } from '../../lib/errors.js';
+import { message } from '../../lib/messages.js';
 import { authUser, requireAuth } from '../../middleware/require-auth.js';
 import { authLimiter } from '../../middleware/rate-limit.js';
 import { clearAuthCookies, REFRESH_COOKIE, setAuthCookies } from './cookies.js';
@@ -31,7 +32,7 @@ authRouter.post('/login', authLimiter, async (req, res) => {
 authRouter.post('/refresh', async (req, res) => {
   const raw = readCookie(req, REFRESH_COOKIE);
   if (!raw) {
-    throw new ApiError('AUTH_REQUIRED', 'No refresh token provided.');
+    throw new ApiError('AUTH_REQUIRED', message('auth.noRefreshToken'));
   }
   const session = await authService.refresh(raw);
   setAuthCookies(res, session.accessToken, session.refreshToken, session.refreshExpiresAt);
@@ -47,7 +48,7 @@ authRouter.post('/logout', async (req, res) => {
 authRouter.get('/me', requireAuth, async (req, res) => {
   const user = await authService.getUserById(authUser(req).id);
   if (!user) {
-    throw new ApiError('NOT_FOUND', 'User not found.');
+    throw new ApiError('NOT_FOUND', message('auth.userNotFound'));
   }
   sendSuccess(res, { user });
 });

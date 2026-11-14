@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { MESSAGES, MESSAGE_KEYS, keyOf, message, zodMessage } from './messages.js';
 
@@ -34,5 +35,63 @@ describe('server messages (F5)', () => {
     expect(MESSAGES['auth.badCredentials']).toBe('Invalid email or password.');
     expect(MESSAGES['field.email']).toBe('A valid email is required.');
     expect(MESSAGES['field.category']).toBe('A valid category is required.');
+  });
+});
+
+/** Files whose errors residents can meet (F5). Admin modules keep plain English. */
+const RESIDENT_FILES = [
+  'app.ts',
+  'lib/uploads.ts',
+  'lib/prisma-errors.ts',
+  'middleware/require-auth.ts',
+  'modules/auth/auth.routes.ts',
+  'modules/auth/auth.service.ts',
+  'modules/auth/password.ts',
+  'modules/users/me.routes.ts',
+  'modules/users/me.service.ts',
+  'modules/reports/reports.routes.ts',
+  'modules/reports/reports.service.ts',
+  'modules/community/comments.service.ts',
+  'modules/community/community.routes.ts',
+  'modules/community/shared.ts',
+  'modules/fix-checks/fix-checks.routes.ts',
+  'modules/fix-checks/fix-checks.service.ts',
+  'modules/notifications/notifications.routes.ts',
+  'modules/notifications/notifications.service.ts',
+];
+
+/** The argument text of every `new ApiError(...)` call in `source`. */
+function apiErrorCalls(source: string): string[] {
+  const calls: string[] = [];
+  let at = source.indexOf('new ApiError(');
+  while (at !== -1) {
+    let depth = 0;
+    let end = at + 'new ApiError'.length;
+    do {
+      const ch = source[end];
+      if (ch === '(') depth += 1;
+      if (ch === ')') depth -= 1;
+      end += 1;
+    } while (depth > 0 && end < source.length);
+    calls.push(source.slice(at + 'new ApiError('.length, end - 1));
+    at = source.indexOf('new ApiError(', end);
+  }
+  return calls;
+}
+
+describe('resident-facing errors (F5)', () => {
+  it('every resident-facing throw uses a key', () => {
+    const literal: string[] = [];
+    for (const file of RESIDENT_FILES) {
+      const source = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
+      for (const args of apiErrorCalls(source)) {
+        // Drop the code (first argument) and keyed messages; any text left is literal English.
+        const rest = args
+          .replace(/^\s*'[A-Z_]+'\s*,?/, '')
+          .replace(/message\(\s*'[\w.]+'(?:\s*,\s*\{[^}]*\})?\s*\)/g, '');
+        if (/['"`]/.test(rest)) literal.push(`${file}: ${args.replace(/\s+/g, ' ').trim()}`);
+      }
+    }
+    expect(literal).toEqual([]);
   });
 });

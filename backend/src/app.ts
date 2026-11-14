@@ -11,6 +11,7 @@ import { pinoHttp } from 'pino-http';
 import { env } from './config/env.js';
 import { enforceContract } from './contract/validate.js';
 import { ApiError } from './lib/errors.js';
+import { message } from './lib/messages.js';
 import { errorHandler } from './lib/error-handler.js';
 import { checkDatabase } from './lib/health.js';
 import { routeParam, sendSuccess } from './lib/http.js';
@@ -99,7 +100,7 @@ export function buildApp() {
       await checkDatabase();
     } catch (err) {
       req.log.error({ err }, 'database check failed');
-      throw new ApiError('SERVICE_UNAVAILABLE', 'Database unavailable.');
+      throw new ApiError('SERVICE_UNAVAILABLE', message('common.unavailable'));
     }
     sendSuccess(res, { status: 'ready', checks: { database: 'ok' } });
   });
@@ -119,7 +120,8 @@ export function buildApp() {
     // to the bucket (and its CDN caches it).
     app.get('/uploads/:key', (req, res) => {
       const key = routeParam(req, 'key');
-      if (!STORAGE_KEY_PATTERN.test(key)) throw new ApiError('NOT_FOUND', 'Not found.');
+      if (!STORAGE_KEY_PATTERN.test(key))
+        throw new ApiError('NOT_FOUND', message('common.notFound'));
       res.redirect(301, objectStore.publicUrl(key));
     });
   }

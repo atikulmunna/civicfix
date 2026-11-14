@@ -10,6 +10,7 @@
 import type { FixVerdict, Prisma, Report } from '../../generated/prisma/client.js';
 import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../lib/errors.js';
+import { message } from '../../lib/messages.js';
 import type { StoredImage } from '../../lib/uploads.js';
 import { applyTransition } from '../admin/workflow.service.js';
 import type { Actor } from '../reports/reports.service.js';
@@ -58,7 +59,7 @@ async function loadReport(db: Db, reportId: string): Promise<CheckedReport> {
       assignedDepartmentId: true,
     },
   });
-  if (!report) throw new ApiError('NOT_FOUND', 'Report not found.');
+  if (!report) throw new ApiError('NOT_FOUND', message('report.notFound'));
   return report;
 }
 
@@ -103,16 +104,13 @@ async function ownVerdict(
 async function assertCheckable(db: Db, report: CheckedReport, actor: Actor): Promise<Date> {
   const fix = currentFix(report);
   if (!fix) {
-    throw new ApiError('VALIDATION_ERROR', 'Only a resolved report has a fix to check.');
+    throw new ApiError('VALIDATION_ERROR', message('fixCheck.notResolved'));
   }
   if (!(await mayCheck(db, report, actor))) {
-    throw new ApiError(
-      'FORBIDDEN',
-      'Fixes are checked by residents, not by admins or the department that made them.',
-    );
+    throw new ApiError('FORBIDDEN', message('fixCheck.notResident'));
   }
   if (await ownVerdict(db, report.id, fix, actor.id)) {
-    throw new ApiError('DUPLICATE_RESOURCE', 'You have already checked this fix.');
+    throw new ApiError('DUPLICATE_RESOURCE', message('fixCheck.already'));
   }
   return fix;
 }

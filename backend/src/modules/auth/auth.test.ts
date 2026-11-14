@@ -65,6 +65,7 @@ describe('POST /auth/register', () => {
     const res = await request(app).post('/api/v1/auth/register').send(citizen);
     expect(res.status).toBe(409);
     expect(res.body.code).toBe('DUPLICATE_RESOURCE');
+    expect(res.body.messageKey).toBe('auth.emailTaken');
   });
 
   it('resolves two simultaneous sign-ups with one email as one success and one conflict', async () => {
@@ -135,6 +136,7 @@ describe('POST /auth/login', () => {
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('VALIDATION_ERROR');
     expect(res.body.message).toBe('Invalid email or password.');
+    expect(res.body.messageKey).toBe('auth.badCredentials');
   });
 
   it('rejects an unknown email with the same generic message', async () => {

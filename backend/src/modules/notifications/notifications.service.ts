@@ -9,6 +9,7 @@
 import type { Prisma, PrismaClient, ReportStatus } from '../../generated/prisma/client.js';
 import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../lib/errors.js';
+import { message } from '../../lib/messages.js';
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
@@ -89,7 +90,7 @@ export async function listNotifications(userId: string, input: ListNotifications
 export async function markRead(notificationId: string, userId: string): Promise<void> {
   const notification = await prisma.notification.findUnique({ where: { id: notificationId } });
   if (notification?.userId !== userId) {
-    throw new ApiError('NOT_FOUND', 'Notification not found.');
+    throw new ApiError('NOT_FOUND', message('notification.notFound'));
   }
   if (!notification.isRead) {
     await prisma.notification.update({ where: { id: notificationId }, data: { isRead: true } });

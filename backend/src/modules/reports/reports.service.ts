@@ -5,6 +5,7 @@
 import type { Prisma, Report, ReportImage, Category } from '../../generated/prisma/client.js';
 import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../lib/errors.js';
+import { message } from '../../lib/messages.js';
 import { env } from '../../config/env.js';
 import { sanitizeText } from '../../lib/sanitize.js';
 import { deleteStoredImages, type StoredImage } from '../../lib/uploads.js';
@@ -80,7 +81,7 @@ export function toPublicReport(r: ReportWithRelations, canSeeInternal = false) {
 async function assertCategoryExists(categoryId: string): Promise<void> {
   const category = await prisma.category.findUnique({ where: { id: categoryId } });
   if (!category?.isActive) {
-    throw new ApiError('VALIDATION_ERROR', 'The selected category does not exist.');
+    throw new ApiError('VALIDATION_ERROR', message('report.categoryMissing'));
   }
 }
 
@@ -150,7 +151,7 @@ export async function getReportById(id: string, actor: Actor | null) {
     include: { images: REPORT_IMAGES, category: true },
   });
   if (!report) {
-    throw new ApiError('NOT_FOUND', 'Report not found.');
+    throw new ApiError('NOT_FOUND', message('report.notFound'));
   }
   const [counts, viewer] = await Promise.all([
     getVoteCounts([id]).then((m) => m.get(id)),
@@ -297,7 +298,7 @@ export async function duplicateCandidates(reportId: string) {
     where: { id: reportId },
     select: { categoryId: true, latitude: true, longitude: true, createdAt: true },
   });
-  if (!report) throw new ApiError('NOT_FOUND', 'Report not found.');
+  if (!report) throw new ApiError('NOT_FOUND', message('report.notFound'));
 
   const radiusM = env.DUPLICATE_RADIUS_M;
   const near = await findDuplicateIds(
@@ -364,17 +365,14 @@ export async function deleteReport(id: string, actor: Actor): Promise<void> {
 async function loadForMutation(id: string, actor: Actor): Promise<Report> {
   const report = await prisma.report.findUnique({ where: { id } });
   if (!report) {
-    throw new ApiError('NOT_FOUND', 'Report not found.');
+    throw new ApiError('NOT_FOUND', message('report.notFound'));
   }
   if (isAdmin(actor)) return report;
   if (report.userId !== actor.id) {
-    throw new ApiError('FORBIDDEN', 'You can only modify your own reports.');
+    throw new ApiError('FORBIDDEN', message('report.notOwner'));
   }
   if (report.status !== 'SUBMITTED') {
-    throw new ApiError(
-      'FORBIDDEN',
-      'A report can only be edited or deleted while it is still under submission.',
-    );
+    throw new ApiError('FORBIDDEN', message('report.locked'));
   }
   return report;
 }

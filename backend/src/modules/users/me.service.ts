@@ -4,6 +4,7 @@
  */
 import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../lib/errors.js';
+import { message } from '../../lib/messages.js';
 import { sanitizeText } from '../../lib/sanitize.js';
 import { toPublicUser } from '../auth/auth.service.js';
 import { REPORT_IMAGES, toPublicReport } from '../reports/reports.service.js';
@@ -11,7 +12,7 @@ import { getVoteCounts } from '../community/votes.service.js';
 
 export async function getMyProfile(userId: string) {
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) throw new ApiError('NOT_FOUND', 'User not found.');
+  if (!user) throw new ApiError('NOT_FOUND', message('auth.userNotFound'));
   return toPublicUser(user);
 }
 

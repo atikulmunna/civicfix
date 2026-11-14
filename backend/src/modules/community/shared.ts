@@ -4,6 +4,7 @@
  */
 import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../lib/errors.js';
+import { message } from '../../lib/messages.js';
 
 /** Throw NOT_FOUND unless the report exists. */
 export async function assertReportExists(reportId: string): Promise<void> {
@@ -12,6 +13,6 @@ export async function assertReportExists(reportId: string): Promise<void> {
     select: { id: true },
   });
   if (!report) {
-    throw new ApiError('NOT_FOUND', 'Report not found.');
+    throw new ApiError('NOT_FOUND', message('report.notFound'));
   }
 }

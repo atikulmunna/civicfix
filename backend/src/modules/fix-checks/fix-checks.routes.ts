@@ -5,6 +5,7 @@
 import { Router } from 'express';
 import { parseInput, routeParam, sendSuccess } from '../../lib/http.js';
 import { ApiError } from '../../lib/errors.js';
+import { message } from '../../lib/messages.js';
 import { deleteStoredImages, storeImage, upload } from '../../lib/uploads.js';
 import { authUser, optionalAuth, requireAuth } from '../../middleware/require-auth.js';
 import { fixCheckLimiter } from '../../middleware/rate-limit.js';
@@ -26,7 +27,7 @@ fixChecksRouter.post(
   async (req, res) => {
     const { verdict } = parseInput(fixCheckSchema, req.body);
     if (!req.file) {
-      throw new ApiError('VALIDATION_ERROR', 'Add a photo of how it looks now.');
+      throw new ApiError('VALIDATION_ERROR', message('fixCheck.photoRequired'));
     }
     const reportId = routeParam(req, 'id');
     const actor = authUser(req);

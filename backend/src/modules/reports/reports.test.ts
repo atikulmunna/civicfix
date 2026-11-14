@@ -162,6 +162,7 @@ describe('POST /reports (create)', () => {
     const out = await res;
     expect(out.status).toBe(400);
     expect(out.body.code).toBe('VALIDATION_ERROR');
+    expect(out.body.messageKey).toBe('upload.type');
   });
 
   it('rejects an image over the size limit with a clear message', async () => {
@@ -256,6 +257,7 @@ describe('GET /reports/:id (detail) + internal note hiding (BR-012)', () => {
   it('returns 404 for an unknown report', async () => {
     const res = await request(app).get('/api/v1/reports/00000000-0000-0000-0000-000000000000');
     expect(res.status).toBe(404);
+    expect(res.body.messageKey).toBe('report.notFound');
   });
 
   it('returns 400 for a malformed report id instead of a server error', async () => {
@@ -429,6 +431,7 @@ describe('PATCH/DELETE /reports/:id (edit window, REP-012/BR-013)', () => {
       .set('Authorization', `Bearer ${otherToken}`)
       .send({ title: 'Hijacked title' });
     expect(res.status).toBe(403);
+    expect(res.body.messageKey).toBe('report.notOwner');
   });
 
   it('forbids the owner from editing once past SUBMITTED', async () => {

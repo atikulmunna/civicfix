@@ -4,8 +4,7 @@
  * conflict); the comments router handles top-level /comments/:id deletes.
  */
 import { Router } from 'express';
-import { routeParam, sendSuccess } from '../../lib/http.js';
-import { ApiError } from '../../lib/errors.js';
+import { parseInput, routeParam, sendSuccess } from '../../lib/http.js';
 import { authUser, optionalAuth, requireAuth } from '../../middleware/require-auth.js';
 import { commentLimiter } from '../../middleware/rate-limit.js';
 import { commentSchema } from './community.schemas.js';
@@ -14,15 +13,7 @@ import * as votes from './votes.service.js';
 import * as subscriptions from './subscriptions.service.js';
 
 function parseComment(body: unknown): { content: string } {
-  const result = commentSchema.safeParse(body);
-  if (!result.success) {
-    const details = result.error.issues.map((i) => ({
-      path: i.path.join('.'),
-      message: i.message,
-    }));
-    throw new ApiError('VALIDATION_ERROR', 'Invalid request data.', details);
-  }
-  return result.data;
+  return parseInput(commentSchema, body);
 }
 
 // Nested under /api/v1/reports

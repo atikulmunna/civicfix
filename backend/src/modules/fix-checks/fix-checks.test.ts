@@ -235,6 +235,7 @@ describe('POST /reports/:id/fix-checks', () => {
     const again = await check('first', id, 'disputed');
     expect(again.status).toBe(409);
     expect(again.body.code).toBe('DUPLICATE_RESOURCE');
+    expect(again.body.messageKey).toBe('fixCheck.already');
 
     const data = await checks(id, 'first');
     expect(data.current).toMatchObject({ confirmed: 1, disputed: 0 });
