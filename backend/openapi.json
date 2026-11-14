@@ -5201,7 +5201,25 @@
           "code": {
             "$ref": "#/components/schemas/ErrorCode"
           },
-          "details": {},
+          "messageKey": {
+            "description": "Resident-facing messages: the web app words the message from this key (F5).",
+            "$ref": "#/components/schemas/MessageKey"
+          },
+          "messageParams": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": [
+                "string",
+                "number"
+              ]
+            }
+          },
+          "details": {
+            "description": "Validation failures: one { path, message, messageKey?, messageParams? } per issue."
+          },
           "requestId": {
             "description": "On 500s: quote it when reporting the problem.",
             "type": "string"
@@ -5227,6 +5245,59 @@
           "UPLOAD_FAILED",
           "SERVICE_UNAVAILABLE",
           "INTERNAL_ERROR"
+        ]
+      },
+      "MessageKey": {
+        "type": "string",
+        "enum": [
+          "common.notFound",
+          "common.authRequired",
+          "common.tokenInvalid",
+          "common.forbidden",
+          "common.duplicate",
+          "common.missingReference",
+          "common.invalidId",
+          "common.invalidRequest",
+          "common.rateLimited",
+          "common.internal",
+          "common.unavailable",
+          "upload.type",
+          "upload.unreadable",
+          "upload.tooManyPixels",
+          "upload.tooLarge",
+          "auth.emailTaken",
+          "auth.badCredentials",
+          "auth.deactivated",
+          "auth.signInAgain",
+          "auth.wrongCurrentPassword",
+          "auth.samePassword",
+          "auth.sessionInvalid",
+          "auth.noRefreshToken",
+          "auth.userNotFound",
+          "auth.passwordTooShort",
+          "auth.passwordCommon",
+          "report.imageRequired",
+          "report.categoryMissing",
+          "report.notFound",
+          "report.notOwner",
+          "report.locked",
+          "comment.empty",
+          "comment.notFound",
+          "comment.notOwner",
+          "fixCheck.photoRequired",
+          "fixCheck.notResolved",
+          "fixCheck.notResident",
+          "fixCheck.already",
+          "notification.notFound",
+          "field.nameRequired",
+          "field.email",
+          "field.category",
+          "field.passwordRequired",
+          "field.currentPasswordRequired",
+          "field.newPasswordRequired",
+          "field.titleTooShort",
+          "field.descriptionTooShort",
+          "field.noChanges"
         ]
       },
       "User": {

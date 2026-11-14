@@ -486,3 +486,17 @@ describe('PATCH/DELETE /reports/:id (edit window, REP-012/BR-013)', () => {
     expect(res.status).toBe(200);
   });
 });
+
+describe('message keys on report validation (F5)', () => {
+  it('keys a title that is too short, with its minimum', async () => {
+    const res = await createReport({ token: ownerToken, title: 'ab' });
+    expect(res.status).toBe(400);
+    expect(res.body.messageKey).toBe('common.invalidRequest');
+    expect(res.body.details).toContainEqual({
+      path: 'title',
+      message: 'Title must be at least 3 characters.',
+      messageKey: 'field.titleTooShort',
+      messageParams: { min: 3 },
+    });
+  });
+});

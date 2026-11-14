@@ -7,6 +7,7 @@
  */
 import { Prisma } from '../generated/prisma/client.js';
 import { ApiError } from './errors.js';
+import { message } from './messages.js';
 
 /** True if an error is a Prisma unique-constraint violation (P2002). */
 export function isUniqueViolation(err: unknown): boolean {
@@ -39,18 +40,18 @@ export function apiErrorFromPrisma(err: unknown): ApiError | null {
   if (!(err instanceof Prisma.PrismaClientKnownRequestError)) return null;
   switch (err.code) {
     case 'P2002': // unique constraint
-      return new ApiError('DUPLICATE_RESOURCE', 'This resource already exists.');
+      return new ApiError('DUPLICATE_RESOURCE', message('common.duplicate'));
     case 'P2025': // record to update or delete does not exist (anymore)
-      return new ApiError('NOT_FOUND', 'Not found.');
+      return new ApiError('NOT_FOUND', message('common.notFound'));
     case 'P2003': // foreign key: references something that does not exist
-      return new ApiError('VALIDATION_ERROR', 'A referenced resource does not exist.');
+      return new ApiError('VALIDATION_ERROR', message('common.missingReference'));
     case 'P2023': // malformed value for the column, e.g. an id that is not a UUID
-      return new ApiError('VALIDATION_ERROR', 'Invalid identifier.');
+      return new ApiError('VALIDATION_ERROR', message('common.invalidId'));
     case 'P2007': // data validation (Prisma 7 ORM queries)
     case 'P2010': // raw query failure
       // Only malformed input (e.g. an id that is not a UUID) is a client error.
       return postgresCode(err) === PG_INVALID_TEXT
-        ? new ApiError('VALIDATION_ERROR', 'Invalid identifier.')
+        ? new ApiError('VALIDATION_ERROR', message('common.invalidId'))
         : null;
     default:
       return null;

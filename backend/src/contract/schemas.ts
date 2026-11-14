@@ -13,6 +13,7 @@
  */
 import { z } from 'zod';
 import { ERROR_CODES } from '../lib/errors.js';
+import { MESSAGE_KEYS } from '../lib/messages.js';
 import {
   FixVerdict,
   ImageType,
@@ -36,6 +37,8 @@ export const ImageTypeSchema = z.enum(ImageType).meta({ id: 'ImageType' });
 export const FixVerdictSchema = z.enum(FixVerdict).meta({ id: 'FixVerdict' });
 export const NotificationTypeSchema = z.enum(NotificationType).meta({ id: 'NotificationType' });
 export const ErrorCodeSchema = z.enum(ERROR_CODES).meta({ id: 'ErrorCode' });
+export const MessageKeySchema = z.enum(MESSAGE_KEYS).meta({ id: 'MessageKey' });
+const messageParams = z.record(z.string(), z.union([z.string(), z.number()]));
 
 // ---------------------------------------------------------------------------
 // Users
@@ -436,7 +439,14 @@ export const ErrorEnvelopeSchema = z
     success: z.literal(false),
     message: z.string(),
     code: ErrorCodeSchema,
-    details: z.unknown().optional(),
+    messageKey: MessageKeySchema.optional().meta({
+      description: 'Resident-facing messages: the web app words the message from this key (F5).',
+    }),
+    messageParams: messageParams.optional(),
+    details: z.unknown().optional().meta({
+      description:
+        'Validation failures: one { path, message, messageKey?, messageParams? } per issue.',
+    }),
     requestId: z
       .string()
       .optional()

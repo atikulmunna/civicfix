@@ -4,6 +4,8 @@
  * (see app.ts) turns it into the standard error envelope.
  */
 
+import type { MessageKey, MessageParams, ServerMessage } from './messages.js';
+
 /** Every error code the API may return (also published in the OpenAPI contract). */
 export const ERROR_CODES = [
   'AUTH_REQUIRED',
@@ -37,12 +39,20 @@ export class ApiError extends Error {
   readonly code: ErrorCode;
   readonly status: number;
   readonly details?: unknown;
+  /** Set for resident-facing messages (F5): the web app words them from the key. */
+  readonly messageKey?: MessageKey;
+  readonly messageParams?: MessageParams;
 
-  constructor(code: ErrorCode, message: string, details?: unknown) {
-    super(message);
+  /** `msg` is a keyed message from lib/messages.ts, or plain English for admin-only errors. */
+  constructor(code: ErrorCode, msg: string | ServerMessage, details?: unknown) {
+    super(typeof msg === 'string' ? msg : msg.text);
     this.name = 'ApiError';
     this.code = code;
     this.status = STATUS_BY_CODE[code];
     this.details = details;
+    if (typeof msg !== 'string') {
+      this.messageKey = msg.key;
+      this.messageParams = msg.params;
+    }
   }
 }

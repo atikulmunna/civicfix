@@ -368,3 +368,31 @@ describe('POST /auth/change-password (R19)', () => {
     expect((await signIn(NEW_PASSWORD)).status).toBe(200);
   });
 });
+
+describe('message keys on auth errors (F5)', () => {
+  it('keys a request without a session', async () => {
+    const res = await request(app).get('/api/v1/auth/me');
+    expect(res.status).toBe(401);
+    expect(res.body.message).toBe('Authentication required.');
+    expect(res.body.messageKey).toBe('common.authRequired');
+  });
+
+  it('keys each field issue of a bad sign-up', async () => {
+    const res = await request(app)
+      .post('/api/v1/auth/register')
+      .send({ name: '', email: 'not-an-email', password: '' });
+    expect(res.status).toBe(400);
+    expect(res.body.messageKey).toBe('common.invalidRequest');
+    const keys = (res.body.details as { path: string; messageKey?: string }[]).map((d) => [
+      d.path,
+      d.messageKey,
+    ]);
+    expect(keys).toEqual(
+      expect.arrayContaining([
+        ['name', 'field.nameRequired'],
+        ['email', 'field.email'],
+        ['password', 'field.passwordRequired'],
+      ]),
+    );
+  });
+});
