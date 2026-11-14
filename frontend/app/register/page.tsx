@@ -10,6 +10,9 @@ import { ApiError } from '@/lib/api';
 import { Button, Card, FieldError, Input, Label } from '@/components/ui';
 import { MIN_PASSWORD_LENGTH } from '@/components/change-password-form';
 
+/** Catches obvious slips in the browser; the API checks the address properly. */
+const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export default function RegisterPage() {
   const t = useTranslations('auth');
   const { register } = useAuth();
@@ -27,6 +30,11 @@ export default function RegisterPage() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!form.name.trim()) return setError(t('register.missingName'));
+    if (!EMAIL_SHAPE.test(form.email.trim())) return setError(t('register.badEmail'));
+    if (form.password.length < MIN_PASSWORD_LENGTH) {
+      return setError(t('register.passwordTooShort', { min: MIN_PASSWORD_LENGTH }));
+    }
     setBusy(true);
     try {
       await register({

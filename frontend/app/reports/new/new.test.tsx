@@ -200,6 +200,9 @@ describe('NewReportPage in Bangla', () => {
     await screen.findByRole('option', { name: 'Roads' });
     const submit = screen.getByRole('button', { name: bn('submit') });
 
+    await user.type(screen.getByLabelText(bn('fields.title')), 'Broken light');
+    await user.type(screen.getByLabelText(bn('fields.description')), 'The light is out.');
+    await user.selectOptions(screen.getByLabelText(bn('fields.category')), 'c1');
     await user.click(submit);
     expect(await screen.findByText(bn('errors.noLocation'))).toBeInTheDocument();
 
@@ -246,5 +249,28 @@ describe('NewReportPage in Bangla', () => {
     const user = userEvent.setup();
     await fillInBangla(user);
     expect(await screen.findByText(bn('errors.submitFailed'))).toBeInTheDocument();
+  });
+
+  it('checks the title, description and category in Bangla, with Bangla digits', async () => {
+    const user = userEvent.setup();
+    renderPage('bn');
+    await screen.findByRole('option', { name: 'Roads' });
+    const submit = screen.getByRole('button', { name: bn('submit') });
+
+    await user.type(screen.getByLabelText(bn('fields.title')), 'ab');
+    await user.click(submit);
+    expect(await screen.findByText(bn('errors.titleTooShort', { min: 3 }))).toHaveTextContent('৩');
+
+    await user.type(screen.getByLabelText(bn('fields.title')), 'c');
+    await user.type(screen.getByLabelText(bn('fields.description')), 'too short');
+    await user.click(submit);
+    expect(
+      await screen.findByText(bn('errors.descriptionTooShort', { min: 10 })),
+    ).toHaveTextContent('১০');
+
+    await user.type(screen.getByLabelText(bn('fields.description')), ' now');
+    await user.click(submit);
+    expect(await screen.findByText(bn('errors.noCategory'))).toBeInTheDocument();
+    expect(postForm).not.toHaveBeenCalled();
   });
 });

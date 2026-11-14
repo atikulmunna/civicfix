@@ -375,7 +375,10 @@
       "noLocation": "Please select a location on the map.",
       "noPhoto": "Please add at least one photo.",
       "tooLarge": "These photos add up to {size, number} MB, over the {limit, number} MB limit. Remove a photo or choose smaller ones.",
-      "submitFailed": "Could not submit the report."
+      "submitFailed": "Could not submit the report.",
+      "titleTooShort": "The title must be at least {min, number} characters.",
+      "descriptionTooShort": "The description must be at least {min, number} characters.",
+      "noCategory": "Choose a category."
     },
     "preparing": "Preparing photos…",
     "submitting": "Submitting…",
@@ -403,7 +406,8 @@
       "noAccount": "No account?",
       "createOne": "Create one",
       "signedIn": "Signed in.",
-      "mustChange": "Please choose a new password."
+      "mustChange": "Please choose a new password.",
+      "missing": "Enter your email and password."
     },
     "register": {
       "eyebrow": "Get started",
@@ -413,7 +417,10 @@
       "submitting": "Creating…",
       "haveAccount": "Already have an account?",
       "signIn": "Sign in",
-      "created": "Account created. Welcome to CivicFix!"
+      "created": "Account created. Welcome to CivicFix!",
+      "missingName": "Enter your name.",
+      "badEmail": "Enter a valid email address.",
+      "passwordTooShort": "Your password must be at least {min, number} characters."
     },
     "password": {
       "heading": "Change password",
@@ -427,7 +434,8 @@
       "tooShort": "Your new password must be at least {min, number} characters.",
       "mismatch": "The new passwords do not match.",
       "changed": "Password changed. You were signed out on your other devices.",
-      "failed": "Could not change your password."
+      "failed": "Could not change your password.",
+      "currentMissing": "Enter your current password."
     },
     "banner": {
       "text": "You are using a temporary password set by an administrator.",
@@ -468,7 +476,8 @@
       "save": "Save changes",
       "saving": "Saving…",
       "saved": "Profile updated.",
-      "saveFailed": "Could not update profile."
+      "saveFailed": "Could not update profile.",
+      "nameMissing": "Enter your name."
     },
     "reports": {
       "title": "My reports",

@@ -134,4 +134,24 @@ describe('profile form in Bangla', () => {
     await user.click(await screen.findByRole('button', { name: bn('profile.save') }));
     expect(await screen.findByText(bn('profile.saveFailed'))).toBeInTheDocument();
   });
+
+  it('leaves checks to the page, and asks for a name in Bangla', async () => {
+    renderWithQuery(
+      <ToastProvider>
+        <AuthProvider>
+          <MePage />
+        </AuthProvider>
+      </ToastProvider>,
+      undefined,
+      { locale: 'bn' },
+    );
+    const user = userEvent.setup();
+    const save = await screen.findByRole('button', { name: bn('profile.save') });
+    // Native bubbles would speak the browser's language instead.
+    expect(save.closest('form')).toHaveAttribute('novalidate');
+    await user.clear(screen.getByLabelText(bn('profile.name')));
+    await user.click(save);
+    expect(await screen.findByText(bn('profile.nameMissing'))).toBeInTheDocument();
+    expect(patch).not.toHaveBeenCalled();
+  });
 });

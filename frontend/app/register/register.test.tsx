@@ -70,7 +70,9 @@ describe('RegisterPage', () => {
     post.mockRejectedValue(new ApiError('Email already registered.', 'CONFLICT', 409));
     const user = userEvent.setup();
     renderRegister();
+    await user.type(screen.getByLabelText('Name'), 'Rina');
     await user.type(screen.getByLabelText('Email'), 'rina@e.com');
+    await user.type(screen.getByLabelText('Password'), 'CorrectHorse9');
     await user.click(screen.getByRole('button', { name: 'Create account' }));
     expect(await screen.findByText('Email already registered.')).toBeInTheDocument();
     expect(push).not.toHaveBeenCalled();
@@ -114,7 +116,32 @@ describe('RegisterPage in Bangla', () => {
     post.mockRejectedValue(new Error('network down'));
     const user = userEvent.setup();
     renderRegister('bn');
+    await user.type(screen.getByLabelText(bn('fields.name')), 'Rina');
+    await user.type(screen.getByLabelText(bn('fields.email')), 'rina@e.com');
+    await user.type(screen.getByLabelText(bn('fields.password')), 'CorrectHorse9');
     await user.click(screen.getByRole('button', { name: bn('register.submit') }));
     expect(await screen.findByText(bn('unexpected'))).toBeInTheDocument();
+  });
+
+  it('checks the name, email and password in Bangla before calling the API', async () => {
+    const user = userEvent.setup();
+    renderRegister('bn');
+    const submit = screen.getByRole('button', { name: bn('register.submit') });
+    await user.click(submit);
+    expect(await screen.findByText(bn('register.missingName'))).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText(bn('fields.name')), 'Rina');
+    await user.type(screen.getByLabelText(bn('fields.email')), 'not-an-email');
+    await user.click(submit);
+    expect(await screen.findByText(bn('register.badEmail'))).toBeInTheDocument();
+
+    await user.clear(screen.getByLabelText(bn('fields.email')));
+    await user.type(screen.getByLabelText(bn('fields.email')), 'rina@e.com');
+    await user.type(screen.getByLabelText(bn('fields.password')), 'short');
+    await user.click(submit);
+    expect(await screen.findByText(bn('register.passwordTooShort', { min: 8 }))).toHaveTextContent(
+      '৮',
+    );
+    expect(post).not.toHaveBeenCalled();
   });
 });

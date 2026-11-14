@@ -23,6 +23,7 @@ function LoginForm() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!email.trim() || !password) return setError(t('login.missing'));
     setBusy(true);
     try {
       const signedIn = await login(email, password);

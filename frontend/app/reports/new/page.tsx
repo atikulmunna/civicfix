@@ -36,6 +36,10 @@ import {
 import type { LatLng } from '@/components/location-picker';
 import Link from 'next/link';
 
+/** Match the API (backend reports.schemas.ts), so the reader learns before the upload. */
+const TITLE_MIN = 3;
+const DESCRIPTION_MIN = 10;
+
 function MapLoading() {
   const t = useTranslations('newReport');
   return <Spinner label={t('loadingMap')} />;
@@ -131,6 +135,13 @@ function NewReportForm() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    if (form.title.trim().length < TITLE_MIN) {
+      return setError(t('errors.titleTooShort', { min: TITLE_MIN }));
+    }
+    if (form.description.trim().length < DESCRIPTION_MIN) {
+      return setError(t('errors.descriptionTooShort', { min: DESCRIPTION_MIN }));
+    }
+    if (!form.categoryId) return setError(t('errors.noCategory'));
     if (!location) return setError(t('errors.noLocation'));
     if (files.length === 0) return setError(t('errors.noPhoto'));
 

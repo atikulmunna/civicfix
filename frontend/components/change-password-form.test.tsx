@@ -130,4 +130,15 @@ describe('ChangePasswordForm in Bangla', () => {
     await u.click(screen.getByRole('button', { name: bn('submit') }));
     expect(await screen.findByText(bn('changed'))).toBeInTheDocument();
   });
+
+  it('leaves checks to the page, and asks for the current password in Bangla', async () => {
+    renderForm(ME, 'bn');
+    const u = userEvent.setup();
+    const submit = await screen.findByRole('button', { name: bn('submit') });
+    // Native bubbles would speak the browser's language instead.
+    expect(submit.closest('form')).toHaveAttribute('novalidate');
+    await u.click(submit);
+    expect(await screen.findByText(bn('currentMissing'))).toBeInTheDocument();
+    expect(post).not.toHaveBeenCalled();
+  });
 });

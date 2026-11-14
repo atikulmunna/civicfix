@@ -133,4 +133,15 @@ describe('LoginPage in Bangla', () => {
     await user.click(screen.getByRole('button', { name: bn('login.submit') }));
     expect(await screen.findByText('Invalid email or password.')).toBeInTheDocument();
   });
+
+  it('asks for the email and password in Bangla before calling the API', async () => {
+    const user = userEvent.setup();
+    renderLogin('bn');
+    await user.click(screen.getByRole('button', { name: bn('login.submit') }));
+    expect(await screen.findByText(bn('login.missing'))).toBeInTheDocument();
+    await user.type(screen.getByLabelText(bn('fields.email')), 't@e.com');
+    await user.click(screen.getByRole('button', { name: bn('login.submit') }));
+    expect(await screen.findByText(bn('login.missing'))).toBeInTheDocument();
+    expect(post).not.toHaveBeenCalled();
+  });
 });

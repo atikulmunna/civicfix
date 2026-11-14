@@ -45,6 +45,10 @@ export function ChangePasswordForm() {
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!current) {
+      setError(t('currentMissing'));
+      return;
+    }
     if (next.length < MIN_PASSWORD_LENGTH) {
       setError(t('tooShort', { min: MIN_PASSWORD_LENGTH }));
       return;
@@ -68,7 +72,7 @@ export function ChangePasswordForm() {
       ) : (
         <p className="mb-4 text-sm text-slate-600">{t('staySignedIn')}</p>
       )}
-      <form onSubmit={onSubmit} className="flex flex-col gap-4">
+      <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
         <div>
           <Label htmlFor="current-password">{t('current')}</Label>
           <Input

@@ -39,6 +39,7 @@ function ProfileForm() {
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!name.trim()) return setError(t('profile.nameMissing'));
     save.mutate();
   }
 
@@ -65,7 +66,11 @@ function ProfileForm() {
           <dd className="col-span-2 text-slate-900">{f.number(user!.trustScore)}</dd>
         </dl>
 
-        <form onSubmit={onSubmit} className="flex flex-col gap-4 border-t border-slate-200 pt-4">
+        <form
+          onSubmit={onSubmit}
+          className="flex flex-col gap-4 border-t border-slate-200 pt-4"
+          noValidate
+        >
           <div>
             <Label htmlFor="name">{t('profile.name')}</Label>
             <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
