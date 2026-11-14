@@ -26,12 +26,59 @@ function secondaryOf(item: CatalogItem): string | null {
   return 'icon' in item ? item.icon : item.contactEmail;
 }
 
+/**
+ * The Bangla name of one item (F5), shown to Bangla readers instead of the
+ * English name. Leaving it empty clears it, and readers see the English name.
+ */
+function BanglaNameEditor({
+  item,
+  adminPath,
+  onSaved,
+}: {
+  item: CatalogItem;
+  adminPath: CatalogConfig['adminPath'];
+  onSaved: () => Promise<unknown>;
+}) {
+  const errorText = useErrorMessage();
+  const { toast } = useToast();
+  const saved = item.nameBn ?? '';
+  const [value, setValue] = useState(saved);
+  const save = useMutation({
+    mutationFn: () => api.patch(`${adminPath}/${item.id}`, { nameBn: value }),
+    onSuccess: async () => {
+      await onSaved();
+      toast('Bangla name saved.', 'success');
+    },
+    onError: (err) => toast(errorText(err, 'Could not save the Bangla name.'), 'error'),
+  });
+  return (
+    <div className="mt-1 flex items-center gap-2">
+      <Input
+        placeholder="Name in Bangla"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        aria-label={`Name in Bangla for ${item.name}`}
+        lang="bn"
+      />
+      <Button
+        variant="secondary"
+        disabled={save.isPending || value.trim() === saved}
+        onClick={() => save.mutate()}
+        aria-label={`Save Bangla name for ${item.name}`}
+      >
+        Save
+      </Button>
+    </div>
+  );
+}
+
 /** Generic CRUD admin for categories & departments (name + optional field). */
 export function CatalogAdmin({ config }: { config: CatalogConfig }) {
   const errorText = useErrorMessage();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [name, setName] = useState('');
+  const [nameBn, setNameBn] = useState('');
   const [secondary, setSecondary] = useState('');
 
   const items = useQuery({
@@ -49,10 +96,15 @@ export function CatalogAdmin({ config }: { config: CatalogConfig }) {
   }
 
   const create = useMutation({
-    mutationFn: (payload: { name: string; icon?: string; contactEmail?: string }) =>
-      api.post(config.adminPath, payload),
+    mutationFn: (payload: {
+      name: string;
+      nameBn?: string;
+      icon?: string;
+      contactEmail?: string;
+    }) => api.post(config.adminPath, payload),
     onSuccess: async () => {
       setName('');
+      setNameBn('');
       setSecondary('');
       await invalidate();
     },
@@ -72,7 +124,7 @@ export function CatalogAdmin({ config }: { config: CatalogConfig }) {
     e.preventDefault();
     if (!name.trim()) return;
     const extra = config.secondary && secondary ? { [config.secondary.key]: secondary } : {};
-    create.mutate({ name, ...extra });
+    create.mutate({ name, ...(nameBn.trim() ? { nameBn } : {}), ...extra });
   }
 
   return (
@@ -84,6 +136,15 @@ export function CatalogAdmin({ config }: { config: CatalogConfig }) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             aria-label={`New ${config.itemKey} name`}
+          />
+        </div>
+        <div className="flex-1">
+          <Input
+            placeholder="Name in Bangla (optional)"
+            value={nameBn}
+            onChange={(e) => setNameBn(e.target.value)}
+            aria-label={`New ${config.itemKey} name in Bangla`}
+            lang="bn"
           />
         </div>
         {config.secondary && (
@@ -118,6 +179,7 @@ export function CatalogAdmin({ config }: { config: CatalogConfig }) {
                 {config.secondary && secondaryOf(item) ? (
                   <span className="ml-2 text-slate-500">{secondaryOf(item)}</span>
                 ) : null}
+                <BanglaNameEditor item={item} adminPath={config.adminPath} onSaved={invalidate} />
               </div>
               {item.isActive === false ? (
                 <Button

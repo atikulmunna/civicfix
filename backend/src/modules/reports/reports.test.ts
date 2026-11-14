@@ -505,3 +505,22 @@ describe('message keys on report validation (F5)', () => {
     });
   });
 });
+
+describe('Bangla category names (F5)', () => {
+  it("sends the category's Bangla name with a report", async () => {
+    const cat = await prisma.category.create({
+      data: { name: `Signs BN ${stamp}`, nameBn: 'সাইনবোর্ড' },
+    });
+    const res = await createReport({ token: ownerToken, category: cat.id });
+    expect(res.status).toBe(201);
+    storedUrls.push(res.body.data.report.images[0].imageUrl);
+    const id = res.body.data.report.id as string;
+    const got = await request(app).get(`/api/v1/reports/${id}`);
+    expect(got.body.data.report.category).toMatchObject({
+      name: `Signs BN ${stamp}`,
+      nameBn: 'সাইনবোর্ড',
+    });
+    await prisma.report.delete({ where: { id } });
+    await prisma.category.delete({ where: { id: cat.id } });
+  });
+});

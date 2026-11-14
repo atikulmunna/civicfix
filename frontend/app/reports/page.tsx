@@ -11,6 +11,7 @@ import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { ReportCard } from '@/components/report-card';
 import { Button, Card, Input, LoadError, PageHeader, Select, Spinner } from '@/components/ui';
 import { useErrorMessage } from '@/lib/i18n/use-error-message';
+import { useLocalName } from '@/lib/i18n/use-local-name';
 
 const SORTS = ['newest', 'oldest', 'priority', 'most_confirmed'] as const;
 
@@ -20,6 +21,7 @@ function asSort(value: string) {
 }
 
 export default function ReportsPage() {
+  const localName = useLocalName();
   const errorText = useErrorMessage();
   const t = useTranslations('reports');
   const paging = useTranslations('common');
@@ -84,7 +86,7 @@ export default function ReportsPage() {
           <option value="">{t('allCategories')}</option>
           {(categories.data ?? []).map((c) => (
             <option key={c.id} value={c.id}>
-              {c.name}
+              {localName(c)}
             </option>
           ))}
         </Select>

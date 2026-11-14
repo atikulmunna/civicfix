@@ -126,3 +126,23 @@ describe('StatusTimeline notes (F5)', () => {
     ).toBeInTheDocument();
   });
 });
+
+describe('ReportCard category name (F5)', () => {
+  it('shows the Bangla category name in Bangla', () => {
+    const report = {
+      id: 'r2',
+      title: 'Dark lane',
+      description: 'No light at night.',
+      status: 'SUBMITTED',
+      severity: 'low',
+      createdAt: '2026-11-11T04:00:00.000Z',
+      counts: { upvotes: 0, confirms: 0, falseReports: 0 },
+      priorityScore: 0,
+      images: [],
+      category: { id: 'c1', name: 'Street Lighting', nameBn: 'রাস্তার বাতি', icon: null },
+    } as unknown as Report;
+    renderWithIntl(<ReportCard report={report} />, { locale: 'bn' });
+    expect(screen.getByText('রাস্তার বাতি')).toBeInTheDocument();
+    expect(screen.queryByText('Street Lighting')).toBeNull();
+  });
+});

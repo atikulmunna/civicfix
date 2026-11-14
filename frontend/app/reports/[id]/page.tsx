@@ -16,9 +16,11 @@ import { MergedNotice } from '@/components/merged-notice';
 import { RecurrenceNote } from '@/components/recurrence-note';
 import { Card, LoadError, Spinner } from '@/components/ui';
 import { useErrorMessage } from '@/lib/i18n/use-error-message';
+import { useLocalName } from '@/lib/i18n/use-local-name';
 
 /** Report detail for one id (separate from the page so it can be tested). */
 export function ReportDetail({ id }: { id: string }) {
+  const localName = useLocalName();
   const errorText = useErrorMessage();
   const t = useTranslations('report');
   const f = useFormat();
@@ -45,7 +47,7 @@ export function ReportDetail({ id }: { id: string }) {
             <StatusBadge status={report.status} />
             <SeverityBadge severity={report.severity} />
             {report.category && (
-              <span className="text-sm text-slate-500">{report.category.name}</span>
+              <span className="text-sm text-slate-500">{localName(report.category)}</span>
             )}
           </div>
           <h1 className="mt-2 text-2xl font-bold text-slate-900">{report.title}</h1>

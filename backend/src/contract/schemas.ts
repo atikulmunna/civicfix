@@ -72,10 +72,14 @@ export const AdminUserSchema = z
 // ---------------------------------------------------------------------------
 // Catalog
 
+/** A name in Bangla (F5); null means readers see `name`. */
+const nameBn = z.string().nullable();
+
 export const CategorySchema = z
   .strictObject({
     id,
     name: z.string(),
+    nameBn,
     description: z.string().nullable(),
     icon: z.string().nullable(),
     isActive: z.boolean(),
@@ -87,6 +91,7 @@ export const DepartmentSchema = z
   .strictObject({
     id,
     name: z.string(),
+    nameBn,
     description: z.string().nullable(),
     contactEmail: z.string().nullable(),
     phone: z.string().nullable(),
@@ -123,7 +128,9 @@ export const ReportSchema = z
     title: z.string(),
     description: z.string(),
     categoryId: id,
-    category: z.strictObject({ id, name: z.string(), icon: z.string().nullable() }).optional(),
+    category: z
+      .strictObject({ id, name: z.string(), nameBn, icon: z.string().nullable() })
+      .optional(),
     status: ReportStatusSchema,
     severity: SeveritySchema,
     latitude: z.number(),
@@ -368,6 +375,7 @@ export const DepartmentScorecardSchema = z
   .strictObject({
     departmentId: id,
     name: z.string(),
+    nameBn,
     assigned: count,
     resolved: count,
     resolutionRate: rate.nullable(),
@@ -406,7 +414,7 @@ export const HotspotSchema = z
     reportCount: count,
     openCount: count,
     categories: z
-      .array(z.strictObject({ categoryId: id, name: z.string(), count }))
+      .array(z.strictObject({ categoryId: id, name: z.string(), nameBn, count }))
       .meta({ description: 'Most reported first.' }),
     recurring: z.boolean().meta({
       description: 'A problem of one kind was reported here again after an earlier one was fixed.',

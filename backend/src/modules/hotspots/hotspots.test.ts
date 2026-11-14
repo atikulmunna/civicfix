@@ -138,7 +138,9 @@ describe('GET /hotspots', () => {
     const hotspot = await hotspotOf(ids);
     expect(hotspot).toMatchObject({ reportCount: 3, openCount: 3, recurring: false });
     expect(hotspot?.reports.map((r) => r.id).sort()).toEqual([...ids].sort());
-    expect(hotspot?.categories).toEqual([{ categoryId: roads, name: `Kerbs ${stamp}`, count: 3 }]);
+    expect(hotspot?.categories).toEqual([
+      { categoryId: roads, name: `Kerbs ${stamp}`, nameBn: null, count: 3 },
+    ]);
     expect(hotspot?.latitude).toBeCloseTo(at.lat + STEP, 5);
     // The middle report is the centre; the outer two are about 89 m away.
     expect(hotspot?.radiusM).toBeGreaterThan(85);

@@ -24,6 +24,7 @@ import { StatusBadge } from './badges';
 import { queryKeys } from '@/lib/query-keys';
 import { Select } from './ui';
 import { useErrorMessage } from '@/lib/i18n/use-error-message';
+import { useLocalName } from '@/lib/i18n/use-local-name';
 
 const DHAKA: [number, number] = [23.78, 90.4];
 
@@ -105,6 +106,7 @@ export function ReportsMap({
   onShowHotspotsChange: (show: boolean) => void;
   focus: MapFocus | null;
 }) {
+  const localName = useLocalName();
   const errorText = useErrorMessage();
   const t = useTranslations('map');
   const f = useFormat();
@@ -172,7 +174,7 @@ export function ReportsMap({
             </option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.name}
+                {localName(c)}
               </option>
             ))}
           </Select>

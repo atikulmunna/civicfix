@@ -3920,6 +3920,10 @@
                     "minLength": 2,
                     "maxLength": 100
                   },
+                  "nameBn": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
                   "description": {
                     "type": "string",
                     "maxLength": 1000
@@ -4021,6 +4025,17 @@
                     "type": "string",
                     "minLength": 2,
                     "maxLength": 100
+                  },
+                  "nameBn": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 100
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "description": {
                     "anyOf": [
@@ -4198,6 +4213,10 @@
                     "minLength": 2,
                     "maxLength": 120
                   },
+                  "nameBn": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
                   "description": {
                     "type": "string",
                     "maxLength": 1000
@@ -4303,6 +4322,17 @@
                     "type": "string",
                     "minLength": 2,
                     "maxLength": 120
+                  },
+                  "nameBn": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 120
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "description": {
                     "anyOf": [
@@ -5427,6 +5457,12 @@
               "name": {
                 "type": "string"
               },
+              "nameBn": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "icon": {
                 "type": [
                   "string",
@@ -5437,6 +5473,7 @@
             "required": [
               "id",
               "name",
+              "nameBn",
               "icon"
             ],
             "additionalProperties": false
@@ -6505,6 +6542,12 @@
           "name": {
             "type": "string"
           },
+          "nameBn": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "description": {
             "type": [
               "string",
@@ -6529,6 +6572,7 @@
         "required": [
           "id",
           "name",
+          "nameBn",
           "description",
           "icon",
           "isActive",
@@ -6546,6 +6590,12 @@
           },
           "name": {
             "type": "string"
+          },
+          "nameBn": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "description": {
             "type": [
@@ -6577,6 +6627,7 @@
         "required": [
           "id",
           "name",
+          "nameBn",
           "description",
           "contactEmail",
           "phone",
@@ -6831,6 +6882,12 @@
           "name": {
             "type": "string"
           },
+          "nameBn": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "assigned": {
             "type": "integer",
             "minimum": 0,
@@ -6914,6 +6971,7 @@
         "required": [
           "departmentId",
           "name",
+          "nameBn",
           "assigned",
           "resolved",
           "resolutionRate",
@@ -7051,6 +7109,12 @@
                 "name": {
                   "type": "string"
                 },
+                "nameBn": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
                 "count": {
                   "type": "integer",
                   "minimum": 0,
@@ -7060,6 +7124,7 @@
               "required": [
                 "categoryId",
                 "name",
+                "nameBn",
                 "count"
               ],
               "additionalProperties": false

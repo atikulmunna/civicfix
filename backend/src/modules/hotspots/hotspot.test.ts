@@ -20,6 +20,7 @@ function report(over: Partial<ClusteredReport>): ClusteredReport {
     status: 'SUBMITTED',
     categoryId: 'roads',
     categoryName: 'Roads',
+    categoryNameBn: null,
     latitude: 23.8,
     longitude: 90.4,
     createdAt: day(1),
@@ -72,8 +73,8 @@ describe('summarize', () => {
     expect(spot?.reportCount).toBe(3);
     expect(spot?.openCount).toBe(2);
     expect(spot?.categories).toEqual([
-      { categoryId: 'roads', name: 'Roads', count: 2 },
-      { categoryId: 'water', name: 'Water', count: 1 },
+      { categoryId: 'roads', name: 'Roads', nameBn: null, count: 2 },
+      { categoryId: 'water', name: 'Water', nameBn: null, count: 1 },
     ]);
     expect(spot?.latestReportAt).toEqual(day(4));
     expect(spot?.reports.map((r) => r.createdAt)).toEqual([day(4), day(2), day(1)]);

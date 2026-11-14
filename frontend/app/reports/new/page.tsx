@@ -36,6 +36,7 @@ import {
 import type { LatLng } from '@/components/location-picker';
 import Link from 'next/link';
 import { useErrorMessage } from '@/lib/i18n/use-error-message';
+import { useLocalName } from '@/lib/i18n/use-local-name';
 
 /** Match the API (backend reports.schemas.ts), so the reader learns before the upload. */
 const TITLE_MIN = 3;
@@ -52,6 +53,7 @@ const LocationPicker = dynamic(
 );
 
 function NewReportForm() {
+  const localName = useLocalName();
   const errorText = useErrorMessage();
   const t = useTranslations('newReport');
   const f = useFormat();
@@ -213,7 +215,7 @@ function NewReportForm() {
                 <option value="">{t('fields.choose')}</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name}
+                    {localName(c)}
                   </option>
                 ))}
               </Select>

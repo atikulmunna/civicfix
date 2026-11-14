@@ -27,6 +27,7 @@ export interface ClusteredReport {
   status: ReportStatus;
   categoryId: string;
   categoryName: string;
+  categoryNameBn: string | null;
   latitude: number;
   longitude: number;
   createdAt: Date;
@@ -41,7 +42,7 @@ export interface Hotspot {
   reportCount: number;
   openCount: number;
   /** Most reported first. */
-  categories: { categoryId: string; name: string; count: number }[];
+  categories: { categoryId: string; name: string; nameBn: string | null; count: number }[];
   recurring: boolean;
   latestReportAt: Date;
   reports: { id: string; title: string; status: ReportStatus; createdAt: Date }[];
@@ -83,11 +84,15 @@ function summarizeOne(reports: readonly ClusteredReport[]): Hotspot {
     longitude: reports.reduce((sum, r) => sum + r.longitude, 0) / reports.length,
   };
 
-  const byCategory = new Map<string, { categoryId: string; name: string; count: number }>();
+  const byCategory = new Map<
+    string,
+    { categoryId: string; name: string; nameBn: string | null; count: number }
+  >();
   for (const r of reports) {
     const entry = byCategory.get(r.categoryId) ?? {
       categoryId: r.categoryId,
       name: r.categoryName,
+      nameBn: r.categoryNameBn,
       count: 0,
     };
     entry.count += 1;

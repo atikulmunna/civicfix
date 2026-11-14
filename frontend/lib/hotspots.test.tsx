@@ -11,7 +11,7 @@ const spot = (over: Partial<Hotspot>): Hotspot => ({
   radiusM: 87,
   reportCount: 4,
   openCount: 2,
-  categories: [{ categoryId: 'c1', name: 'Drainage', count: 4 }],
+  categories: [{ categoryId: 'c1', name: 'Drainage', nameBn: null, count: 4 }],
   recurring: false,
   latestReportAt: '2026-11-05T10:00:00.000Z',
   reports: [],
@@ -37,15 +37,15 @@ function show(hotspot: Hotspot, locale: Locale = 'en') {
 }
 
 const two = [
-  { categoryId: 'c1', name: 'Drainage', count: 3 },
-  { categoryId: 'c2', name: 'Roads', count: 1 },
+  { categoryId: 'c1', name: 'Drainage', nameBn: null, count: 3 },
+  { categoryId: 'c2', name: 'Roads', nameBn: null, count: 1 },
 ];
 
 describe('useHotspotText', () => {
   it('names one kind, or the top kind and how many others', () => {
     expect(show(spot({})).kinds).toBe('Drainage');
     expect(show(spot({ categories: two })).kinds).toBe('Drainage and 1 other kind');
-    const three = [...two, { categoryId: 'c3', name: 'Lights', count: 1 }];
+    const three = [...two, { categoryId: 'c3', name: 'Lights', nameBn: null, count: 1 }];
     expect(show(spot({ categories: three })).kinds).toBe('Drainage and 2 other kinds');
   });
 

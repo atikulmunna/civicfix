@@ -5,6 +5,7 @@ import { assetUrl } from '@/lib/api';
 import { useTranslations } from 'next-intl';
 import { useFormat } from '@/lib/i18n/use-format';
 import { SeverityBadge, StatusBadge } from './badges';
+import { useLocalName } from '@/lib/i18n/use-local-name';
 
 export function ReportCard({
   report,
@@ -16,6 +17,7 @@ export function ReportCard({
   /** Show the triage score (admin queues; closed reports score 0 and show none). */
   showPriority?: boolean;
 }) {
+  const localName = useLocalName();
   const t = useTranslations('report');
   const f = useFormat();
   const thumb = report.images?.[0]?.imageUrl;
@@ -43,7 +45,7 @@ export function ReportCard({
           <StatusBadge status={report.status} />
           <SeverityBadge severity={report.severity} />
           {report.category && (
-            <span className="text-xs text-slate-500">{report.category.name}</span>
+            <span className="text-xs text-slate-500">{localName(report.category)}</span>
           )}
           {showPriority && report.priorityScore > 0 && (
             <span

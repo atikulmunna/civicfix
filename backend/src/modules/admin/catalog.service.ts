@@ -24,7 +24,12 @@ export async function listCategories(includeInactive = false) {
 export async function createCategory(input: CategoryCreateInput) {
   try {
     return await prisma.category.create({
-      data: { name: input.name, description: input.description ?? null, icon: input.icon ?? null },
+      data: {
+        name: input.name,
+        nameBn: input.nameBn ?? null,
+        description: input.description ?? null,
+        icon: input.icon ?? null,
+      },
     });
   } catch (err) {
     if (isUniqueViolation(err)) {
@@ -70,6 +75,7 @@ export async function createDepartment(input: DepartmentCreateInput) {
     return await prisma.department.create({
       data: {
         name: input.name,
+        nameBn: input.nameBn ?? null,
         description: input.description ?? null,
         contactEmail: input.contactEmail ?? null,
         phone: input.phone ?? null,

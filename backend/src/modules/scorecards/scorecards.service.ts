@@ -9,7 +9,7 @@ export async function getScorecards(now = new Date()) {
   const departments = await prisma.department.findMany({
     where: { isActive: true },
     orderBy: { name: 'asc' },
-    select: { id: true, name: true },
+    select: { id: true, name: true, nameBn: true },
   });
   const assignments = await prisma.reportAssignment.findMany({
     where: { isCurrent: true, departmentId: { in: departments.map((d) => d.id) } },

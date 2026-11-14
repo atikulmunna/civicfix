@@ -3,7 +3,7 @@ import { median, OVERDUE_LIMIT, scorecard, type AssignmentFacts } from './scorec
 
 const now = new Date('2026-11-03T12:00:00Z');
 const hoursAgo = (h: number) => new Date(now.getTime() - h * 3_600_000);
-const dept = { id: 'd1', name: 'Public Works' };
+const dept = { id: 'd1', name: 'Public Works', nameBn: null };
 
 let n = 0;
 function fact(over: Partial<AssignmentFacts>): AssignmentFacts {

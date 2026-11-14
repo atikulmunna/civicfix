@@ -2535,6 +2535,7 @@ export interface paths {
                 content: {
                     "application/json": {
                         name: string;
+                        nameBn?: string;
                         description?: string;
                         icon?: string;
                     };
@@ -2643,6 +2644,7 @@ export interface paths {
                 content: {
                     "application/json": {
                         name?: string;
+                        nameBn?: string | null;
                         description?: string | null;
                         icon?: string | null;
                         isActive?: boolean;
@@ -2702,6 +2704,7 @@ export interface paths {
                 content: {
                     "application/json": {
                         name: string;
+                        nameBn?: string;
                         description?: string;
                         contactEmail?: string;
                         phone?: string;
@@ -2811,6 +2814,7 @@ export interface paths {
                 content: {
                     "application/json": {
                         name?: string;
+                        nameBn?: string | null;
                         description?: string | null;
                         contactEmail?: string | null;
                         phone?: string | null;
@@ -3461,6 +3465,7 @@ export interface components {
                 /** Format: uuid */
                 id: string;
                 name: string;
+                nameBn: string | null;
                 icon: string | null;
             };
             status: components["schemas"]["ReportStatus"];
@@ -3706,6 +3711,7 @@ export interface components {
             /** Format: uuid */
             id: string;
             name: string;
+            nameBn: string | null;
             description: string | null;
             icon: string | null;
             isActive: boolean;
@@ -3716,6 +3722,7 @@ export interface components {
             /** Format: uuid */
             id: string;
             name: string;
+            nameBn: string | null;
             description: string | null;
             contactEmail: string | null;
             phone: string | null;
@@ -3775,6 +3782,7 @@ export interface components {
             /** Format: uuid */
             departmentId: string;
             name: string;
+            nameBn: string | null;
             assigned: number;
             resolved: number;
             resolutionRate: number | null;
@@ -3818,6 +3826,7 @@ export interface components {
                 /** Format: uuid */
                 categoryId: string;
                 name: string;
+                nameBn: string | null;
                 count: number;
             }[];
             /** @description A problem of one kind was reported here again after an earlier one was fixed. */

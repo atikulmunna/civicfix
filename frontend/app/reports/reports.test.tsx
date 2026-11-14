@@ -19,7 +19,7 @@ function makeReport(over: Partial<Report> = {}): Report {
     title: 'Pothole on 5th',
     description: 'A big pothole.',
     categoryId: 'c1',
-    category: { id: 'c1', name: 'Roads', icon: null },
+    category: { id: 'c1', name: 'Roads', nameBn: null, icon: null },
     status: 'SUBMITTED',
     severity: 'high',
     latitude: 1,
@@ -109,5 +109,23 @@ describe('ReportsPage in Bangla', () => {
     );
     renderWithQuery(<ReportsPage />, undefined, { locale: 'bn' });
     expect(await screen.findByText(t.none)).toBeInTheDocument();
+  });
+});
+
+describe('category names in Bangla (F5)', () => {
+  it('offers categories by their Bangla name, or the English one when there is none', async () => {
+    get.mockImplementation((path: string) =>
+      path === '/categories'
+        ? Promise.resolve({
+            categories: [
+              { id: 'c1', name: 'Roads', nameBn: 'রাস্তা' },
+              { id: 'c2', name: 'Benches', nameBn: null },
+            ],
+          })
+        : Promise.resolve({ items: [makeReport()], page: 1, limit: 10, total: 1, totalPages: 1 }),
+    );
+    renderWithQuery(<ReportsPage />, undefined, { locale: 'bn' });
+    expect(await screen.findByRole('option', { name: 'রাস্তা' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Benches' })).toBeInTheDocument();
   });
 });

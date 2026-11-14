@@ -64,6 +64,7 @@ export interface OverdueReport {
 export interface DepartmentScorecard {
   departmentId: string;
   name: string;
+  nameBn: string | null;
   /** Assigned in the window. */
   assigned: number;
   resolved: number;
@@ -118,7 +119,7 @@ function onTimeRate(
 }
 
 export function scorecard(
-  department: { id: string; name: string },
+  department: { id: string; name: string; nameBn: string | null },
   facts: readonly AssignmentFacts[],
   now: Date,
 ): DepartmentScorecard {
@@ -150,6 +151,7 @@ export function scorecard(
   return {
     departmentId: department.id,
     name: department.name,
+    nameBn: department.nameBn,
     assigned: recent.length,
     resolved: resolved.length,
     resolutionRate: ratio(resolved.length, resolvable.length),

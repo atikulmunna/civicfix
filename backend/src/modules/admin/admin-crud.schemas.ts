@@ -29,8 +29,17 @@ export type UserRoleInput = z.infer<typeof userRoleSchema>;
 
 // --- Categories ----------------------------------------------------------
 
+/** A name in Bangla (F5): trimmed, and an empty one stored as null. */
+const banglaName = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .transform((v) => (v === '' ? null : v));
+
 export const categoryCreateSchema = z.object({
   name: z.string().trim().min(2).max(100),
+  nameBn: banglaName(100).optional(),
   description: z.string().trim().max(1000).optional(),
   icon: z.string().trim().max(100).optional(),
 });
@@ -39,6 +48,7 @@ export type CategoryCreateInput = z.infer<typeof categoryCreateSchema>;
 export const categoryUpdateSchema = z
   .object({
     name: z.string().trim().min(2).max(100),
+    nameBn: banglaName(100).nullable(),
     description: z.string().trim().max(1000).nullable(),
     icon: z.string().trim().max(100).nullable(),
     isActive: z.boolean(),
@@ -51,6 +61,7 @@ export type CategoryUpdateInput = z.infer<typeof categoryUpdateSchema>;
 
 export const departmentCreateSchema = z.object({
   name: z.string().trim().min(2).max(120),
+  nameBn: banglaName(120).optional(),
   description: z.string().trim().max(1000).optional(),
   contactEmail: z.string().trim().max(255).pipe(z.email()).optional(),
   phone: z.string().trim().max(30).optional(),
@@ -60,6 +71,7 @@ export type DepartmentCreateInput = z.infer<typeof departmentCreateSchema>;
 export const departmentUpdateSchema = z
   .object({
     name: z.string().trim().min(2).max(120),
+    nameBn: banglaName(120).nullable(),
     description: z.string().trim().max(1000).nullable(),
     contactEmail: z.string().trim().max(255).pipe(z.email()).nullable(),
     phone: z.string().trim().max(30).nullable(),

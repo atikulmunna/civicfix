@@ -58,7 +58,12 @@ export function toPublicReport(r: ReportWithRelations, canSeeInternal = false) {
     description: r.description,
     categoryId: r.categoryId,
     category: r.category
-      ? { id: r.category.id, name: r.category.name, icon: r.category.icon }
+      ? {
+          id: r.category.id,
+          name: r.category.name,
+          nameBn: r.category.nameBn,
+          icon: r.category.icon,
+        }
       : undefined,
     status: r.status,
     severity: r.severity,
