@@ -7,7 +7,13 @@
     "loading": "লোড হচ্ছে…",
     "pageOf": "পাতা {page, number} / {pages, number} · মোট {total, number}টি",
     "previous": "আগের পাতা",
-    "next": "পরের পাতা"
+    "next": "পরের পাতা",
+    "photoPicker": {
+      "chooseOne": "একটি ছবি বেছে নিন",
+      "chooseMany": "ছবি বেছে নিন",
+      "none": "কোনো ছবি বেছে নেওয়া হয়নি",
+      "chosen": "{count, plural, other {#টি ছবি বেছে নেওয়া হয়েছে}}"
+    }
   },
   "status": {
     "SUBMITTED": "জমা হয়েছে",

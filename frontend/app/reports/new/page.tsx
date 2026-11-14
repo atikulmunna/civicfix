@@ -28,6 +28,7 @@ import {
   Input,
   Label,
   PageHeader,
+  PhotoPicker,
   Select,
   Spinner,
   Textarea,
@@ -255,14 +256,13 @@ function NewReportForm() {
             <p id="images-hint" className="mb-1 text-xs text-slate-500">
               {t('photosHint', { max: MAX_PHOTOS })}
             </p>
-            <input
+            <PhotoPicker
               id="images"
-              type="file"
+              files={files}
               accept="image/png,image/jpeg,image/webp"
               multiple
               aria-describedby="images-hint"
               onChange={pickPhotos}
-              className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium hover:file:bg-slate-200"
             />
             {previews.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-2">

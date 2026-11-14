@@ -7,7 +7,13 @@
     "loading": "Loading…",
     "pageOf": "Page {page, number} of {pages, number} · {total, number} total",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "photoPicker": {
+      "chooseOne": "Choose a photo",
+      "chooseMany": "Choose photos",
+      "none": "No photo chosen",
+      "chosen": "{count, plural, one {# photo chosen} other {# photos chosen}}"
+    }
   },
   "status": {
     "SUBMITTED": "Submitted",

@@ -167,6 +167,13 @@ describe('NewReportPage in Bangla', () => {
     expect(screen.getByRole('option', { name: bn('fields.choose') })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: severity('urgent') })).toBeInTheDocument();
     expect(screen.getByText(bn('photosHint', { max: 5 }))).toHaveTextContent('৫');
+    const picker = createTranslator({
+      locale: 'bn',
+      messages: messagesFor('bn'),
+      namespace: 'common.photoPicker',
+    });
+    expect(screen.getByText(picker('chooseMany'))).toBeInTheDocument();
+    expect(screen.getByText(picker('none'))).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: bn('title') })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: bn('submit') })).toBeInTheDocument();
   });
