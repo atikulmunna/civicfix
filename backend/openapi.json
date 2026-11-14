@@ -168,6 +168,13 @@
                   "phone": {
                     "type": "string",
                     "maxLength": 30
+                  },
+                  "language": {
+                    "type": "string",
+                    "enum": [
+                      "en",
+                      "bn"
+                    ]
                   }
                 },
                 "required": [

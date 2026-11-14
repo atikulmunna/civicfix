@@ -398,3 +398,25 @@ describe('message keys on auth errors (F5)', () => {
     );
   });
 });
+
+describe('language at sign-up (F5)', () => {
+  it('stores the language a resident signs up in', async () => {
+    const email = `citizen_bn_${stamp}@example.com`;
+    createdEmails.push(email);
+    const res = await request(app)
+      .post('/api/v1/auth/register')
+      .send({ name: 'Rina', email, password: 'CorrectHorse9', language: 'bn' });
+    expect(res.status).toBe(201);
+    expect(res.body.data.user.language).toBe('bn');
+  });
+
+  it('refuses a language the app does not have', async () => {
+    const email = `fr_${stamp}@example.com`;
+    createdEmails.push(email);
+    const res = await request(app)
+      .post('/api/v1/auth/register')
+      .send({ name: 'Rina', email, password: 'CorrectHorse9', language: 'fr' });
+    expect(res.status).toBe(400);
+    expect((res.body.details as { path: string }[]).map((d) => d.path)).toContain('language');
+  });
+});

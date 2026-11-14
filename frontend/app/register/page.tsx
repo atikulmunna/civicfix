@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useAuth } from '@/components/auth-context';
 import { useToast } from '@/components/toast';
 import { Button, Card, FieldError, Input, Label } from '@/components/ui';
@@ -16,6 +16,7 @@ const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export default function RegisterPage() {
   const errorText = useErrorMessage();
   const t = useTranslations('auth');
+  const locale = useLocale();
   const { register } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
@@ -43,6 +44,8 @@ export default function RegisterPage() {
         email: form.email,
         password: form.password,
         phone: form.phone || undefined,
+        // The account remembers the language the page is in (F5).
+        language: locale,
       });
       toast(t('register.created'), 'success');
       router.push('/');

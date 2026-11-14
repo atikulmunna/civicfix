@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { screen, within } from '@testing-library/react';
-import { messagesFor, renderWithIntl } from '@/test-utils';
+import { messagesFor, renderWithQuery } from '@/test-utils';
 import type { Locale } from '@/i18n/locale';
 
 const { useAuth } = vi.hoisted(() => ({ useAuth: vi.fn() }));
@@ -20,7 +20,7 @@ import { Navbar } from './navbar';
 
 function sections(user: { name: string; role: string } | null, locale: Locale = 'en') {
   useAuth.mockReturnValue({ user, loading: false, logout: vi.fn() });
-  renderWithIntl(<Navbar />, { locale });
+  renderWithQuery(<Navbar />, undefined, { locale });
   // The row for small screens (CSS shows one set of links at a time).
   const row = screen.getByRole('navigation', { name: messagesFor(locale).nav.sections });
   return within(row)

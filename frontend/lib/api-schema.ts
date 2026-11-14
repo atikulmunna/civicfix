@@ -145,6 +145,8 @@ export interface paths {
                         email: string;
                         password: string;
                         phone?: string;
+                        /** @enum {string} */
+                        language?: "en" | "bn";
                     };
                 };
             };

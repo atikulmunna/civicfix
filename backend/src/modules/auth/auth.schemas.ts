@@ -1,6 +1,7 @@
 /** Request schemas for the auth routes (SRS v1.1 §9.2). */
 import { z } from 'zod';
 import { zodMessage } from '../../lib/messages.js';
+import { languageSchema } from '../users/me.schemas.js';
 
 export const registerSchema = z.object({
   name: z.string().trim().min(1, zodMessage('field.nameRequired')).max(120),
@@ -11,6 +12,8 @@ export const registerSchema = z.object({
     .pipe(z.email(zodMessage('field.email'))),
   password: z.string().min(1, zodMessage('field.passwordRequired')),
   phone: z.string().trim().max(30).optional(),
+  /** The language the resident signed up in (F5), so their account remembers it. */
+  language: languageSchema.optional(),
 });
 
 export const loginSchema = z.object({

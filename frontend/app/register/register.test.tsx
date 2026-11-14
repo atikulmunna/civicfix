@@ -60,6 +60,7 @@ describe('RegisterPage', () => {
         email: 'rina@e.com',
         password: 'CorrectHorse9',
         phone: undefined,
+        language: 'en',
       }),
     );
     expect(await screen.findByText('Account created. Welcome to CivicFix!')).toBeInTheDocument();
@@ -110,6 +111,10 @@ describe('RegisterPage in Bangla', () => {
     await user.type(screen.getByLabelText(bn('fields.password')), 'CorrectHorse9');
     await user.click(screen.getByRole('button', { name: bn('register.submit') }));
     expect(await screen.findByText(bn('register.created'))).toBeInTheDocument();
+    expect(post).toHaveBeenCalledWith(
+      '/auth/register',
+      expect.objectContaining({ language: 'bn' }),
+    );
   });
 
   it('says in Bangla when something unexpected fails', async () => {

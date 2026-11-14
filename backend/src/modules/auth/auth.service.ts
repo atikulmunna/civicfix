@@ -72,6 +72,8 @@ export interface RegisterInput {
   email: string;
   password: string;
   phone?: string;
+  /** The interface language the resident signed up in (F5). */
+  language?: 'en' | 'bn';
 }
 
 export async function register(
@@ -98,6 +100,7 @@ export async function register(
         email,
         passwordHash,
         phone: phone === undefined || phone === '' ? null : phone,
+        ...(input.language ? { language: input.language } : {}),
       },
     })
     .catch((err: unknown) => {
