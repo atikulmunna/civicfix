@@ -112,7 +112,7 @@ async function checks(id: string, who?: Who) {
 beforeAll(async () => {
   categoryId = (await prisma.category.create({ data: { name: `Drains ${stamp}`, icon: 'drain' } }))
     .id;
-  deptA = (await prisma.department.create({ data: { name: `Drainage ${stamp}` } })).id;
+  deptA = (await prisma.department.create({ data: { name: `Fix Drainage ${stamp}` } })).id;
   deptB = (await prisma.department.create({ data: { name: `Parks ${stamp}` } })).id;
 
   for (const email of Object.values(emails)) {
