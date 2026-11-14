@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import { api, errorMessage } from '@/lib/api';
-import { formatDate } from '@/lib/format';
-import { hotspotCounts, hotspotKinds } from '@/lib/hotspots';
+import { useHotspotText } from '@/lib/hotspots';
+import { useFormat } from '@/lib/i18n/use-format';
 import { queryKeys } from '@/lib/query-keys';
 import type { Hotspot } from '@/lib/types';
 import { LoadError, Spinner } from './ui';
@@ -14,6 +15,9 @@ const NAMED = 3;
 
 /** Places where reports cluster, most reports first (F4). */
 export function HotspotList({ onShow }: { onShow: (hotspot: Hotspot) => void }) {
+  const t = useTranslations('hotspots');
+  const text = useHotspotText();
+  const f = useFormat();
   const query = useQuery({
     queryKey: queryKeys.hotspots,
     queryFn: ({ signal }) => api.get('/hotspots', undefined, { signal }),
@@ -22,23 +26,24 @@ export function HotspotList({ onShow }: { onShow: (hotspot: Hotspot) => void }) 
   return (
     <section aria-labelledby="hotspots-heading" className="flex max-w-3xl flex-col gap-3">
       <h2 id="hotspots-heading" className="text-xl font-semibold text-slate-900">
-        Hotspots
+        {t('heading')}
       </h2>
       {query.isPending ? (
-        <Spinner label="Loading hotspots…" />
+        <Spinner label={t('loading')} />
       ) : query.isError ? (
-        <LoadError>{errorMessage(query.error, 'Failed to load the hotspots.')}</LoadError>
+        <LoadError>{errorMessage(query.error, t('loadError'))}</LoadError>
       ) : (
         <>
           <p className="text-sm text-slate-600">
-            Places with at least {query.data.minReports} reports within {query.data.radiusM} m of
-            each other in the last {query.data.windowDays} days, fixed ones included. Most reports
-            first.
+            {t('intro', {
+              min: query.data.minReports,
+              radius: query.data.radiusM,
+              days: query.data.windowDays,
+            })}
           </p>
           {query.data.hotspots.length === 0 ? (
             <p className="py-6 text-sm text-slate-500">
-              No hotspots right now: no place has {query.data.minReports} or more reports this close
-              together.
+              {t('none', { min: query.data.minReports })}
             </p>
           ) : (
             <ol className="divide-y divide-slate-100 border-t border-slate-200">
@@ -49,15 +54,15 @@ export function HotspotList({ onShow }: { onShow: (hotspot: Hotspot) => void }) 
                 >
                   <div className="flex min-w-0 flex-col gap-1">
                     <p className="flex flex-wrap items-center gap-2 font-medium text-slate-900">
-                      {hotspotKinds(h)}
+                      {text.kinds(h)}
                       {h.recurring && (
                         <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
-                          Keeps coming back
+                          {t('recurring')}
                         </span>
                       )}
                     </p>
                     <p className="text-sm text-slate-600">
-                      {hotspotCounts(h)} Latest {formatDate(h.latestReportAt)}.
+                      {text.counts(h)} {t('latest', { date: f.date(h.latestReportAt) })}
                     </p>
                     <ul className="flex flex-col gap-0.5 text-sm">
                       {h.reports.slice(0, NAMED).map((r) => (
@@ -74,7 +79,7 @@ export function HotspotList({ onShow }: { onShow: (hotspot: Hotspot) => void }) 
                     onClick={() => onShow(h)}
                     className="self-start rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
                   >
-                    Show on map
+                    {t('showOnMap')}
                   </button>
                 </li>
               ))}

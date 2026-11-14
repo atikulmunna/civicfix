@@ -272,5 +272,38 @@
       "reportIssue": "Report an issue",
       "exploreMap": "Explore the map"
     }
+  },
+  "map": {
+    "eyebrow": "Live map",
+    "title": "Map",
+    "subtitle": "Every reported issue, plotted by location. Shaded areas are hotspots, where reports cluster.",
+    "status": "Status",
+    "allStatuses": "All statuses",
+    "category": "Category",
+    "allCategories": "All categories",
+    "categoriesUnavailable": "Categories unavailable",
+    "hotspotsToggle": "Hotspots",
+    "hotspotsError": "Could not load the hotspots.",
+    "markersError": "Could not load reports for this area.",
+    "loadingReports": "Loading reports…",
+    "inView": "{count, number} in view",
+    "viewReport": "View report",
+    "cameBack": "A fixed problem came back here."
+  },
+  "hotspots": {
+    "heading": "Hotspots",
+    "loading": "Loading hotspots…",
+    "loadError": "Failed to load the hotspots.",
+    "intro": "Places with at least {min, number} reports within {radius, number} m of each other in the last {days, number} days, fixed ones included. Most reports first.",
+    "none": "No hotspots right now: no place has {min, number} or more reports this close together.",
+    "recurring": "Keeps coming back",
+    "latest": "Latest {date}.",
+    "showOnMap": "Show on map",
+    "kindsUnknown": "Reports",
+    "kindsMore": "{top} and {others, plural, one {# other kind} other {# other kinds}}",
+    "counts": "{reports, number} reports within {reach, number} m, {open}.",
+    "openAll": "all fixed",
+    "openNone": "none fixed yet",
+    "openSome": "{count, number} still open"
   }
 }

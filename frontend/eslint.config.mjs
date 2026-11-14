@@ -21,6 +21,9 @@ const TRANSLATED_FILES = [
   'app/reports/page.tsx',
   'app/reports/[[]id]/page.tsx',
   'app/page.tsx',
+  'app/map/page.tsx',
+  'components/reports-map.tsx',
+  'components/hotspot-list.tsx',
 ];
 
 /** Symbols and punctuation that read the same in every language. */

@@ -2,7 +2,8 @@ import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { renderWithQuery } from '@/test-utils';
+import { messagesFor, renderWithQuery } from '@/test-utils';
+import type { Locale } from '@/i18n/locale';
 
 const { get, flyTo } = vi.hoisted(() => ({ get: vi.fn(), flyTo: vi.fn() }));
 vi.mock('@/lib/api', async () => {
@@ -81,6 +82,7 @@ function renderMap(
     showHotspots?: boolean;
     focus?: MapFocus | null;
     onShowHotspotsChange?: () => void;
+    locale?: Locale;
   } = {},
 ) {
   return renderWithQuery(
@@ -89,6 +91,8 @@ function renderMap(
       onShowHotspotsChange={props.onShowHotspotsChange ?? vi.fn()}
       focus={props.focus ?? null}
     />,
+    undefined,
+    { locale: props.locale ?? 'en' },
   );
 }
 
@@ -153,5 +157,17 @@ describe('ReportsMap', () => {
     respond(() => Promise.resolve({ items: [] }));
     renderMap({ focus: { latitude: 23.81, longitude: 90.41, seq: 1 } });
     await waitFor(() => expect(flyTo).toHaveBeenCalledWith([23.81, 90.41], 16));
+  });
+
+  it('reads in Bangla: its filters, count, toggle and hotspot popups', async () => {
+    const t = messagesFor('bn').map;
+    respond(() => Promise.resolve({ items: [marker] }));
+    renderMap({ showHotspots: true, locale: 'bn' });
+    expect(await screen.findByText('১টি', { exact: false })).toBeInTheDocument();
+    expect(screen.getByLabelText(t.status)).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: t.allStatuses })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: t.hotspotsToggle })).toBeChecked();
+    expect(await screen.findByText(t.cameBack)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: new RegExp(t.viewReport) })).toBeInTheDocument();
   });
 });
