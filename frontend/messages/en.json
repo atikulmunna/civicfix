@@ -305,5 +305,44 @@
     "openAll": "all fixed",
     "openNone": "none fixed yet",
     "openSome": "{count, number} still open"
+  },
+  "scorecards": {
+    "eyebrow": "Accountability",
+    "title": "Department scorecards",
+    "subtitle": "How quickly each department responds to and resolves the reports assigned to it.",
+    "loading": "Loading scorecards…",
+    "loadError": "Failed to load the scorecards.",
+    "none": "Scorecards appear here once departments are set up.",
+    "statement": "{count, plural, =0 {No report is past its resolution target right now.} one {# report is past its resolution target right now.} other {# reports are past their resolution target right now.}}",
+    "region": "Scores by department",
+    "columns": {
+      "department": "Department",
+      "overdueNow": "Overdue now",
+      "resolved": "Resolved",
+      "respondedOnTime": "First response on time",
+      "resolvedOnTime": "Resolved on time",
+      "typicalResponse": "Typical first response",
+      "typicalResolve": "Typical time to resolve"
+    },
+    "noData": "No data",
+    "resolvedOf": "{resolved, number} of {assigned, number} assigned",
+    "overdueHeading": "Overdue reports",
+    "cutShort": "Showing the {shown, number} most overdue of {total, number}.",
+    "overTarget": "{duration} over target",
+    "method": {
+      "heading": "How this is measured",
+      "caption": "Targets by severity",
+      "severity": "Severity",
+      "responseWithin": "First response within",
+      "resolvedWithin": "Resolved within",
+      "notes": {
+        "clock": "The clock starts when a report is assigned to a department, so time waiting for review does not count against it. A reassigned report counts for its current department.",
+        "firstResponse": "First response is the department's first status change after assignment.",
+        "window": "Scores cover reports assigned in the last {days, number} days. A report still within its target counts neither way. Overdue reports are counted whatever their age.",
+        "excluded": "Reports rejected or marked as duplicates had nothing to resolve, so they are left out of the resolved percentages.",
+        "disputed": "A fix that residents dispute with photos goes back to the department, and the report counts as unresolved again.",
+        "median": "Typical means the median: half of reports were faster, half slower."
+      }
+    }
   }
 }

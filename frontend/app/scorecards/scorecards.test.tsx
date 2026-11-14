@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, within } from '@testing-library/react';
-import { renderWithQuery } from '@/test-utils';
+import { createTranslator } from 'next-intl';
+import { messagesFor, renderWithQuery } from '@/test-utils';
+import type { Locale } from '@/i18n/locale';
 
 const { get } = vi.hoisted(() => ({ get: vi.fn() }));
 vi.mock('@/lib/api', async () => {
@@ -44,14 +46,14 @@ const overdue = (reportId: string, title: string, hoursOverdue: number) => ({
   hoursOverdue,
 });
 
-function renderWith(departments: DepartmentScorecard[]) {
+function renderWith(departments: DepartmentScorecard[], locale: Locale = 'en') {
   get.mockResolvedValue({
     generatedAt: '2026-11-05T00:00:00.000Z',
     windowDays: 90,
     targets,
     departments,
   });
-  renderWithQuery(<ScorecardsPage />);
+  renderWithQuery(<ScorecardsPage />, undefined, { locale });
 }
 
 describe('department scorecards page', () => {
@@ -159,5 +161,51 @@ describe('department scorecards page', () => {
     expect(
       await screen.findByText('Scorecards appear here once departments are set up.'),
     ).toBeInTheDocument();
+  });
+});
+
+describe('department scorecards page in Bangla', () => {
+  const bn = createTranslator({
+    locale: 'bn',
+    messages: messagesFor('bn'),
+    namespace: 'scorecards',
+  });
+
+  beforeEach(() => {
+    get.mockReset();
+  });
+
+  it('says how many reports are overdue, one or many', async () => {
+    renderWith([card({ overdueCount: 3 })], 'bn');
+    expect(await screen.findByText(bn('statement', { count: 3 }))).toBeInTheDocument();
+  });
+
+  it('says so when nothing is overdue', async () => {
+    renderWith([card({})], 'bn');
+    expect(await screen.findByText(bn('statement', { count: 0 }))).toBeInTheDocument();
+  });
+
+  it('shows measures with Bangla digits, and Bangla "No data"', async () => {
+    renderWith(
+      [
+        card({
+          departmentId: 'a',
+          name: 'Roads',
+          assigned: 12,
+          resolved: 7,
+          resolutionRate: 0.5833,
+          medianResolveHours: 96,
+        }),
+        card({ departmentId: 'b', name: 'Water' }),
+      ],
+      'bn',
+    );
+    const row = await screen.findByRole('row', { name: /Roads/ });
+    expect(within(row).getByText('৫৮%')).toBeInTheDocument();
+    expect(within(row).getByText(/৪/)).toBeInTheDocument();
+    const empty = screen.getByRole('row', { name: /Water/ });
+    expect(within(empty).getAllByText(bn('noData'))).toHaveLength(5);
+    expect(screen.getByRole('region', { name: bn('region') })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: bn('method.heading') })).toBeInTheDocument();
   });
 });
