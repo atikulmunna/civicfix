@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { renderWithQuery } from '@/test-utils';
+import { createTranslator } from 'next-intl';
+import { messagesFor, renderWithQuery } from '@/test-utils';
+import type { Locale } from '@/i18n/locale';
 
 const { get, post } = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn() }));
 vi.mock('next/navigation', () => ({
@@ -21,7 +23,7 @@ import { ChangePasswordForm } from './change-password-form';
 
 const ME = { id: 'u1', name: 'Me', email: 'me@e.com', role: 'citizen', mustChangePassword: false };
 
-function renderForm(user = ME) {
+function renderForm(user = ME, locale: Locale = 'en') {
   get.mockImplementation((path: string) =>
     path === '/auth/me' ? Promise.resolve({ user }) : Promise.reject(new Error(path)),
   );
@@ -31,6 +33,8 @@ function renderForm(user = ME) {
         <ChangePasswordForm />
       </AuthProvider>
     </ToastProvider>,
+    undefined,
+    { locale },
   );
 }
 
@@ -80,5 +84,50 @@ describe('ChangePasswordForm', () => {
   it('explains why after an admin reset', async () => {
     renderForm({ ...ME, mustChangePassword: true });
     expect(await screen.findByText(/An administrator reset your password/)).toBeInTheDocument();
+  });
+});
+
+describe('ChangePasswordForm in Bangla', () => {
+  const bn = createTranslator({
+    locale: 'bn',
+    messages: messagesFor('bn'),
+    namespace: 'auth.password',
+  });
+
+  beforeEach(() => {
+    get.mockReset();
+    post.mockReset();
+  });
+
+  it('catches a short password and a mismatch in Bangla, with Bangla digits', async () => {
+    renderForm(ME, 'bn');
+    const u = userEvent.setup();
+    await u.type(await screen.findByLabelText(bn('current')), 'OldPassword1');
+    await u.type(screen.getByLabelText(bn('new')), 'short');
+    await u.type(screen.getByLabelText(bn('confirm')), 'short');
+    await u.click(screen.getByRole('button', { name: bn('submit') }));
+    expect(await screen.findByText(bn('tooShort', { min: 8 }))).toHaveTextContent('৮');
+
+    await u.clear(screen.getByLabelText(bn('new')));
+    await u.type(screen.getByLabelText(bn('new')), 'NewPassword12');
+    await u.clear(screen.getByLabelText(bn('confirm')));
+    await u.type(screen.getByLabelText(bn('confirm')), 'Different99');
+    await u.click(screen.getByRole('button', { name: bn('submit') }));
+    expect(await screen.findByText(bn('mismatch'))).toBeInTheDocument();
+    expect(post).not.toHaveBeenCalled();
+  });
+
+  it('explains an admin reset and confirms the change in Bangla', async () => {
+    post.mockResolvedValue({ user: ME });
+    renderForm({ ...ME, mustChangePassword: true }, 'bn');
+    expect(await screen.findByText(bn('resetNotice'))).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: bn('heading') })).toBeInTheDocument();
+
+    const u = userEvent.setup();
+    await u.type(screen.getByLabelText(bn('current')), 'OldPassword1');
+    await u.type(screen.getByLabelText(bn('new')), 'NewPassword12');
+    await u.type(screen.getByLabelText(bn('confirm')), 'NewPassword12');
+    await u.click(screen.getByRole('button', { name: bn('submit') }));
+    expect(await screen.findByText(bn('changed'))).toBeInTheDocument();
   });
 });

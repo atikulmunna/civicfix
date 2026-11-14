@@ -27,6 +27,11 @@ const TRANSLATED_FILES = [
   'app/scorecards/page.tsx',
   'app/reports/new/page.tsx',
   'components/location-picker.tsx',
+  'app/login/page.tsx',
+  'app/register/page.tsx',
+  'components/change-password-form.tsx',
+  'components/password-reset-banner.tsx',
+  'components/require-auth.tsx',
 ];
 
 /** Symbols and punctuation that read the same in every language. */

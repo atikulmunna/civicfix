@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen } from '@testing-library/react';
-import { renderWithQuery } from '@/test-utils';
+import { createTranslator } from 'next-intl';
+import { messagesFor, renderWithQuery } from '@/test-utils';
+import type { Locale } from '@/i18n/locale';
 
 const { get, pathname } = vi.hoisted(() => ({ get: vi.fn(), pathname: { value: '/' } }));
 vi.mock('next/navigation', () => ({
@@ -16,7 +18,7 @@ vi.mock('@/lib/api', async () => {
 import { AuthProvider } from '@/components/auth-context';
 import { PasswordResetBanner } from './password-reset-banner';
 
-function renderBanner(mustChangePassword: boolean, path = '/') {
+function renderBanner(mustChangePassword: boolean, path = '/', locale: Locale = 'en') {
   pathname.value = path;
   get.mockResolvedValue({ user: { id: 'u1', role: 'citizen', mustChangePassword } });
   return renderWithQuery(
@@ -24,6 +26,8 @@ function renderBanner(mustChangePassword: boolean, path = '/') {
       <PasswordResetBanner />
       <p>page</p>
     </AuthProvider>,
+    undefined,
+    { locale },
   );
 }
 
@@ -48,5 +52,25 @@ describe('PasswordResetBanner', () => {
     renderBanner(true, '/me');
     await screen.findByText('page');
     expect(screen.queryByRole('link', { name: 'Choose a new password' })).not.toBeInTheDocument();
+  });
+});
+
+describe('PasswordResetBanner in Bangla', () => {
+  beforeEach(() => {
+    get.mockReset();
+  });
+
+  it('asks for a new password in Bangla', async () => {
+    const bn = createTranslator({
+      locale: 'bn',
+      messages: messagesFor('bn'),
+      namespace: 'auth.banner',
+    });
+    renderBanner(true, '/', 'bn');
+    expect(await screen.findByRole('link', { name: bn('link') })).toHaveAttribute(
+      'href',
+      '/me#change-password',
+    );
+    expect(screen.getByRole('status')).toHaveTextContent(bn('text'));
   });
 });

@@ -380,5 +380,57 @@
       "prompt": "Click the map to set the location.",
       "useMine": "Use my location"
     }
+  },
+  "auth": {
+    "fields": {
+      "name": "Name",
+      "email": "Email",
+      "password": "Password",
+      "phone": "Phone (optional)"
+    },
+    "unexpected": "Something went wrong. Please try again.",
+    "login": {
+      "eyebrow": "Welcome back",
+      "title": "Sign in",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "noAccount": "No account?",
+      "createOne": "Create one",
+      "signedIn": "Signed in.",
+      "mustChange": "Please choose a new password."
+    },
+    "register": {
+      "eyebrow": "Get started",
+      "title": "Create your account",
+      "passwordHint": "At least {min, number} characters.",
+      "submit": "Create account",
+      "submitting": "Creating…",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "created": "Account created. Welcome to CivicFix!"
+    },
+    "password": {
+      "heading": "Change password",
+      "resetNotice": "An administrator reset your password. Choose a new one to finish signing in safely.",
+      "staySignedIn": "You will stay signed in here and be signed out everywhere else.",
+      "current": "Current password",
+      "new": "New password",
+      "confirm": "Confirm new password",
+      "submit": "Change password",
+      "submitting": "Changing…",
+      "tooShort": "Your new password must be at least {min, number} characters.",
+      "mismatch": "The new passwords do not match.",
+      "changed": "Password changed. You were signed out on your other devices.",
+      "failed": "Could not change your password."
+    },
+    "banner": {
+      "text": "You are using a temporary password set by an administrator.",
+      "link": "Choose a new password"
+    },
+    "gate": {
+      "checking": "Checking your session…",
+      "deniedTitle": "Access denied",
+      "deniedBody": "You don’t have permission to view this page."
+    }
   }
 }

@@ -3,12 +3,15 @@
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/components/auth-context';
 import { useToast } from '@/components/toast';
 import { ApiError } from '@/lib/api';
 import { Button, Card, FieldError, Input, Label } from '@/components/ui';
+import { MIN_PASSWORD_LENGTH } from '@/components/change-password-form';
 
 export default function RegisterPage() {
+  const t = useTranslations('auth');
   const { register } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
@@ -32,10 +35,10 @@ export default function RegisterPage() {
         password: form.password,
         phone: form.phone || undefined,
       });
-      toast('Account created. Welcome to CivicFix!', 'success');
+      toast(t('register.created'), 'success');
       router.push('/');
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.');
+      setError(err instanceof ApiError ? err.message : t('unexpected'));
     } finally {
       setBusy(false);
     }
@@ -43,18 +46,20 @@ export default function RegisterPage() {
 
   return (
     <div className="mx-auto max-w-sm py-10">
-      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">Get started</p>
+      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">
+        {t('register.eyebrow')}
+      </p>
       <h1 className="mb-6 mt-2 text-3xl font-bold tracking-tight text-slate-900">
-        Create your account
+        {t('register.title')}
       </h1>
       <Card>
         <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
           <div>
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name">{t('fields.name')}</Label>
             <Input id="name" value={form.name} onChange={update('name')} required />
           </div>
           <div>
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('fields.email')}</Label>
             <Input
               id="email"
               type="email"
@@ -65,7 +70,7 @@ export default function RegisterPage() {
             />
           </div>
           <div>
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t('fields.password')}</Label>
             <Input
               id="password"
               type="password"
@@ -74,22 +79,24 @@ export default function RegisterPage() {
               onChange={update('password')}
               required
             />
-            <p className="mt-1 text-xs text-slate-500">At least 8 characters.</p>
+            <p className="mt-1 text-xs text-slate-500">
+              {t('register.passwordHint', { min: MIN_PASSWORD_LENGTH })}
+            </p>
           </div>
           <div>
-            <Label htmlFor="phone">Phone (optional)</Label>
+            <Label htmlFor="phone">{t('fields.phone')}</Label>
             <Input id="phone" value={form.phone} onChange={update('phone')} />
           </div>
           <FieldError>{error}</FieldError>
           <Button type="submit" disabled={busy}>
-            {busy ? 'Creating…' : 'Create account'}
+            {busy ? t('register.submitting') : t('register.submit')}
           </Button>
         </form>
       </Card>
       <p className="mt-4 text-center text-sm text-slate-600">
-        Already have an account?{' '}
+        {t('register.haveAccount')}{' '}
         <Link href="/login" className="font-medium text-teal-700 hover:underline">
-          Sign in
+          {t('register.signIn')}
         </Link>
       </p>
     </div>
