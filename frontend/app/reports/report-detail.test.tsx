@@ -86,8 +86,10 @@ describe('ReportDetail in Bangla', () => {
     expect(screen.getByRole('heading', { name: t.historyHeading })).toBeInTheDocument();
   });
 
-  it("keeps the API's own message when the report fails to load", async () => {
+  it("words a failed load in Bangla, never the server's English", async () => {
     render('/reports/r1');
-    expect(await screen.findByRole('alert')).toHaveTextContent('Service down.');
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(messagesFor('bn').errors.codes.INTERNAL_ERROR);
+    expect(alert).not.toHaveTextContent('Service down.');
   });
 });

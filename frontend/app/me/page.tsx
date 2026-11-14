@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 import { useTranslations } from 'next-intl';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, errorMessage } from '@/lib/api';
+import { api } from '@/lib/api';
 import { queryKeys } from '@/lib/query-keys';
 import { RequireAuth } from '@/components/require-auth';
 import { useAuth } from '@/components/auth-context';
@@ -12,8 +12,10 @@ import { useToast } from '@/components/toast';
 import { ChangePasswordForm } from '@/components/change-password-form';
 import { useFormat } from '@/lib/i18n/use-format';
 import { Button, Card, FieldError, Input, Label, PageHeader } from '@/components/ui';
+import { useErrorMessage } from '@/lib/i18n/use-error-message';
 
 function ProfileForm() {
+  const errorText = useErrorMessage();
   const t = useTranslations('me');
   const f = useFormat();
   const { user } = useAuth();
@@ -32,7 +34,7 @@ function ProfileForm() {
       queryClient.setQueryData(queryKeys.me, updated);
       toast(t('profile.saved'), 'success');
     },
-    onError: (err) => setError(errorMessage(err, t('profile.saveFailed'))),
+    onError: (err) => setError(errorText(err, t('profile.saveFailed'))),
   });
   const busy = save.isPending;
 

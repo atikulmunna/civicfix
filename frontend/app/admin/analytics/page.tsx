@@ -1,15 +1,17 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { api, errorMessage } from '@/lib/api';
+import { api } from '@/lib/api';
 import { queryKeys } from '@/lib/query-keys';
 import type { ReportStatus, Severity } from '@/lib/types';
 import { useFormat } from '@/lib/i18n/use-format';
 import { RequireAuth } from '@/components/require-auth';
 import { BarChart } from '@/components/admin/bar-chart';
 import { Card, LoadError, PageHeader, Spinner, StatTile } from '@/components/ui';
+import { useErrorMessage } from '@/lib/i18n/use-error-message';
 
 function Analytics() {
+  const errorText = useErrorMessage();
   const f = useFormat();
   const summaryQuery = useQuery({
     queryKey: queryKeys.analytics('summary'),
@@ -34,7 +36,7 @@ function Analytics() {
   if (queries.some((q) => q.isPending)) return <Spinner />;
   const failed = queries.find((q) => q.isError);
   if (failed || !summaryQuery.data) {
-    return <LoadError>{errorMessage(failed?.error, 'Failed to load analytics.')}</LoadError>;
+    return <LoadError>{errorText(failed?.error, 'Failed to load analytics.')}</LoadError>;
   }
   const summary = summaryQuery.data;
   const categories = categoriesQuery.data?.categories ?? [];

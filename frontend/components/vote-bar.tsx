@@ -4,12 +4,13 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, errorMessage } from '@/lib/api';
+import { api } from '@/lib/api';
 import { invalidateReportLists } from '@/lib/query-client';
 import { queryKeys } from '@/lib/query-keys';
 import type { Report, ReportViewerState, VoteCounts } from '@/lib/types';
 import { useAuth } from './auth-context';
 import { useToast } from './toast';
+import { useErrorMessage } from '@/lib/i18n/use-error-message';
 
 type Vote = 'upvote' | 'confirm' | 'false-report';
 
@@ -42,6 +43,7 @@ export function VoteBar({
   /** The signed-in viewer's votes and follow, from the report detail. */
   initialViewer?: ReportViewerState;
 }) {
+  const errorText = useErrorMessage();
   const t = useTranslations('votes');
   const { user } = useAuth();
   const { toast } = useToast();
@@ -84,14 +86,14 @@ export function VoteBar({
       // Every list showing counts or priority goes stale too.
       void invalidateReportLists(queryClient);
     },
-    onError: (err, { vote }) => toast(errorMessage(err, t(FAILED[vote])), 'error'),
+    onError: (err, { vote }) => toast(errorText(err, t(FAILED[vote])), 'error'),
   });
 
   const follow = useMutation({
     mutationFn: (undo: boolean) =>
       undo ? api.del(`/reports/${reportId}/follow`) : api.post(`/reports/${reportId}/follow`),
     onSuccess: ({ following }) => updateViewer({ following }),
-    onError: (err) => toast(errorMessage(err, t('followFailed')), 'error'),
+    onError: (err) => toast(errorText(err, t('followFailed')), 'error'),
   });
 
   const busy = castVote.isPending || follow.isPending;

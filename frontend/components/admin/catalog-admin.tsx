@@ -2,11 +2,12 @@
 
 import { useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, errorMessage } from '@/lib/api';
+import { api } from '@/lib/api';
 import { queryKeys } from '@/lib/query-keys';
 import { useToast } from '@/components/toast';
 import { Button, Input, LoadError, Spinner } from '@/components/ui';
 import type { Category, Department } from '@/lib/types';
+import { useErrorMessage } from '@/lib/i18n/use-error-message';
 
 type CatalogItem = Category | Department;
 
@@ -27,6 +28,7 @@ function secondaryOf(item: CatalogItem): string | null {
 
 /** Generic CRUD admin for categories & departments (name + optional field). */
 export function CatalogAdmin({ config }: { config: CatalogConfig }) {
+  const errorText = useErrorMessage();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [name, setName] = useState('');
@@ -54,7 +56,7 @@ export function CatalogAdmin({ config }: { config: CatalogConfig }) {
       setSecondary('');
       await invalidate();
     },
-    onError: (err) => toast(errorMessage(err, 'Failed to create.'), 'error'),
+    onError: (err) => toast(errorText(err, 'Failed to create.'), 'error'),
   });
 
   const setActive = useMutation({
@@ -63,7 +65,7 @@ export function CatalogAdmin({ config }: { config: CatalogConfig }) {
         ? api.patch(`${config.adminPath}/${item.id}`, { isActive: true })
         : api.del(`${config.adminPath}/${item.id}`),
     onSuccess: () => invalidate(),
-    onError: (err) => toast(errorMessage(err, 'Failed.'), 'error'),
+    onError: (err) => toast(errorText(err, 'Failed.'), 'error'),
   });
 
   function onCreate(e: FormEvent) {
@@ -102,7 +104,7 @@ export function CatalogAdmin({ config }: { config: CatalogConfig }) {
       {items.isPending ? (
         <Spinner />
       ) : items.isError ? (
-        <LoadError>{errorMessage(items.error, 'Failed to load items.')}</LoadError>
+        <LoadError>{errorText(items.error, 'Failed to load items.')}</LoadError>
       ) : (
         <ul className="divide-y divide-slate-100">
           {items.data.map((item) => (

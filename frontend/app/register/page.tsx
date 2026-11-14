@@ -6,14 +6,15 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/components/auth-context';
 import { useToast } from '@/components/toast';
-import { ApiError } from '@/lib/api';
 import { Button, Card, FieldError, Input, Label } from '@/components/ui';
 import { MIN_PASSWORD_LENGTH } from '@/components/change-password-form';
+import { useErrorMessage } from '@/lib/i18n/use-error-message';
 
 /** Catches obvious slips in the browser; the API checks the address properly. */
 const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function RegisterPage() {
+  const errorText = useErrorMessage();
   const t = useTranslations('auth');
   const { register } = useAuth();
   const router = useRouter();
@@ -46,7 +47,7 @@ export default function RegisterPage() {
       toast(t('register.created'), 'success');
       router.push('/');
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : t('unexpected'));
+      setError(errorText(err, t('unexpected')));
     } finally {
       setBusy(false);
     }

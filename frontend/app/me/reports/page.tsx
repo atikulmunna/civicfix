@@ -4,13 +4,15 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { api, errorMessage } from '@/lib/api';
+import { api } from '@/lib/api';
 import { queryKeys } from '@/lib/query-keys';
 import { RequireAuth } from '@/components/require-auth';
 import { ReportCard } from '@/components/report-card';
 import { Button, LoadError, PageHeader, Spinner } from '@/components/ui';
+import { useErrorMessage } from '@/lib/i18n/use-error-message';
 
 function MyReports() {
+  const errorText = useErrorMessage();
   const t = useTranslations('me');
   const paging = useTranslations('common');
   const [page, setPage] = useState(1);
@@ -39,7 +41,7 @@ function MyReports() {
       {reports.isPending ? (
         <Spinner />
       ) : reports.isError ? (
-        <LoadError>{errorMessage(reports.error, t('reports.loadError'))}</LoadError>
+        <LoadError>{errorText(reports.error, t('reports.loadError'))}</LoadError>
       ) : data && data.items.length > 0 ? (
         <>
           <div className="grid gap-4 md:grid-cols-2">

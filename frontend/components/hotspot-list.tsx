@@ -3,18 +3,20 @@
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
-import { api, errorMessage } from '@/lib/api';
+import { api } from '@/lib/api';
 import { useHotspotText } from '@/lib/hotspots';
 import { useFormat } from '@/lib/i18n/use-format';
 import { queryKeys } from '@/lib/query-keys';
 import type { Hotspot } from '@/lib/types';
 import { LoadError, Spinner } from './ui';
+import { useErrorMessage } from '@/lib/i18n/use-error-message';
 
 /** Reports named per hotspot in the list; the rest are on the map. */
 const NAMED = 3;
 
 /** Places where reports cluster, most reports first (F4). */
 export function HotspotList({ onShow }: { onShow: (hotspot: Hotspot) => void }) {
+  const errorText = useErrorMessage();
   const t = useTranslations('hotspots');
   const text = useHotspotText();
   const f = useFormat();
@@ -31,7 +33,7 @@ export function HotspotList({ onShow }: { onShow: (hotspot: Hotspot) => void }) 
       {query.isPending ? (
         <Spinner label={t('loading')} />
       ) : query.isError ? (
-        <LoadError>{errorMessage(query.error, t('loadError'))}</LoadError>
+        <LoadError>{errorText(query.error, t('loadError'))}</LoadError>
       ) : (
         <>
           <p className="text-sm text-slate-600">

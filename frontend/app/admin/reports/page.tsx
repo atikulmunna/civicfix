@@ -3,13 +3,14 @@
 import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { api, errorMessage } from '@/lib/api';
+import { api } from '@/lib/api';
 import { asSeverity, asStatus, SEVERITY_OPTIONS, STATUS_OPTIONS } from '@/lib/format';
 import { useFormat } from '@/lib/i18n/use-format';
 import { queryKeys } from '@/lib/query-keys';
 import { RequireAuth } from '@/components/require-auth';
 import { ReportCard } from '@/components/report-card';
 import { Button, Card, LoadError, PageHeader, Select, Spinner } from '@/components/ui';
+import { useErrorMessage } from '@/lib/i18n/use-error-message';
 
 const ADMIN_SORTS = [
   { value: 'priority', label: 'Highest priority' },
@@ -23,6 +24,7 @@ function asAdminSort(value: string) {
 }
 
 function AdminReportsList() {
+  const errorText = useErrorMessage();
   const f = useFormat();
   const searchParams = useSearchParams();
   const [filters, setFilters] = useState({
@@ -120,7 +122,7 @@ function AdminReportsList() {
       {reports.isPending ? (
         <Spinner />
       ) : reports.isError ? (
-        <LoadError>{errorMessage(reports.error, 'Failed to load reports.')}</LoadError>
+        <LoadError>{errorText(reports.error, 'Failed to load reports.')}</LoadError>
       ) : data && data.items.length > 0 ? (
         <>
           <div className="grid gap-4 md:grid-cols-2">

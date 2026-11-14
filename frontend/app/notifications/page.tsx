@@ -3,19 +3,21 @@
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, errorMessage } from '@/lib/api';
+import { api } from '@/lib/api';
 import type { Notification, Paginated } from '@/lib/types';
 import { useFormat } from '@/lib/i18n/use-format';
 import { queryKeys } from '@/lib/query-keys';
 import { RequireAuth } from '@/components/require-auth';
 import { useToast } from '@/components/toast';
 import { Button, LoadError, PageHeader, Spinner } from '@/components/ui';
+import { useErrorMessage } from '@/lib/i18n/use-error-message';
 
 interface NotificationsData extends Paginated<Notification> {
   unreadCount: number;
 }
 
 function NotificationsList() {
+  const errorText = useErrorMessage();
   const t = useTranslations('notifications');
   const f = useFormat();
   const router = useRouter();
@@ -40,13 +42,13 @@ function NotificationsList() {
           : d,
       );
     },
-    onError: (err) => toast(errorMessage(err, t('markReadFailed')), 'error'),
+    onError: (err) => toast(errorText(err, t('markReadFailed')), 'error'),
   });
 
   const markAll = useMutation({
     mutationFn: () => api.patch('/notifications/read-all'),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.notifications }),
-    onError: (err) => toast(errorMessage(err, t('markAllFailed')), 'error'),
+    onError: (err) => toast(errorText(err, t('markAllFailed')), 'error'),
   });
 
   function open(n: Notification) {
@@ -56,7 +58,7 @@ function NotificationsList() {
 
   if (notifications.isPending) return <Spinner />;
   if (notifications.isError) {
-    return <LoadError>{errorMessage(notifications.error, t('loadError'))}</LoadError>;
+    return <LoadError>{errorText(notifications.error, t('loadError'))}</LoadError>;
   }
 
   return (

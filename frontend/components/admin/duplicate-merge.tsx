@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { api, errorMessage } from '@/lib/api';
+import { api } from '@/lib/api';
 import { useFormat } from '@/lib/i18n/use-format';
 import { queryKeys } from '@/lib/query-keys';
 import type { Report, ReportStatus } from '@/lib/types';
 import { StatusBadge } from '../badges';
 import { Button, Card, Input, Label, LoadError, Spinner } from '../ui';
+import { useErrorMessage } from '@/lib/i18n/use-error-message';
 
 /** A report can be merged only before it is verified (§26: SUBMITTED or UNDER_REVIEW). */
 const MERGEABLE: ReadonlySet<ReportStatus> = new Set<ReportStatus>(['SUBMITTED', 'UNDER_REVIEW']);
@@ -33,6 +34,7 @@ export function DuplicateMerge({
   busy: boolean;
   onMerge: (originalId: string) => void;
 }) {
+  const errorText = useErrorMessage();
   const f = useFormat();
   const mergeable = MERGEABLE.has(report.status);
   const [target, setTarget] = useState<Target | null>(null);
@@ -87,7 +89,7 @@ export function DuplicateMerge({
           {query.isPending ? (
             <Spinner label="Looking for likely duplicates…" />
           ) : query.isError ? (
-            <LoadError>{errorMessage(query.error, 'Failed to look for duplicates.')}</LoadError>
+            <LoadError>{errorText(query.error, 'Failed to look for duplicates.')}</LoadError>
           ) : (
             <div className="flex flex-col gap-2">
               <p className="text-sm text-slate-600">

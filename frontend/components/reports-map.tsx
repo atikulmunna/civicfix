@@ -13,7 +13,7 @@ import {
   useMap,
   useMapEvents,
 } from 'react-leaflet';
-import { api, errorMessage } from '@/lib/api';
+import { api } from '@/lib/api';
 import { asStatus, STATUS_OPTIONS } from '@/lib/format';
 import { useFormat } from '@/lib/i18n/use-format';
 import { useHotspotText } from '@/lib/hotspots';
@@ -23,6 +23,7 @@ import type { Hotspot } from '@/lib/types';
 import { StatusBadge } from './badges';
 import { queryKeys } from '@/lib/query-keys';
 import { Select } from './ui';
+import { useErrorMessage } from '@/lib/i18n/use-error-message';
 
 const DHAKA: [number, number] = [23.78, 90.4];
 
@@ -104,6 +105,7 @@ export function ReportsMap({
   onShowHotspotsChange: (show: boolean) => void;
   focus: MapFocus | null;
 }) {
+  const errorText = useErrorMessage();
   const t = useTranslations('map');
   const f = useFormat();
   const [status, setStatus] = useState('');
@@ -186,13 +188,13 @@ export function ReportsMap({
         </label>
         {showHotspots && hotspotsQuery.isError && (
           <span role="alert" className="self-center text-sm text-red-700">
-            {errorMessage(hotspotsQuery.error, t('hotspotsError'))}
+            {errorText(hotspotsQuery.error, t('hotspotsError'))}
           </span>
         )}
         <span className="ml-auto self-center text-sm text-slate-500" aria-live="polite">
           {markersQuery.isError ? (
             <span role="alert" className="text-red-700">
-              {errorMessage(markersQuery.error, t('markersError'))}
+              {errorText(markersQuery.error, t('markersError'))}
             </span>
           ) : markersQuery.isPending ? (
             t('loadingReports')

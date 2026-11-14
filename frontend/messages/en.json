@@ -493,6 +493,85 @@
       "reference": "Reference",
       "retry": "Try again",
       "home": "Home"
+    },
+    "server": {
+      "common": {
+        "notFound": "Not found.",
+        "authRequired": "Authentication required.",
+        "tokenInvalid": "Invalid or expired access token.",
+        "forbidden": "You do not have permission to perform this action.",
+        "duplicate": "This resource already exists.",
+        "missingReference": "A referenced resource does not exist.",
+        "invalidId": "Invalid identifier.",
+        "invalidRequest": "Invalid request data.",
+        "rateLimited": "Too many requests. Please try again later.",
+        "internal": "Internal server error.",
+        "unavailable": "Database unavailable."
+      },
+      "upload": {
+        "type": "Only JPEG, PNG, or WebP images are allowed.",
+        "unreadable": "The image could not be read. Please upload a valid photo.",
+        "tooManyPixels": "Image dimensions are too large (max {megapixels, number} megapixels).",
+        "tooLarge": "Each image must be at most {bytes, number} bytes."
+      },
+      "auth": {
+        "emailTaken": "An account with this email already exists.",
+        "badCredentials": "Invalid email or password.",
+        "deactivated": "This account has been deactivated.",
+        "signInAgain": "Please sign in again.",
+        "wrongCurrentPassword": "Your current password is incorrect.",
+        "samePassword": "Choose a password different from your current one.",
+        "sessionInvalid": "Invalid or expired session. Please log in again.",
+        "noRefreshToken": "No refresh token provided.",
+        "userNotFound": "User not found.",
+        "passwordTooShort": "Password must be at least {min, number} characters.",
+        "passwordCommon": "Password is too common; choose a stronger one."
+      },
+      "report": {
+        "imageRequired": "At least one image is required.",
+        "categoryMissing": "The selected category does not exist.",
+        "notFound": "Report not found.",
+        "notOwner": "You can only modify your own reports.",
+        "locked": "A report can only be edited or deleted while it is still under submission."
+      },
+      "comment": {
+        "empty": "Comment cannot be empty.",
+        "notFound": "Comment not found.",
+        "notOwner": "You can only delete your own comments."
+      },
+      "fixCheck": {
+        "photoRequired": "Add a photo of how it looks now.",
+        "notResolved": "Only a resolved report has a fix to check.",
+        "notResident": "Fixes are checked by residents, not by admins or the department that made them.",
+        "already": "You have already checked this fix."
+      },
+      "notification": {
+        "notFound": "Notification not found."
+      },
+      "field": {
+        "nameRequired": "Name is required.",
+        "email": "A valid email is required.",
+        "category": "A valid category is required.",
+        "passwordRequired": "Password is required.",
+        "currentPasswordRequired": "Current password is required.",
+        "newPasswordRequired": "New password is required.",
+        "titleTooShort": "Title must be at least {min, number} characters.",
+        "descriptionTooShort": "Description must be at least {min, number} characters.",
+        "noChanges": "No fields to update."
+      }
+    },
+    "codes": {
+      "AUTH_REQUIRED": "Please sign in to continue.",
+      "FORBIDDEN": "You do not have permission to do this.",
+      "VALIDATION_ERROR": "Some details are not valid. Please check them and try again.",
+      "NOT_FOUND": "We could not find what you were looking for.",
+      "DUPLICATE_RESOURCE": "This already exists.",
+      "INVALID_STATUS_TRANSITION": "This change is not allowed right now.",
+      "RATE_LIMITED": "Too many tries. Please wait a little and try again.",
+      "UPLOAD_FAILED": "The upload did not work. Please try again.",
+      "SERVICE_UNAVAILABLE": "The service is unavailable right now. Please try again soon.",
+      "INTERNAL_ERROR": "Something went wrong. Please try again.",
+      "NETWORK_ERROR": "Could not reach CivicFix. Check your connection and try again."
     }
   }
 }

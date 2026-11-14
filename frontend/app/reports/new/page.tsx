@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { skipToken, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, errorMessage } from '@/lib/api';
+import { api } from '@/lib/api';
 import type { Report } from '@/lib/types';
 import { SEVERITY_OPTIONS } from '@/lib/format';
 import { useFormat } from '@/lib/i18n/use-format';
@@ -35,6 +35,7 @@ import {
 } from '@/components/ui';
 import type { LatLng } from '@/components/location-picker';
 import Link from 'next/link';
+import { useErrorMessage } from '@/lib/i18n/use-error-message';
 
 /** Match the API (backend reports.schemas.ts), so the reader learns before the upload. */
 const TITLE_MIN = 3;
@@ -51,6 +52,7 @@ const LocationPicker = dynamic(
 );
 
 function NewReportForm() {
+  const errorText = useErrorMessage();
   const t = useTranslations('newReport');
   const f = useFormat();
   const router = useRouter();
@@ -77,7 +79,7 @@ function NewReportForm() {
       toast(t('submitted'), 'success');
       router.push(`/reports/${report.id}`);
     },
-    onError: (err) => setError(errorMessage(err, t('errors.submitFailed'))),
+    onError: (err) => setError(errorText(err, t('errors.submitFailed'))),
   });
   const busy = preparing || submit.isPending;
 

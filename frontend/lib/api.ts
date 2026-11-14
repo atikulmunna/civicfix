@@ -12,17 +12,56 @@ import type { paths } from './api-schema';
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api/v1';
 
+/** Values for a message's placeholders. */
+export type MessageParams = Record<string, string | number>;
+
+/** What the server sent to word a message itself (F5); see lib/i18n/use-error-message.ts. */
+export interface MessageKeyed {
+  messageKey?: string;
+  messageParams?: MessageParams;
+}
+
 export class ApiError extends Error {
   code: string;
   status: number;
   details?: unknown;
-  constructor(message: string, code: string, status: number, details?: unknown) {
+  messageKey?: string;
+  messageParams?: MessageParams;
+  constructor(
+    message: string,
+    code: string,
+    status: number,
+    details?: unknown,
+    keyed: MessageKeyed = {},
+  ) {
     super(message);
     this.name = 'ApiError';
     this.code = code;
     this.status = status;
     this.details = details;
+    if (keyed.messageKey !== undefined) this.messageKey = keyed.messageKey;
+    if (keyed.messageParams !== undefined) this.messageParams = keyed.messageParams;
   }
+}
+
+/** Placeholder values, if `value` is an object of strings and numbers. */
+export function readParams(value: unknown): MessageParams | undefined {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return undefined;
+  const params: MessageParams = {};
+  for (const [name, v] of Object.entries(value)) {
+    if (typeof v !== 'string' && typeof v !== 'number') return undefined;
+    params[name] = v;
+  }
+  return params;
+}
+
+/** The key and values an envelope or validation issue carries, when well formed. */
+export function readKeyed(source: { messageKey?: unknown; messageParams?: unknown }): MessageKeyed {
+  const keyed: MessageKeyed = {};
+  if (typeof source.messageKey === 'string') keyed.messageKey = source.messageKey;
+  const params = readParams(source.messageParams);
+  if (params) keyed.messageParams = params;
+  return keyed;
 }
 
 interface Envelope<T> {
@@ -31,6 +70,8 @@ interface Envelope<T> {
   message?: string;
   code?: string;
   details?: unknown;
+  messageKey?: unknown;
+  messageParams?: unknown;
 }
 
 /** Per-call options. `signal` lets callers (e.g. TanStack Query) cancel stale requests. */
@@ -101,14 +142,10 @@ async function send<T>(path: string, options: RequestInit): Promise<T> {
       body?.code ?? 'INTERNAL_ERROR',
       res.status,
       body?.details,
+      body ? readKeyed(body) : {},
     );
   }
   return body.data as T;
-}
-
-/** User-facing message for a failed call: the API's message, or `fallback`. */
-export function errorMessage(error: unknown, fallback: string): string {
-  return error instanceof ApiError ? error.message : fallback;
 }
 
 function toQuery(params: unknown): string {

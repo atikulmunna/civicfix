@@ -3,13 +3,14 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { api, errorMessage } from '@/lib/api';
+import { api } from '@/lib/api';
 import { asSeverity, asStatus, SEVERITY_OPTIONS, STATUS_OPTIONS } from '@/lib/format';
 import { useFormat } from '@/lib/i18n/use-format';
 import { queryKeys } from '@/lib/query-keys';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { ReportCard } from '@/components/report-card';
 import { Button, Card, Input, LoadError, PageHeader, Select, Spinner } from '@/components/ui';
+import { useErrorMessage } from '@/lib/i18n/use-error-message';
 
 const SORTS = ['newest', 'oldest', 'priority', 'most_confirmed'] as const;
 
@@ -19,6 +20,7 @@ function asSort(value: string) {
 }
 
 export default function ReportsPage() {
+  const errorText = useErrorMessage();
   const t = useTranslations('reports');
   const paging = useTranslations('common');
   const f = useFormat();
@@ -126,7 +128,7 @@ export default function ReportsPage() {
       {reports.isPending ? (
         <Spinner />
       ) : reports.isError ? (
-        <LoadError>{errorMessage(reports.error, t('loadError'))}</LoadError>
+        <LoadError>{errorText(reports.error, t('loadError'))}</LoadError>
       ) : data && data.items.length > 0 ? (
         <>
           <div className="grid gap-4 md:grid-cols-2">
