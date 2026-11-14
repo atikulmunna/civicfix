@@ -10,6 +10,7 @@ vi.mock('@/lib/api', async () => {
 });
 
 import { ToastProvider } from '@/components/toast';
+import { EnglishOnly } from '@/components/english-only';
 import { Moderation } from './page';
 
 const report = {
@@ -69,5 +70,22 @@ describe('Moderation panel', () => {
         expect.objectContaining({ status: 'UNDER_REVIEW' }),
       ),
     );
+  });
+
+  it('stays English inside a Bangla page, its date and status names included', async () => {
+    renderWithQuery(
+      <ToastProvider>
+        <EnglishOnly>
+          <Moderation id="r1" />
+        </EnglishOnly>
+      </ToastProvider>,
+      undefined,
+      { locale: 'bn' },
+    );
+    // English in any English order (the old helper followed the machine's locale).
+    const reported = await screen.findByText(/^Reported /);
+    expect(reported.textContent).toMatch(/\d{4}/);
+    expect(reported.textContent).not.toMatch(/[\u0980-\u09FF]/);
+    expect(screen.getByRole('option', { name: 'Under Review' })).toBeInTheDocument();
   });
 });

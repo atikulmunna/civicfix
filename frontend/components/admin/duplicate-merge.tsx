@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { api, errorMessage } from '@/lib/api';
-import { formatDate } from '@/lib/format';
+import { useFormat } from '@/lib/i18n/use-format';
 import { queryKeys } from '@/lib/query-keys';
 import type { Report, ReportStatus } from '@/lib/types';
 import { StatusBadge } from '../badges';
@@ -33,6 +33,7 @@ export function DuplicateMerge({
   busy: boolean;
   onMerge: (originalId: string) => void;
 }) {
+  const f = useFormat();
   const mergeable = MERGEABLE.has(report.status);
   const [target, setTarget] = useState<Target | null>(null);
   const [typedId, setTypedId] = useState('');
@@ -108,7 +109,7 @@ export function DuplicateMerge({
                         </Link>
                       </div>
                       <p className="text-xs text-slate-500">
-                        {c.distanceM ?? 0} m away, reported {formatDate(c.createdAt)}
+                        {c.distanceM ?? 0} m away, reported {f.date(c.createdAt)}
                       </p>
                       <Button
                         variant="secondary"

@@ -1,35 +1,8 @@
 import type { ReportStatus, Severity } from './types';
 
-export function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-}
-
-export function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
-/** "hello" -> "Hello" (empty string stays empty). */
-function capitalize(word: string): string {
-  return word.charAt(0).toUpperCase() + word.slice(1);
-}
-
-export function statusLabel(status: ReportStatus): string {
-  return status.toLowerCase().split('_').map(capitalize).join(' ');
-}
-
-export function severityLabel(severity: Severity): string {
-  return capitalize(severity);
-}
+// Labels, dates and durations for people to read come from useFormat
+// (lib/i18n/use-format.ts), in the reader's language. This file keeps the
+// language-free lists and checks.
 
 export const STATUS_OPTIONS: ReportStatus[] = [
   'SUBMITTED',
@@ -57,20 +30,4 @@ export function asStatus(value: string | null | undefined): ReportStatus | undef
 /** Like asStatus, for severities. */
 export function asSeverity(value: string | null | undefined): Severity | undefined {
   return SEVERITY_OPTIONS.find((s) => s === value);
-}
-
-/** A duration for people to read: "5 hours", "3 days", "under 1 hour". */
-export function formatDuration(hours: number): string {
-  if (hours < 1) return 'under 1 hour';
-  if (hours < 24) {
-    const whole = Math.round(hours);
-    return `${String(whole)} ${whole === 1 ? 'hour' : 'hours'}`;
-  }
-  const days = Math.round(hours / 24);
-  return `${String(days)} ${days === 1 ? 'day' : 'days'}`;
-}
-
-/** A share from 0 to 1 as a whole percentage. */
-export function formatRate(rate: number): string {
-  return `${String(Math.round(rate * 100))}%`;
 }

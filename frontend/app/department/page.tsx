@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, errorMessage } from '@/lib/api';
-import { formatDate } from '@/lib/format';
+import { useFormat } from '@/lib/i18n/use-format';
 import { RequireAuth } from '@/components/require-auth';
 import { SeverityBadge, StatusBadge } from '@/components/badges';
 import { useToast } from '@/components/toast';
@@ -17,6 +17,7 @@ interface Action {
 }
 
 function Queue() {
+  const f = useFormat();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const queue = useQuery({
@@ -60,7 +61,7 @@ function Queue() {
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusBadge status={r.status} />
                   <SeverityBadge severity={r.severity} />
-                  <span className="text-xs text-slate-400">{formatDate(r.createdAt)}</span>
+                  <span className="text-xs text-slate-400">{f.date(r.createdAt)}</span>
                 </div>
                 <Link
                   href={`/reports/${r.id}`}
