@@ -20,6 +20,7 @@ function asSort(value: string) {
 
 export default function ReportsPage() {
   const t = useTranslations('reports');
+  const paging = useTranslations('common');
   const f = useFormat();
   const [filters, setFilters] = useState({
     categoryId: '',
@@ -135,7 +136,7 @@ export default function ReportsPage() {
           </div>
           <div className="flex items-center justify-between pt-2">
             <span className="text-sm text-slate-500">
-              {t('pageOf', {
+              {paging('pageOf', {
                 page: data.page,
                 pages: Math.max(data.totalPages, 1),
                 total: data.total,
@@ -147,14 +148,14 @@ export default function ReportsPage() {
                 disabled={data.page <= 1}
                 onClick={() => setFilters((f) => ({ ...f, page: f.page - 1 }))}
               >
-                {t('previous')}
+                {paging('previous')}
               </Button>
               <Button
                 variant="secondary"
                 disabled={data.page >= data.totalPages}
                 onClick={() => setFilters((f) => ({ ...f, page: f.page + 1 }))}
               >
-                {t('next')}
+                {paging('next')}
               </Button>
             </div>
           </div>

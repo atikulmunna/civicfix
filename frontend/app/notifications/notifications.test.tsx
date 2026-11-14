@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
-import { renderWithQuery } from '@/test-utils';
+import { createTranslator } from 'next-intl';
+import { messagesFor, renderWithQuery } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 
 const { get, patch, push } = vi.hoisted(() => ({ get: vi.fn(), patch: vi.fn(), push: vi.fn() }));
@@ -69,5 +70,71 @@ describe('NotificationsPage', () => {
     expect(await screen.findByText('now resolved')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /mark all read/i }));
     await waitFor(() => expect(patch).toHaveBeenCalledWith('/notifications/read-all'));
+  });
+});
+
+describe('NotificationsPage in Bangla', () => {
+  const bn = createTranslator({
+    locale: 'bn',
+    messages: messagesFor('bn'),
+    namespace: 'notifications',
+  });
+
+  function renderBangla() {
+    renderWithQuery(
+      <ToastProvider>
+        <AuthProvider>
+          <NotificationsPage />
+        </AuthProvider>
+      </ToastProvider>,
+      undefined,
+      { locale: 'bn' },
+    );
+  }
+
+  beforeEach(() => {
+    get.mockReset();
+    patch.mockReset().mockResolvedValue({});
+  });
+
+  function serve(items: ReturnType<typeof notif>[]) {
+    get.mockImplementation((path: string) => {
+      if (path === '/auth/me') return Promise.resolve({ user: ME });
+      return Promise.resolve({
+        items,
+        unreadCount: items.filter((n) => !n.isRead).length,
+        page: 1,
+        limit: 50,
+        total: items.length,
+        totalPages: 1,
+      });
+    });
+  }
+
+  it('labels the page in Bangla and counts unread in Bangla digits', async () => {
+    serve([notif(), notif({ id: 'n2', title: 'New comment', isRead: true })]);
+    renderBangla();
+    // The notification text itself comes from the server, as sent.
+    expect(
+      await screen.findByText('Report status updated', { selector: 'span' }),
+    ).toBeInTheDocument();
+    const heading = screen.getByRole('heading', { level: 1 });
+    expect(heading).toHaveTextContent(bn('title'));
+    expect(heading).toHaveTextContent('১');
+    expect(screen.getByRole('button', { name: bn('markAll') })).toBeInTheDocument();
+  });
+
+  it('says so in Bangla when there are none', async () => {
+    serve([]);
+    renderBangla();
+    expect(await screen.findByText(bn('empty'))).toBeInTheDocument();
+  });
+
+  it('falls back to a Bangla message when loading fails', async () => {
+    get.mockImplementation((path: string) =>
+      path === '/auth/me' ? Promise.resolve({ user: ME }) : Promise.reject(new Error('down')),
+    );
+    renderBangla();
+    expect(await screen.findByRole('alert')).toHaveTextContent(bn('loadError'));
   });
 });

@@ -4,7 +4,10 @@
       "title": "CivicFix: Community Problem Reporting",
       "description": "Report local civic issues, track their status, and help your community."
     },
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "pageOf": "Page {page, number} of {pages, number} · {total, number} total",
+    "previous": "Previous",
+    "next": "Next"
   },
   "status": {
     "SUBMITTED": "Submitted",
@@ -158,9 +161,6 @@
       "most_confirmed": "Most confirmed"
     },
     "loadError": "Failed to load reports.",
-    "pageOf": "Page {page, number} of {pages, number} · {total, number} total",
-    "previous": "Previous",
-    "next": "Next",
     "none": "No reports match your filters."
   },
   "home": {
@@ -431,6 +431,44 @@
       "checking": "Checking your session…",
       "deniedTitle": "Access denied",
       "deniedBody": "You don’t have permission to view this page."
+    }
+  },
+  "notifications": {
+    "eyebrow": "Account",
+    "title": "Notifications",
+    "markAll": "Mark all read",
+    "empty": "No notifications yet.",
+    "loadError": "Failed to load notifications.",
+    "markReadFailed": "Could not mark the notification as read.",
+    "markAllFailed": "Could not mark notifications as read."
+  },
+  "me": {
+    "eyebrow": "Account",
+    "roles": {
+      "citizen": "Citizen",
+      "department_worker": "Department worker",
+      "admin": "Admin",
+      "super_admin": "Super admin"
+    },
+    "profile": {
+      "title": "My profile",
+      "myReports": "My reports →",
+      "email": "Email",
+      "role": "Role",
+      "trustScore": "Trust score",
+      "name": "Name",
+      "phone": "Phone",
+      "phonePublic": "Show my phone number publicly",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "saved": "Profile updated.",
+      "saveFailed": "Could not update profile."
+    },
+    "reports": {
+      "title": "My reports",
+      "reportIssue": "Report an issue",
+      "loadError": "Failed to load your reports.",
+      "empty": "You haven’t reported anything yet. <link>Report an issue</link>."
     }
   }
 }

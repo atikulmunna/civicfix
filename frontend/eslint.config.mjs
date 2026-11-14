@@ -32,6 +32,9 @@ const TRANSLATED_FILES = [
   'components/change-password-form.tsx',
   'components/password-reset-banner.tsx',
   'components/require-auth.tsx',
+  'app/notifications/page.tsx',
+  'app/me/reports/page.tsx',
+  'app/me/page.tsx',
 ];
 
 /** Symbols and punctuation that read the same in every language. */

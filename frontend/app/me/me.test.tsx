@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { renderWithQuery } from '@/test-utils';
+import { createTranslator } from 'next-intl';
+import { messagesFor, renderWithQuery } from '@/test-utils';
 
 const { get, patch } = vi.hoisted(() => ({ get: vi.fn(), patch: vi.fn() }));
 vi.mock('next/navigation', () => ({
@@ -65,5 +66,72 @@ describe('profile form', () => {
     expect(client.getQueryData(queryKeys.me)).toMatchObject({ name: 'Rina Akter' });
     // One /auth/me for the initial session, none after saving.
     expect(get.mock.calls.filter(([path]) => path === '/auth/me')).toHaveLength(1);
+  });
+});
+
+describe('profile form in Bangla', () => {
+  const bn = createTranslator({ locale: 'bn', messages: messagesFor('bn'), namespace: 'me' });
+
+  beforeEach(() => {
+    get.mockReset();
+    patch.mockReset();
+    get.mockImplementation((path: string) =>
+      path === '/auth/me'
+        ? Promise.resolve({ user: { ...me, role: 'department_worker', trustScore: 12 } })
+        : Promise.reject(new Error(path)),
+    );
+  });
+
+  it('labels the profile in Bangla, with the role and trust score in Bangla', async () => {
+    renderWithQuery(
+      <ToastProvider>
+        <AuthProvider>
+          <MePage />
+        </AuthProvider>
+      </ToastProvider>,
+      undefined,
+      { locale: 'bn' },
+    );
+    expect(await screen.findByLabelText(bn('profile.name'))).toBeInTheDocument();
+    expect(screen.getByLabelText(bn('profile.phone'))).toBeInTheDocument();
+    expect(screen.getByLabelText(bn('profile.phonePublic'))).toBeInTheDocument();
+    expect(screen.getByText(bn('roles.department_worker'))).toBeInTheDocument();
+    expect(screen.getByText('১২')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: bn('profile.myReports') })).toHaveAttribute(
+      'href',
+      '/me/reports',
+    );
+  });
+
+  it('confirms the save in Bangla', async () => {
+    patch.mockResolvedValue({ user: me });
+    renderWithQuery(
+      <ToastProvider>
+        <AuthProvider>
+          <MePage />
+        </AuthProvider>
+      </ToastProvider>,
+      undefined,
+      { locale: 'bn' },
+    );
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: bn('profile.save') }));
+    expect(await screen.findByText(bn('profile.saved'))).toBeInTheDocument();
+  });
+
+  it('falls back to a Bangla message when the save fails', async () => {
+    patch.mockRejectedValue(new Error('down'));
+    renderWithQuery(
+      <ToastProvider>
+        <AuthProvider>
+          <MePage />
+        </AuthProvider>
+      </ToastProvider>,
+      undefined,
+      { locale: 'bn' },
+    );
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: bn('profile.save') }));
+    expect(await screen.findByText(bn('profile.saveFailed'))).toBeInTheDocument();
   });
 });
