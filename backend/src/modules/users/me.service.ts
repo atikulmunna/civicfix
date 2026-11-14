@@ -19,13 +19,20 @@ export interface UpdateMeInput {
   name?: string;
   phone?: string | null;
   phoneIsPublic?: boolean;
+  language?: 'en' | 'bn';
 }
 
 export async function updateMyProfile(userId: string, input: UpdateMeInput) {
-  const data: { name?: string; phone?: string | null; phoneIsPublic?: boolean } = {};
+  const data: {
+    name?: string;
+    phone?: string | null;
+    phoneIsPublic?: boolean;
+    language?: 'en' | 'bn';
+  } = {};
   if (input.name !== undefined) data.name = sanitizeText(input.name);
   if (input.phone !== undefined) data.phone = input.phone ? sanitizeText(input.phone) : null;
   if (input.phoneIsPublic !== undefined) data.phoneIsPublic = input.phoneIsPublic;
+  if (input.language !== undefined) data.language = input.language;
 
   const user = await prisma.user.update({ where: { id: userId }, data });
   return toPublicUser(user);

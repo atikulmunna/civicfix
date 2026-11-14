@@ -1,0 +1,276 @@
+{
+  "common": {
+    "meta": {
+      "title": "CivicFix: Community Problem Reporting",
+      "description": "Report local civic issues, track their status, and help your community."
+    },
+    "loading": "Loading…"
+  },
+  "status": {
+    "SUBMITTED": "Submitted",
+    "UNDER_REVIEW": "Under Review",
+    "VERIFIED": "Verified",
+    "ASSIGNED": "Assigned",
+    "IN_PROGRESS": "In Progress",
+    "RESOLVED": "Resolved",
+    "REJECTED": "Rejected",
+    "DUPLICATE": "Duplicate",
+    "NEEDS_MORE_INFO": "Needs More Info",
+    "ARCHIVED": "Archived"
+  },
+  "severity": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "urgent": "Urgent"
+  },
+  "format": {
+    "underAnHour": "under 1 hour",
+    "hours": "{count, plural, one {# hour} other {# hours}}",
+    "days": "{count, plural, one {# day} other {# days}}"
+  },
+  "nav": {
+    "main": "Main",
+    "sections": "Sections",
+    "reports": "Reports",
+    "map": "Map",
+    "scorecards": "Scorecards",
+    "reportIssue": "Report an issue",
+    "myQueue": "My queue",
+    "admin": "Admin",
+    "notifications": "Notifications",
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "signOut": "Sign out",
+    "signedOut": "Signed out.",
+    "switchTo": "Change language to Bangla"
+  },
+  "report": {
+    "noHistory": "No history yet.",
+    "statusChange": "{from} → {to}",
+    "byLine": "{name} · {date}",
+    "priorityTitle": "Triage priority",
+    "priority": "Priority {score}",
+    "upvotes": "Upvotes",
+    "confirmations": "Confirmations",
+    "merged": "This report was merged into another report of the same problem. <link>See the original report</link> for its updates.",
+    "reportedOn": "Reported {date}",
+    "loadError": "Failed to load report.",
+    "historyHeading": "Status history",
+    "historyLoadError": "Failed to load the status history.",
+    "photo": {
+      "evidence": "evidence photo",
+      "before": "before photo",
+      "after": "after photo"
+    }
+  },
+  "recurrence": {
+    "heading": "This problem has come back",
+    "summary": "{count, plural, one {An earlier report of the same kind within {radius, number} m was fixed before this one was made.} other {# earlier reports of the same kind within {radius, number} m were fixed before this one was made.}}",
+    "item": "<link>{title}</link>, fixed {date}, {distance, number} m away",
+    "cutShort": "Showing the {shown, number} most recently fixed.",
+    "loadError": "Could not check for earlier reports here."
+  },
+  "votes": {
+    "upvote": "Upvote · {count, number}",
+    "confirm": "Confirm · {count, number}",
+    "follow": "Follow",
+    "following": "Following",
+    "flag": "Flag as false",
+    "flagged": "Flagged",
+    "flaggedToast": "Flagged as possibly false. Thanks.",
+    "signInPrompt": "<link>Sign in</link> to upvote, confirm, or follow this report.",
+    "upvotesCount": "{count, number} upvotes",
+    "confirmationsCount": "{count, number} confirmations",
+    "upvoteFailed": "Could not upvote.",
+    "confirmFailed": "Could not confirm.",
+    "flagFailed": "Could not flag this report.",
+    "followFailed": "Could not follow."
+  },
+  "comments": {
+    "heading": "Comments ({count, number})",
+    "loading": "Loading comments…",
+    "loadError": "Failed to load comments.",
+    "none": "No comments yet.",
+    "delete": "Delete",
+    "placeholder": "Add a comment…",
+    "addLabel": "Add a comment",
+    "posting": "Posting…",
+    "post": "Post comment",
+    "signInPrompt": "<link>Sign in</link> to comment.",
+    "postError": "Could not post comment.",
+    "deleteError": "Could not delete comment."
+  },
+  "fixChecks": {
+    "loading": "Loading fix checks…",
+    "loadError": "Failed to load the fix checks.",
+    "headingOpen": "Is it fixed?",
+    "headingClosed": "Fix checks",
+    "markedResolved": "Marked resolved {date}. Residents check the fix with a photo, and {needed, number} disputes send it back to the department.",
+    "tally": "{confirmed, number} confirmed, {disputed, number} disputed",
+    "signInPrompt": "<link>Sign in</link> to check this fix.",
+    "staffNote": "Fixes are checked by residents, not by admins or the department that made them.",
+    "noneYet": "No one has checked this fix yet.",
+    "yourCheck": "Your check",
+    "photoLabel": "Photo of how it looks now",
+    "photoHint": "Take it from about where the report's photo was taken, so the two compare.",
+    "addPhoto": "Add a photo of how it looks now.",
+    "tooBig": "This photo is {size, number} MB, over the {limit, number} MB limit. Choose a smaller one.",
+    "sending": "Sending…",
+    "cancel": "Cancel",
+    "sendError": "Could not send your check.",
+    "sentConfirmed": "Confirmation sent. Thanks for checking.",
+    "sentDisputed": "Dispute sent. Thanks for checking.",
+    "reopened": "Dispute sent. With {needed, number} disputes, the report goes back to the department.",
+    "photoAlt": "Photo from {name}, open full size",
+    "earlierFixDate": "{date}, of an earlier fix",
+    "cutShort": "Showing the {shown, number} newest of {total, number}.",
+    "confirmed": {
+      "ask": "Yes, it's fixed",
+      "send": "Send confirmation",
+      "mine": "You confirmed this fix.",
+      "listed": "Confirmed the fix"
+    },
+    "disputed": {
+      "ask": "No, still a problem",
+      "send": "Send dispute",
+      "mine": "You disputed this fix.",
+      "listed": "Disputed the fix"
+    }
+  },
+  "reports": {
+    "eyebrow": "Community reports",
+    "title": "Reports",
+    "subtitle": "Browse and track issues reported across the city.",
+    "search": "Search",
+    "searchPlaceholder": "Search title or description…",
+    "category": "Category",
+    "allCategories": "All categories",
+    "status": "Status",
+    "allStatuses": "All statuses",
+    "severity": "Severity",
+    "allSeverities": "All severities",
+    "sort": "Sort",
+    "sorts": {
+      "newest": "Newest",
+      "oldest": "Oldest",
+      "priority": "Highest priority",
+      "most_confirmed": "Most confirmed"
+    },
+    "loadError": "Failed to load reports.",
+    "pageOf": "Page {page, number} of {pages, number} · {total, number} total",
+    "previous": "Previous",
+    "next": "Next",
+    "none": "No reports match your filters."
+  },
+  "home": {
+    "hero": {
+      "eyebrow": "Community-powered civic reporting",
+      "titleLead": "Report civic issues.",
+      "titleAccent": "Track the fix.",
+      "body": "Residents report local problems (potholes, broken lights, garbage, flooding) with a photo and map location, then follow them from submission to resolution.",
+      "reportIssue": "Report an issue",
+      "exploreMap": "Explore the map",
+      "browse": "Browse reports",
+      "artLabel": "Animated map with a pulsing location pin",
+      "categories": "Issue categories",
+      "stages": "Status stages",
+      "freeValue": "Free",
+      "free": "No paid services"
+    },
+    "how": {
+      "eyebrow": "How it works",
+      "title": "From report to resolution in three steps",
+      "steps": {
+        "report": {
+          "title": "Report",
+          "body": "Describe the issue, add a photo, and drop a pin on the map."
+        },
+        "verify": {
+          "title": "Verify",
+          "body": "Neighbours confirm it and admins review and assign it to a department."
+        },
+        "resolve": {
+          "title": "Resolve",
+          "body": "Track status changes and get notified when it’s fixed."
+        }
+      }
+    },
+    "features": {
+      "eyebrow": "What you can do",
+      "title": "Everything a report needs to get fixed",
+      "items": {
+        "pin": {
+          "title": "Pin the exact spot",
+          "body": "Drop a marker on the map, and every report carries precise GPS coordinates."
+        },
+        "photo": {
+          "title": "Photo evidence",
+          "body": "Attach a picture so the problem is unmistakable. Image type is verified on the server."
+        },
+        "community": {
+          "title": "Community verification",
+          "body": "Neighbours upvote and confirm reports, surfacing what matters most."
+        },
+        "tracking": {
+          "title": "Transparent tracking",
+          "body": "Follow each report through a clear six-stage lifecycle, from submission to fix."
+        },
+        "routing": {
+          "title": "Routed to the right team",
+          "body": "Admins assign each issue to the department responsible for resolving it."
+        },
+        "notify": {
+          "title": "Stay in the loop",
+          "body": "Get notified the moment your report changes status or gets resolved."
+        }
+      }
+    },
+    "categories": {
+      "eyebrow": "What you can report",
+      "title": "Seven categories of civic issues",
+      "items": {
+        "roads": "Roads & Potholes",
+        "lighting": "Street Lighting",
+        "garbage": "Garbage & Sanitation",
+        "water": "Water & Drainage",
+        "safety": "Public Safety",
+        "parks": "Parks & Greenery",
+        "electricity": "Electricity"
+      }
+    },
+    "lifecycle": {
+      "eyebrow": "Every report, tracked",
+      "title": "A transparent status lifecycle"
+    },
+    "audiences": {
+      "eyebrow": "Built for both sides",
+      "title": "For the people who report, and the people who fix",
+      "residents": {
+        "title": "For residents",
+        "items": {
+          "report": "Report an issue in under a minute",
+          "map": "See what others have flagged nearby on the map",
+          "confirm": "Confirm and upvote to add weight to a report",
+          "track": "Track progress and get notified on every change"
+        }
+      },
+      "team": {
+        "title": "For departments & admins",
+        "items": {
+          "review": "Review and verify incoming reports",
+          "assign": "Assign work to the responsible department",
+          "workflow": "Move issues through the status workflow",
+          "trends": "Monitor trends on the analytics dashboard"
+        }
+      }
+    },
+    "cta": {
+      "eyebrow": "Get started",
+      "title": "Spotted something broken? Report it.",
+      "body": "It takes about a minute, and your neighbours can back you up. Every report is public and tracked to resolution.",
+      "reportIssue": "Report an issue",
+      "exploreMap": "Explore the map"
+    }
+  }
+}

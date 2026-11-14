@@ -1,11 +1,15 @@
 /** Request schemas for the self-service profile routes (SRS v1.1 §9.3). */
 import { z } from 'zod';
 
+/** Interface languages (F5). */
+export const languageSchema = z.enum(['en', 'bn']);
+
 export const updateMeSchema = z
   .object({
     name: z.string().trim().min(1).max(120),
     phone: z.string().trim().max(30).nullable(),
     phoneIsPublic: z.boolean(),
+    language: languageSchema,
   })
   .partial()
   .refine((v) => Object.keys(v).length > 0, { message: 'No fields to update.' });

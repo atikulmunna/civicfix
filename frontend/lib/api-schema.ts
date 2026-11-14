@@ -2308,6 +2308,8 @@ export interface paths {
                         name?: string;
                         phone?: string | null;
                         phoneIsPublic?: boolean;
+                        /** @enum {string} */
+                        language?: "en" | "bn";
                     };
                 };
             };
@@ -3430,6 +3432,8 @@ export interface components {
             trustScore: number;
             phone: string | null;
             phoneIsPublic: boolean;
+            /** @description Chosen interface language; null until the user picks one. */
+            language: ("en" | "bn") | null;
             mustChangePassword: boolean;
             /** Format: date-time */
             createdAt: string;
@@ -3667,6 +3671,8 @@ export interface components {
             trustScore: number;
             phone: string | null;
             phoneIsPublic: boolean;
+            /** @description Chosen interface language; null until the user picks one. */
+            language: ("en" | "bn") | null;
             mustChangePassword: boolean;
             /** Format: date-time */
             createdAt: string;

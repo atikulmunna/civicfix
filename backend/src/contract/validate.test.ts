@@ -12,6 +12,7 @@ const user = {
   trustScore: 0,
   phone: null,
   phoneIsPublic: false,
+  language: null,
   mustChangePassword: false,
   // A Date, as services return it: checked in its JSON (ISO string) form.
   createdAt: new Date(),

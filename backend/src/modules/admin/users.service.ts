@@ -8,25 +8,14 @@ import type { Prisma, User } from '../../generated/prisma/client.js';
 import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../lib/errors.js';
 import { logger } from '../../lib/logger.js';
+import { toPublicUser } from '../auth/auth.service.js';
 import { hashPassword } from '../auth/password.js';
 import type { Actor } from '../reports/reports.service.js';
 import type { ListUsersInput, UserRoleInput } from './admin-crud.schemas.js';
 
+/** The public user plus what admins manage, as the contract's AdminUser says. */
 function toAdminUser(u: User) {
-  return {
-    id: u.id,
-    name: u.name,
-    email: u.email,
-    role: u.role,
-    departmentId: u.departmentId,
-    isActive: u.isActive,
-    trustScore: u.trustScore,
-    phone: u.phone,
-    phoneIsPublic: u.phoneIsPublic,
-    mustChangePassword: u.mustChangePassword,
-    createdAt: u.createdAt,
-    updatedAt: u.updatedAt,
-  };
+  return { ...toPublicUser(u), isActive: u.isActive, updatedAt: u.updatedAt };
 }
 
 export async function listUsers(input: ListUsersInput) {

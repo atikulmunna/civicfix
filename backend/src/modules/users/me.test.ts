@@ -97,6 +97,48 @@ describe('PATCH /users/me', () => {
   });
 });
 
+describe('language (F5)', () => {
+  it('starts with no language', async () => {
+    const fresh = `me_lang_${stamp}@example.com`;
+    const res = await request(app)
+      .post('/api/v1/auth/register')
+      .send({ name: 'New User', email: fresh, password: 'CorrectHorse9' });
+    expect(res.status).toBe(201);
+    expect(res.body.data.user.language).toBeNull();
+    await prisma.user.deleteMany({ where: { email: fresh } });
+  });
+
+  it('saves a language and returns it everywhere the user appears', async () => {
+    const res = await request(app)
+      .patch('/api/v1/users/me')
+      .set(...bearer(token))
+      .send({ language: 'bn' });
+    expect(res.status).toBe(200);
+    expect(res.body.data.user.language).toBe('bn');
+
+    const me = await request(app)
+      .get('/api/v1/auth/me')
+      .set(...bearer(token));
+    expect(me.body.data.user.language).toBe('bn');
+
+    const login = await request(app)
+      .post('/api/v1/auth/login')
+      .send({ email, password: 'CorrectHorse9' });
+    expect(login.body.data.user.language).toBe('bn');
+  });
+
+  it('refuses other languages', async () => {
+    for (const language of ['fr', null]) {
+      const res = await request(app)
+        .patch('/api/v1/users/me')
+        .set(...bearer(token))
+        .send({ language });
+      expect(res.status).toBe(400);
+      expect(res.body.code).toBe('VALIDATION_ERROR');
+    }
+  });
+});
+
 describe('GET /users/me/reports', () => {
   it('returns only the current user’s reports with counts', async () => {
     const res = await request(app)

@@ -1,5 +1,5 @@
 import type { ReportStatus, Severity } from '@/lib/types';
-import { severityLabel, statusLabel } from '@/lib/format';
+import { useFormat } from '@/lib/i18n/use-format';
 
 const STATUS_STYLES: Record<ReportStatus, string> = {
   SUBMITTED: 'bg-slate-100 text-slate-700',
@@ -24,9 +24,11 @@ const SEVERITY_STYLES: Record<Severity, string> = {
 const base = 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium';
 
 export function StatusBadge({ status }: { status: ReportStatus }) {
-  return <span className={`${base} ${STATUS_STYLES[status]}`}>{statusLabel(status)}</span>;
+  const f = useFormat();
+  return <span className={`${base} ${STATUS_STYLES[status]}`}>{f.status(status)}</span>;
 }
 
 export function SeverityBadge({ severity }: { severity: Severity }) {
-  return <span className={`${base} ${SEVERITY_STYLES[severity]}`}>{severityLabel(severity)}</span>;
+  const f = useFormat();
+  return <span className={`${base} ${SEVERITY_STYLES[severity]}`}>{f.severity(severity)}</span>;
 }

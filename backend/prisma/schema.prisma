@@ -105,6 +105,8 @@ model User {
   passwordHash       String   @map("password_hash")
   phone              String?  @db.VarChar(30)
   phoneIsPublic      Boolean  @default(false) @map("phone_is_public")
+  // Chosen interface language, 'en' or 'bn' (F5); null until the user picks one.
+  language           String?  @db.VarChar(2)
   role               UserRole @default(citizen)
   departmentId       String?  @map("department_id") @db.Uuid
   trustScore         Int      @default(0) @map("trust_score")

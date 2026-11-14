@@ -1,18 +1,14 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { useFormatter, useTranslations } from 'next-intl';
 
-const STEPS = [
-  { n: '01', title: 'Report', body: 'Describe the issue, add a photo, and drop a pin on the map.' },
-  {
-    n: '02',
-    title: 'Verify',
-    body: 'Neighbours confirm it and admins review and assign it to a department.',
-  },
-  { n: '03', title: 'Resolve', body: 'Track status changes and get notified when it’s fixed.' },
-];
+const STEPS = ['report', 'verify', 'resolve'] as const;
 
-const FEATURES: { icon: ReactNode; title: string; body: string }[] = [
+type FeatureId = 'pin' | 'photo' | 'community' | 'tracking' | 'routing' | 'notify';
+
+const FEATURES: { id: FeatureId; icon: ReactNode }[] = [
   {
+    id: 'pin',
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -27,10 +23,9 @@ const FEATURES: { icon: ReactNode; title: string; body: string }[] = [
         <circle cx="12" cy="10" r="3" />
       </svg>
     ),
-    title: 'Pin the exact spot',
-    body: 'Drop a marker on the map, and every report carries precise GPS coordinates.',
   },
   {
+    id: 'photo',
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -45,10 +40,9 @@ const FEATURES: { icon: ReactNode; title: string; body: string }[] = [
         <circle cx="12" cy="13" r="3" />
       </svg>
     ),
-    title: 'Photo evidence',
-    body: 'Attach a picture so the problem is unmistakable. Image type is verified on the server.',
   },
   {
+    id: 'community',
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -65,10 +59,9 @@ const FEATURES: { icon: ReactNode; title: string; body: string }[] = [
         <path d="M16 3.13a4 4 0 0 1 0 7.75" />
       </svg>
     ),
-    title: 'Community verification',
-    body: 'Neighbours upvote and confirm reports, surfacing what matters most.',
   },
   {
+    id: 'tracking',
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -82,10 +75,9 @@ const FEATURES: { icon: ReactNode; title: string; body: string }[] = [
         <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
       </svg>
     ),
-    title: 'Transparent tracking',
-    body: 'Follow each report through a clear six-stage lifecycle, from submission to fix.',
   },
   {
+    id: 'routing',
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -101,10 +93,9 @@ const FEATURES: { icon: ReactNode; title: string; body: string }[] = [
         <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01" />
       </svg>
     ),
-    title: 'Routed to the right team',
-    body: 'Admins assign each issue to the department responsible for resolving it.',
   },
   {
+    id: 'notify',
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -119,36 +110,32 @@ const FEATURES: { icon: ReactNode; title: string; body: string }[] = [
         <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
       </svg>
     ),
-    title: 'Stay in the loop',
-    body: 'Get notified the moment your report changes status or gets resolved.',
   },
 ];
 
 const CATEGORIES = [
-  'Roads & Potholes',
-  'Street Lighting',
-  'Garbage & Sanitation',
-  'Water & Drainage',
-  'Public Safety',
-  'Parks & Greenery',
-  'Electricity',
-];
+  'roads',
+  'lighting',
+  'garbage',
+  'water',
+  'safety',
+  'parks',
+  'electricity',
+] as const;
 
-const LIFECYCLE = ['Submitted', 'Under review', 'Verified', 'Assigned', 'In progress', 'Resolved'];
+/** The six stages a report moves through, named by their status labels. */
+const LIFECYCLE = [
+  'SUBMITTED',
+  'UNDER_REVIEW',
+  'VERIFIED',
+  'ASSIGNED',
+  'IN_PROGRESS',
+  'RESOLVED',
+] as const;
 
-const RESIDENT_ITEMS = [
-  'Report an issue in under a minute',
-  'See what others have flagged nearby on the map',
-  'Confirm and upvote to add weight to a report',
-  'Track progress and get notified on every change',
-];
+const RESIDENT_ITEMS = ['report', 'map', 'confirm', 'track'] as const;
 
-const TEAM_ITEMS = [
-  'Review and verify incoming reports',
-  'Assign work to the responsible department',
-  'Move issues through the status workflow',
-  'Monitor trends on the analytics dashboard',
-];
+const TEAM_ITEMS = ['review', 'assign', 'workflow', 'trends'] as const;
 
 function Check() {
   return (
@@ -166,15 +153,10 @@ function Check() {
   );
 }
 
-function HeroArt() {
+function HeroArt({ label }: { label: string }) {
   return (
     <div className="hidden justify-center lg:flex">
-      <svg
-        viewBox="0 0 400 380"
-        className="w-full max-w-md"
-        role="img"
-        aria-label="Animated map with a pulsing location pin"
-      >
+      <svg viewBox="0 0 400 380" className="w-full max-w-md" role="img" aria-label={label}>
         <defs>
           <radialGradient id="civic-glow" cx="50%" cy="45%" r="55%">
             <stop offset="0%" stopColor="#2dd4bf" stopOpacity="0.28" />
@@ -252,6 +234,9 @@ function HeroArt() {
 }
 
 export default function HomePage() {
+  const t = useTranslations('home');
+  const status = useTranslations('status');
+  const format = useFormatter();
   return (
     <div className="flex flex-col gap-16 sm:gap-24">
       {/* Hero */}
@@ -259,40 +244,37 @@ export default function HomePage() {
         <div className="grid items-center gap-12 lg:grid-cols-2">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">
-              Community-powered civic reporting
+              {t('hero.eyebrow')}
             </p>
             <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-6xl">
-              Report civic issues. <span className="text-teal-600">Track the fix.</span>
+              {t('hero.titleLead')} <span className="text-teal-600">{t('hero.titleAccent')}</span>
             </h1>
-            <p className="mt-4 max-w-xl text-lg text-slate-600">
-              Residents report local problems (potholes, broken lights, garbage, flooding) with a
-              photo and map location, then follow them from submission to resolution.
-            </p>
+            <p className="mt-4 max-w-xl text-lg text-slate-600">{t('hero.body')}</p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link
                 href="/reports/new"
                 className="rounded-lg bg-teal-600 px-5 py-2.5 font-medium text-white transition hover:bg-teal-700"
               >
-                Report an issue
+                {t('hero.reportIssue')}
               </Link>
               <Link
                 href="/map"
                 className="rounded-lg bg-slate-900 px-5 py-2.5 font-medium text-white transition hover:bg-slate-800"
               >
-                Explore the map
+                {t('hero.exploreMap')}
               </Link>
               <Link
                 href="/reports"
                 className="rounded-lg border border-slate-300 px-5 py-2.5 font-medium text-slate-700 transition hover:bg-slate-50"
               >
-                Browse reports →
+                {t('hero.browse')} →
               </Link>
             </div>
             <dl className="mt-12 grid max-w-lg grid-cols-3 gap-6 border-t border-slate-200 pt-6">
               {[
-                { k: '7', v: 'Issue categories' },
-                { k: '6', v: 'Status stages' },
-                { k: 'Free', v: 'No paid services' },
+                { k: format.number(CATEGORIES.length), v: t('hero.categories') },
+                { k: format.number(LIFECYCLE.length), v: t('hero.stages') },
+                { k: t('hero.freeValue'), v: t('hero.free') },
               ].map((f) => (
                 <div key={f.v}>
                   <dt className="text-3xl font-extrabold tracking-tight text-slate-900">{f.k}</dt>
@@ -301,26 +283,30 @@ export default function HomePage() {
               ))}
             </dl>
           </div>
-          <HeroArt />
+          <HeroArt label={t('hero.artLabel')} />
         </div>
       </section>
 
       {/* How it works */}
       <section>
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">
-          How it works
+          {t('how.eyebrow')}
         </p>
         <h2 className="mt-2 max-w-2xl text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-          From report to resolution in three steps
+          {t('how.title')}
         </h2>
         <ol className="mt-10 grid gap-x-10 gap-y-10 sm:grid-cols-3">
-          {STEPS.map((s) => (
-            <li key={s.title} className="border-t-2 border-slate-900 pt-5">
+          {STEPS.map((step, i) => (
+            <li key={step} className="border-t-2 border-slate-900 pt-5">
               <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-extrabold tabular-nums text-teal-600">{s.n}</span>
-                <h3 className="text-lg font-bold text-slate-900">{s.title}</h3>
+                <span className="text-4xl font-extrabold tabular-nums text-teal-600">
+                  {format.number(i + 1, { minimumIntegerDigits: 2 })}
+                </span>
+                <h3 className="text-lg font-bold text-slate-900">{t(`how.steps.${step}.title`)}</h3>
               </div>
-              <p className="mt-3 text-[15px] leading-relaxed text-slate-600">{s.body}</p>
+              <p className="mt-3 text-[15px] leading-relaxed text-slate-600">
+                {t(`how.steps.${step}.body`)}
+              </p>
             </li>
           ))}
         </ol>
@@ -329,20 +315,24 @@ export default function HomePage() {
       {/* Features */}
       <section>
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">
-          What you can do
+          {t('features.eyebrow')}
         </p>
         <h2 className="mt-2 max-w-2xl text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-          Everything a report needs to get fixed
+          {t('features.title')}
         </h2>
         <div className="mt-10 grid gap-x-10 gap-y-9 sm:grid-cols-2">
           {FEATURES.map((f) => (
-            <div key={f.title} className="flex gap-4">
+            <div key={f.id} className="flex gap-4">
               <span className="shrink-0 text-teal-600 drop-shadow-[0_6px_14px_rgba(13,148,136,0.45)]">
                 {f.icon}
               </span>
               <div>
-                <h3 className="font-semibold text-slate-900">{f.title}</h3>
-                <p className="mt-1 text-sm leading-relaxed text-slate-600">{f.body}</p>
+                <h3 className="font-semibold text-slate-900">
+                  {t(`features.items.${f.id}.title`)}
+                </h3>
+                <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                  {t(`features.items.${f.id}.body`)}
+                </p>
               </div>
             </div>
           ))}
@@ -353,10 +343,10 @@ export default function HomePage() {
       <section className="grid gap-12 lg:grid-cols-2">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">
-            What you can report
+            {t('categories.eyebrow')}
           </p>
           <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-            Seven categories of civic issues
+            {t('categories.title')}
           </h2>
           <ul className="mt-6 flex flex-wrap gap-2">
             {CATEGORIES.map((c) => (
@@ -364,17 +354,17 @@ export default function HomePage() {
                 key={c}
                 className="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm text-slate-700"
               >
-                {c}
+                {t(`categories.items.${c}`)}
               </li>
             ))}
           </ul>
         </div>
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">
-            Every report, tracked
+            {t('lifecycle.eyebrow')}
           </p>
           <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-            A transparent status lifecycle
+            {t('lifecycle.title')}
           </h2>
           <ol className="mt-6 flex flex-wrap items-center gap-x-2 gap-y-3">
             {LIFECYCLE.map((s, i) => (
@@ -386,7 +376,7 @@ export default function HomePage() {
                       : 'rounded-full border border-slate-300 px-3 py-1 text-sm font-medium text-slate-700'
                   }
                 >
-                  {s}
+                  {status(s)}
                 </span>
                 {i < LIFECYCLE.length - 1 && (
                   <span className="text-slate-400" aria-hidden>
@@ -402,30 +392,30 @@ export default function HomePage() {
       {/* Two audiences */}
       <section>
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">
-          Built for both sides
+          {t('audiences.eyebrow')}
         </p>
         <h2 className="mt-2 max-w-2xl text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-          For the people who report, and the people who fix
+          {t('audiences.title')}
         </h2>
         <div className="mt-10 grid gap-10 sm:grid-cols-2">
           <div className="border-t-2 border-slate-900 pt-5">
-            <h3 className="text-lg font-bold text-slate-900">For residents</h3>
+            <h3 className="text-lg font-bold text-slate-900">{t('audiences.residents.title')}</h3>
             <ul className="mt-4 space-y-3">
-              {RESIDENT_ITEMS.map((t) => (
-                <li key={t} className="flex gap-3 text-[15px] text-slate-600">
+              {RESIDENT_ITEMS.map((item) => (
+                <li key={item} className="flex gap-3 text-[15px] text-slate-600">
                   <Check />
-                  {t}
+                  {t(`audiences.residents.items.${item}`)}
                 </li>
               ))}
             </ul>
           </div>
           <div className="border-t-2 border-teal-500 pt-5">
-            <h3 className="text-lg font-bold text-slate-900">For departments &amp; admins</h3>
+            <h3 className="text-lg font-bold text-slate-900">{t('audiences.team.title')}</h3>
             <ul className="mt-4 space-y-3">
-              {TEAM_ITEMS.map((t) => (
-                <li key={t} className="flex gap-3 text-[15px] text-slate-600">
+              {TEAM_ITEMS.map((item) => (
+                <li key={item} className="flex gap-3 text-[15px] text-slate-600">
                   <Check />
-                  {t}
+                  {t(`audiences.team.items.${item}`)}
                 </li>
               ))}
             </ul>
@@ -436,27 +426,24 @@ export default function HomePage() {
       {/* CTA */}
       <section className="rounded-3xl bg-slate-900 px-6 py-14 text-center sm:px-12">
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-400">
-          Get started
+          {t('cta.eyebrow')}
         </p>
         <h2 className="mx-auto mt-3 max-w-2xl text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-          Spotted something broken? Report it.
+          {t('cta.title')}
         </h2>
-        <p className="mx-auto mt-4 max-w-xl text-slate-300">
-          It takes about a minute, and your neighbours can back you up. Every report is public and
-          tracked to resolution.
-        </p>
+        <p className="mx-auto mt-4 max-w-xl text-slate-300">{t('cta.body')}</p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link
             href="/reports/new"
             className="rounded-lg bg-teal-500 px-5 py-2.5 font-medium text-slate-950 transition hover:bg-teal-400"
           >
-            Report an issue
+            {t('cta.reportIssue')}
           </Link>
           <Link
             href="/map"
             className="rounded-lg border border-white/25 px-5 py-2.5 font-medium text-white transition hover:bg-white/10"
           >
-            Explore the map
+            {t('cta.exploreMap')}
           </Link>
         </div>
       </section>

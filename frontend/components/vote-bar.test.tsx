@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createTestQueryClient, renderWithQuery } from '@/test-utils';
+import { createTestQueryClient, messagesFor, renderWithQuery } from '@/test-utils';
+import type { Locale } from '@/i18n/locale';
 
 const { post, del } = vi.hoisted(() => ({ post: vi.fn(), del: vi.fn() }));
 vi.mock('@/lib/api', async () => {
@@ -25,7 +26,7 @@ const none: ReportViewerState = {
   following: false,
 };
 
-function setup(viewer?: ReportViewerState) {
+function setup(viewer?: ReportViewerState, locale: Locale = 'en') {
   const client = createTestQueryClient();
   client.setQueryData(queryKeys.report('r1'), {
     report: { id: 'r1', counts: counts(1), viewer: viewer ?? none },
@@ -37,6 +38,7 @@ function setup(viewer?: ReportViewerState) {
       <VoteBar reportId="r1" initialCounts={counts(1)} initialViewer={viewer} />
     </ToastProvider>,
     client,
+    { locale },
   );
   return { client, user: userEvent.setup() };
 }
@@ -127,5 +129,17 @@ describe('VoteBar', () => {
     expect(
       client.getQueryData<{ report: { viewer: ReportViewerState } }>(queryKeys.report('r1')),
     ).toMatchObject({ report: { viewer: { confirmed: true, following: true } } });
+  });
+
+  it('reads in Bangla, counts included', async () => {
+    const t = messagesFor('bn').votes;
+    const { user } = setup(undefined, 'bn');
+    expect(screen.getByRole('button', { name: new RegExp(t.follow) })).toBeInTheDocument();
+    const upvote = screen.getAllByRole('button')[0]!;
+    expect(upvote).toHaveTextContent('১');
+    expect(upvote.textContent).not.toMatch(/[A-Za-z0-9]/);
+    post.mockResolvedValue({ counts: counts(1) });
+    await user.click(screen.getByRole('button', { name: t.flag }));
+    expect(await screen.findByText(t.flaggedToast)).toBeInTheDocument();
   });
 });

@@ -3,40 +3,28 @@
 import { useState, type FormEvent } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, assetUrl, errorMessage } from '@/lib/api';
-import { formatDateTime } from '@/lib/format';
+import { useFormat } from '@/lib/i18n/use-format';
 import { invalidateReportLists } from '@/lib/query-client';
 import { queryKeys } from '@/lib/query-keys';
-import { formatMegabytes, resizeImage, UPLOAD_BUDGET_BYTES } from '@/lib/resize-image';
+import { resizeImage, UPLOAD_BUDGET_BYTES } from '@/lib/resize-image';
 import type { FixCheck, FixChecks as FixChecksData, FixVerdict } from '@/lib/types';
 import { useAuth } from './auth-context';
 import { useToast } from './toast';
 import { Button, FieldError, Label, LoadError, Spinner } from './ui';
 
-const VERDICTS: Record<
-  FixVerdict,
-  { ask: string; send: string; mine: string; listed: string; pressed: string; text: string }
-> = {
-  confirmed: {
-    ask: "Yes, it's fixed",
-    send: 'Send confirmation',
-    mine: 'You confirmed this fix.',
-    listed: 'Confirmed the fix',
-    pressed: 'border-green-600 bg-green-50 text-green-700',
-    text: 'text-green-700',
-  },
-  disputed: {
-    ask: 'No, still a problem',
-    send: 'Send dispute',
-    mine: 'You disputed this fix.',
-    listed: 'Disputed the fix',
-    pressed: 'border-red-600 bg-red-50 text-red-700',
-    text: 'text-red-700',
-  },
+const VERDICT_STYLES: Record<FixVerdict, { pressed: string; text: string }> = {
+  confirmed: { pressed: 'border-green-600 bg-green-50 text-green-700', text: 'text-green-700' },
+  disputed: { pressed: 'border-red-600 bg-red-50 text-red-700', text: 'text-red-700' },
 };
 
+/** Megabytes to one decimal, for upload size messages. */
+const megabytes = (bytes: number) => Math.round((bytes / (1024 * 1024)) * 10) / 10;
+
 function CheckForm({ reportId, disputesToReopen }: { reportId: string; disputesToReopen: number }) {
+  const t = useTranslations('fixChecks');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [verdict, setVerdict] = useState<FixVerdict | null>(null);
@@ -55,10 +43,10 @@ function CheckForm({ reportId, disputesToReopen }: { reportId: string; disputesT
     onSuccess: async ({ reopened }, check) => {
       toast(
         reopened
-          ? `Dispute sent. With ${String(disputesToReopen)} disputes, the report goes back to the department.`
+          ? t('reopened', { needed: disputesToReopen })
           : check.verdict === 'confirmed'
-            ? 'Confirmation sent. Thanks for checking.'
-            : 'Dispute sent. Thanks for checking.',
+            ? t('sentConfirmed')
+            : t('sentDisputed'),
         'success',
       );
       setVerdict(null);
@@ -74,7 +62,7 @@ function CheckForm({ reportId, disputesToReopen }: { reportId: string; disputesT
         ]);
       }
     },
-    onError: (err) => setError(errorMessage(err, 'Could not send your check.')),
+    onError: (err) => setError(errorMessage(err, t('sendError'))),
   });
 
   function choose(next: FixVerdict | null) {
@@ -86,14 +74,14 @@ function CheckForm({ reportId, disputesToReopen }: { reportId: string; disputesT
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (!verdict) return;
-    if (!photo) return setError('Add a photo of how it looks now.');
+    if (!photo) return setError(t('addPhoto'));
     setError(null);
     setPreparing(true);
     const prepared = await resizeImage(photo);
     setPreparing(false);
     if (prepared.size > UPLOAD_BUDGET_BYTES) {
       return setError(
-        `This photo is ${formatMegabytes(prepared.size)}, over the ${formatMegabytes(UPLOAD_BUDGET_BYTES)} limit. Choose a smaller one.`,
+        t('tooBig', { size: megabytes(prepared.size), limit: megabytes(UPLOAD_BUDGET_BYTES) }),
       );
     }
     send.mutate({ verdict, photo: prepared });
@@ -104,7 +92,7 @@ function CheckForm({ reportId, disputesToReopen }: { reportId: string; disputesT
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-3">
-      <div role="group" aria-label="Your check" className="flex flex-wrap gap-2">
+      <div role="group" aria-label={t('yourCheck')} className="flex flex-wrap gap-2">
         {(['confirmed', 'disputed'] as const).map((v) => (
           <button
             key={v}
@@ -112,16 +100,16 @@ function CheckForm({ reportId, disputesToReopen }: { reportId: string; disputesT
             aria-pressed={verdict === v}
             disabled={busy}
             onClick={() => choose(verdict === v ? null : v)}
-            className={`${btn} ${verdict === v ? VERDICTS[v].pressed : 'border-slate-300 text-slate-700 hover:bg-slate-50'}`}
+            className={`${btn} ${verdict === v ? VERDICT_STYLES[v].pressed : 'border-slate-300 text-slate-700 hover:bg-slate-50'}`}
           >
-            {VERDICTS[v].ask}
+            {t(`${v}.ask`)}
           </button>
         ))}
       </div>
       {verdict && (
         <>
           <div>
-            <Label htmlFor="fix-photo">Photo of how it looks now</Label>
+            <Label htmlFor="fix-photo">{t('photoLabel')}</Label>
             <input
               id="fix-photo"
               type="file"
@@ -131,16 +119,16 @@ function CheckForm({ reportId, disputesToReopen }: { reportId: string; disputesT
               className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium hover:file:bg-slate-200"
             />
             <p id="fix-photo-hint" className="mt-1 text-xs text-slate-500">
-              Take it from about where the report&apos;s photo was taken, so the two compare.
+              {t('photoHint')}
             </p>
             <FieldError>{error}</FieldError>
           </div>
           <div className="flex gap-2">
             <Button type="submit" disabled={busy}>
-              {busy ? 'Sending…' : VERDICTS[verdict].send}
+              {busy ? t('sending') : t(`${verdict}.send`)}
             </Button>
             <Button type="button" variant="secondary" disabled={busy} onClick={() => choose(null)}>
-              Cancel
+              {t('cancel')}
             </Button>
           </div>
         </>
@@ -151,14 +139,18 @@ function CheckForm({ reportId, disputesToReopen }: { reportId: string; disputesT
 
 /** What the viewer can do about the current fix. */
 function YourPart({ reportId, data }: { reportId: string; data: FixChecksData }) {
+  const t = useTranslations('fixChecks');
   const { user } = useAuth();
   if (!user) {
     return (
       <p className="text-sm text-slate-600">
-        <Link href="/login" className="font-medium text-teal-700 hover:underline">
-          Sign in
-        </Link>{' '}
-        to check this fix.
+        {t.rich('signInPrompt', {
+          link: (chunks) => (
+            <Link href="/login" className="font-medium text-teal-700 hover:underline">
+              {chunks}
+            </Link>
+          ),
+        })}
       </p>
     );
   }
@@ -166,19 +158,15 @@ function YourPart({ reportId, data }: { reportId: string; data: FixChecksData })
   if (!viewer) return null; // signed in a moment ago: the refetch brings it
   if (viewer.verdict) {
     return (
-      <p className={`text-sm font-medium ${VERDICTS[viewer.verdict].text}`}>
-        {VERDICTS[viewer.verdict].mine}
+      <p className={`text-sm font-medium ${VERDICT_STYLES[viewer.verdict].text}`}>
+        {t(`${viewer.verdict}.mine`)}
       </p>
     );
   }
   if (viewer.canCheck) {
     return <CheckForm reportId={reportId} disputesToReopen={data.disputesToReopen} />;
   }
-  return (
-    <p className="text-sm text-slate-500">
-      Fixes are checked by residents, not by admins or the department that made them.
-    </p>
-  );
+  return <p className="text-sm text-slate-500">{t('staffNote')}</p>;
 }
 
 function CheckList({
@@ -190,6 +178,8 @@ function CheckList({
   total: number;
   currentFix: string | null;
 }) {
+  const t = useTranslations('fixChecks');
+  const f = useFormat();
   return (
     <div>
       <ul className="grid gap-3 sm:grid-cols-2">
@@ -203,21 +193,22 @@ function CheckList({
             >
               <Image
                 src={assetUrl(c.imageUrl)}
-                alt={`Photo from ${c.author.name}, open full size`}
+                alt={t('photoAlt', { name: c.author.name })}
                 fill
                 sizes="80px"
                 className="object-cover"
               />
             </a>
             <div className="text-sm">
-              <p className={`font-medium ${VERDICTS[c.verdict].text}`}>
-                {VERDICTS[c.verdict].listed}
+              <p className={`font-medium ${VERDICT_STYLES[c.verdict].text}`}>
+                {t(`${c.verdict}.listed`)}
               </p>
               <p className="text-slate-700">{c.author.name}</p>
               <p className="text-xs text-slate-400">
-                {formatDateTime(c.createdAt)}
-                {/* Only worth saying once a newer fix is waiting for checks. */}
-                {currentFix && c.resolvedAt !== currentFix && ', of an earlier fix'}
+                {/* "Earlier" is only worth saying once a newer fix is waiting for checks. */}
+                {currentFix && c.resolvedAt !== currentFix
+                  ? t('earlierFixDate', { date: f.dateTime(c.createdAt) })
+                  : f.dateTime(c.createdAt)}
               </p>
             </div>
           </li>
@@ -225,7 +216,7 @@ function CheckList({
       </ul>
       {total > checks.length && (
         <p className="mt-2 text-sm text-slate-500">
-          Showing the {checks.length} newest of {total}.
+          {t('cutShort', { shown: checks.length, total })}
         </p>
       )}
     </div>
@@ -237,15 +228,17 @@ function CheckList({
  * really is, with a photo; afterwards, the checks that were made.
  */
 export function FixChecks({ reportId, resolved }: { reportId: string; resolved: boolean }) {
+  const t = useTranslations('fixChecks');
+  const f = useFormat();
   const query = useQuery({
     queryKey: queryKeys.fixChecks(reportId),
     queryFn: ({ signal }) => api.get(`/reports/${reportId}/fix-checks`, undefined, { signal }),
   });
 
   // Only a resolved report is sure to have something here, so only it waits visibly.
-  if (query.isPending) return resolved ? <Spinner label="Loading fix checks…" /> : null;
+  if (query.isPending) return resolved ? <Spinner label={t('loading')} /> : null;
   if (query.isError) {
-    return <LoadError>{errorMessage(query.error, 'Failed to load the fix checks.')}</LoadError>;
+    return <LoadError>{errorMessage(query.error, t('loadError'))}</LoadError>;
   }
   const data = query.data;
   const current = data.current;
@@ -258,16 +251,18 @@ export function FixChecks({ reportId, resolved }: { reportId: string; resolved: 
     >
       <div>
         <h2 id="fix-checks-heading" className="text-lg font-semibold text-slate-900">
-          {current ? 'Is it fixed?' : 'Fix checks'}
+          {current ? t('headingOpen') : t('headingClosed')}
         </h2>
         {current && (
           <>
             <p className="mt-1 text-sm text-slate-600">
-              Marked resolved {formatDateTime(current.resolvedAt)}. Residents check the fix with a
-              photo, and {data.disputesToReopen} disputes send it back to the department.
+              {t('markedResolved', {
+                date: f.dateTime(current.resolvedAt),
+                needed: data.disputesToReopen,
+              })}
             </p>
             <p className="mt-2 text-sm font-medium tabular-nums text-slate-900">
-              {current.confirmed} confirmed, {current.disputed} disputed
+              {t('tally', { confirmed: current.confirmed, disputed: current.disputed })}
             </p>
           </>
         )}
@@ -280,7 +275,7 @@ export function FixChecks({ reportId, resolved }: { reportId: string; resolved: 
           currentFix={current?.resolvedAt ?? null}
         />
       ) : (
-        <p className="text-sm text-slate-500">No one has checked this fix yet.</p>
+        <p className="text-sm text-slate-500">{t('noneYet')}</p>
       )}
     </section>
   );

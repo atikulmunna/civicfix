@@ -49,6 +49,10 @@ const userShape = {
   trustScore: z.number().int(),
   phone: z.string().nullable(),
   phoneIsPublic: z.boolean(),
+  language: z
+    .enum(['en', 'bn'])
+    .nullable()
+    .meta({ description: 'Chosen interface language; null until the user picks one.' }),
   /** Set after an admin password reset; the user must choose a new password. */
   mustChangePassword: z.boolean(),
   createdAt: timestamp,

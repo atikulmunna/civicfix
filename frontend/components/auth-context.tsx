@@ -1,8 +1,11 @@
 'use client';
 
 import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError } from '@/lib/api';
+import { setLocale } from '@/i18n/actions';
 import { queryKeys } from '@/lib/query-keys';
 import type { User } from '@/lib/types';
 
@@ -35,6 +38,8 @@ async function fetchCurrentUser(signal: AbortSignal): Promise<User | null> {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const locale = useLocale();
   const me = useQuery({
     queryKey: queryKeys.me,
     queryFn: ({ signal }) => fetchCurrentUser(signal),
@@ -53,9 +58,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { user } = await api.post('/auth/login', { email, password });
       resetOtherQueries();
       queryClient.setQueryData(queryKeys.me, user);
+      // A language saved on the account follows it to this device (F5).
+      if (user.language && user.language !== locale) {
+        await setLocale(user.language).catch(() => undefined);
+        router.refresh();
+      }
       return user;
     },
-    [queryClient, resetOtherQueries],
+    [queryClient, resetOtherQueries, locale, router],
   );
 
   const register = useCallback(
