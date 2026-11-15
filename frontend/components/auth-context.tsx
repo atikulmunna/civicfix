@@ -19,6 +19,7 @@ interface AuthContextValue {
     email: string;
     password: string;
     phone?: string;
+    language?: 'en' | 'bn';
   }) => Promise<void>;
   logout: () => Promise<void>;
 }

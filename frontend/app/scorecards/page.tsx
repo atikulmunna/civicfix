@@ -4,13 +4,15 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
-import { api, errorMessage } from '@/lib/api';
+import { api } from '@/lib/api';
 import { SEVERITY_OPTIONS } from '@/lib/format';
 import { useFormat } from '@/lib/i18n/use-format';
 import { queryKeys } from '@/lib/query-keys';
 import type { DepartmentScorecard, Scorecards } from '@/lib/types';
 import { SeverityBadge } from '@/components/badges';
 import { LoadError, PageHeader, Spinner } from '@/components/ui';
+import { useErrorMessage } from '@/lib/i18n/use-error-message';
+import { useLocalName } from '@/lib/i18n/use-local-name';
 
 /** A measured value, or a quiet "No data": never a zero nobody measured. */
 function Measure({ children }: { children: ReactNode }) {
@@ -36,6 +38,7 @@ function Statement({ overdue }: { overdue: number }) {
 }
 
 function ComparisonTable({ departments }: { departments: DepartmentScorecard[] }) {
+  const localName = useLocalName();
   const t = useTranslations('scorecards');
   const f = useFormat();
   const header = 'px-3 py-2 text-left align-bottom text-sm font-medium text-slate-500';
@@ -79,7 +82,7 @@ function ComparisonTable({ departments }: { departments: DepartmentScorecard[] }
           {departments.map((d) => (
             <tr key={d.departmentId}>
               <th scope="row" className="py-3 pl-0 pr-3 text-left align-top font-medium">
-                {d.name}
+                {localName(d)}
               </th>
               <td
                 className={`${cell} ${d.overdueCount > 0 ? 'font-semibold text-red-700' : 'text-slate-500'}`}
@@ -113,6 +116,7 @@ function ComparisonTable({ departments }: { departments: DepartmentScorecard[] }
 }
 
 function OverdueReports({ departments }: { departments: DepartmentScorecard[] }) {
+  const localName = useLocalName();
   const t = useTranslations('scorecards');
   const f = useFormat();
   return (
@@ -123,7 +127,7 @@ function OverdueReports({ departments }: { departments: DepartmentScorecard[] })
       <div className="mt-4 flex flex-col gap-6">
         {departments.map((d) => (
           <div key={d.departmentId}>
-            <h3 className="font-medium text-slate-900">{d.name}</h3>
+            <h3 className="font-medium text-slate-900">{localName(d)}</h3>
             {d.overdueCount > d.overdue.length && (
               <p className="text-sm text-slate-500">
                 {t('cutShort', { shown: d.overdue.length, total: d.overdueCount })}
@@ -202,6 +206,7 @@ function HowMeasured({ data }: { data: Scorecards }) {
 }
 
 export default function ScorecardsPage() {
+  const errorText = useErrorMessage();
   const t = useTranslations('scorecards');
   const query = useQuery({
     queryKey: queryKeys.scorecards,
@@ -222,7 +227,7 @@ export default function ScorecardsPage() {
     return (
       <div className="flex flex-col gap-6">
         {header}
-        <LoadError>{errorMessage(query.error, t('loadError'))}</LoadError>
+        <LoadError>{errorText(query.error, t('loadError'))}</LoadError>
       </div>
     );
   }

@@ -1,5 +1,6 @@
 /** Request schemas for the self-service profile routes (SRS v1.1 §9.3). */
 import { z } from 'zod';
+import { zodMessage } from '../../lib/messages.js';
 
 /** Interface languages (F5). */
 export const languageSchema = z.enum(['en', 'bn']);
@@ -12,7 +13,7 @@ export const updateMeSchema = z
     language: languageSchema,
   })
   .partial()
-  .refine((v) => Object.keys(v).length > 0, { message: 'No fields to update.' });
+  .refine((v) => Object.keys(v).length > 0, { message: zodMessage('field.noChanges') });
 
 export const listMyReportsSchema = z.object({
   page: z.coerce.number().int().positive().default(1),

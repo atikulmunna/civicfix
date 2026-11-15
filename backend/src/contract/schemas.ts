@@ -13,6 +13,7 @@
  */
 import { z } from 'zod';
 import { ERROR_CODES } from '../lib/errors.js';
+import { MESSAGE_KEYS } from '../lib/messages.js';
 import {
   FixVerdict,
   ImageType,
@@ -36,6 +37,8 @@ export const ImageTypeSchema = z.enum(ImageType).meta({ id: 'ImageType' });
 export const FixVerdictSchema = z.enum(FixVerdict).meta({ id: 'FixVerdict' });
 export const NotificationTypeSchema = z.enum(NotificationType).meta({ id: 'NotificationType' });
 export const ErrorCodeSchema = z.enum(ERROR_CODES).meta({ id: 'ErrorCode' });
+export const MessageKeySchema = z.enum(MESSAGE_KEYS).meta({ id: 'MessageKey' });
+const messageParams = z.record(z.string(), z.union([z.string(), z.number()]));
 
 // ---------------------------------------------------------------------------
 // Users
@@ -69,10 +72,14 @@ export const AdminUserSchema = z
 // ---------------------------------------------------------------------------
 // Catalog
 
+/** A name in Bangla (F5); null means readers see `name`. */
+const nameBn = z.string().nullable();
+
 export const CategorySchema = z
   .strictObject({
     id,
     name: z.string(),
+    nameBn,
     description: z.string().nullable(),
     icon: z.string().nullable(),
     isActive: z.boolean(),
@@ -84,6 +91,7 @@ export const DepartmentSchema = z
   .strictObject({
     id,
     name: z.string(),
+    nameBn,
     description: z.string().nullable(),
     contactEmail: z.string().nullable(),
     phone: z.string().nullable(),
@@ -120,7 +128,9 @@ export const ReportSchema = z
     title: z.string(),
     description: z.string(),
     categoryId: id,
-    category: z.strictObject({ id, name: z.string(), icon: z.string().nullable() }).optional(),
+    category: z
+      .strictObject({ id, name: z.string(), nameBn, icon: z.string().nullable() })
+      .optional(),
     status: ReportStatusSchema,
     severity: SeveritySchema,
     latitude: z.number(),
@@ -165,12 +175,27 @@ export const MapMarkerSchema = z
   })
   .meta({ id: 'MapMarker', description: 'Lightweight report marker for the map viewport.' });
 
+/** The values each automatic history note's wording needs (F5). */
+export const HISTORY_NOTE_PARAMS = {
+  'report.submitted': z.strictObject({}),
+  'report.merged': z.strictObject({ originalTitle: z.string() }),
+  'report.reopenedByDisputes': z.strictObject({ count: z.number().int() }),
+};
+
+export const HistoryNoteKeySchema = z
+  .enum(['report.submitted', 'report.merged', 'report.reopenedByDisputes'])
+  .meta({ id: 'HistoryNoteKey' });
+
 export const StatusHistoryEntrySchema = z
   .strictObject({
     id,
     oldStatus: ReportStatusSchema.nullable(),
     newStatus: ReportStatusSchema,
     note: z.string().nullable(),
+    noteKey: HistoryNoteKeySchema.nullable().meta({
+      description: 'Automatic notes only (F5): the web app words them from this key.',
+    }),
+    noteParams: z.record(z.string(), z.union([z.string(), z.number()])).nullable(),
     changedBy: z.strictObject({ id, name: z.string(), role: RoleSchema }),
     createdAt: timestamp,
   })
@@ -245,17 +270,45 @@ export const FixChecksSchema = z
   })
   .meta({ id: 'FixChecks' });
 
+/** The values each notification kind's wording needs (F5). */
+export const NOTIFICATION_PARAMS = {
+  status_changed: z.strictObject({ reportTitle: z.string(), status: ReportStatusSchema }),
+  report_merged: z.strictObject({ reportTitle: z.string(), originalTitle: z.string() }),
+  fix_disputed: z.strictObject({ reportTitle: z.string() }),
+};
+
+const notificationFields = {
+  id,
+  userId: id,
+  reportId: id.nullable(),
+  title: z.string(),
+  message: z.string(),
+  type: NotificationTypeSchema,
+  isRead: z.boolean(),
+  createdAt: timestamp,
+};
+
 export const NotificationSchema = z
-  .strictObject({
-    id,
-    userId: id,
-    reportId: id.nullable(),
-    title: z.string(),
-    message: z.string(),
-    type: NotificationTypeSchema,
-    isRead: z.boolean(),
-    createdAt: timestamp,
-  })
+  .union([
+    z.strictObject({
+      ...notificationFields,
+      kind: z.literal('status_changed'),
+      params: NOTIFICATION_PARAMS.status_changed,
+    }),
+    z.strictObject({
+      ...notificationFields,
+      kind: z.literal('report_merged'),
+      params: NOTIFICATION_PARAMS.report_merged,
+    }),
+    z.strictObject({
+      ...notificationFields,
+      kind: z.literal('fix_disputed'),
+      params: NOTIFICATION_PARAMS.fix_disputed,
+    }),
+    z.strictObject({ ...notificationFields, kind: z.null(), params: z.null() }).meta({
+      description: 'Stored before kinds (F5): show title and message as stored.',
+    }),
+  ])
   .meta({ id: 'Notification' });
 
 // ---------------------------------------------------------------------------
@@ -322,6 +375,7 @@ export const DepartmentScorecardSchema = z
   .strictObject({
     departmentId: id,
     name: z.string(),
+    nameBn,
     assigned: count,
     resolved: count,
     resolutionRate: rate.nullable(),
@@ -360,7 +414,7 @@ export const HotspotSchema = z
     reportCount: count,
     openCount: count,
     categories: z
-      .array(z.strictObject({ categoryId: id, name: z.string(), count }))
+      .array(z.strictObject({ categoryId: id, name: z.string(), nameBn, count }))
       .meta({ description: 'Most reported first.' }),
     recurring: z.boolean().meta({
       description: 'A problem of one kind was reported here again after an earlier one was fixed.',
@@ -436,7 +490,14 @@ export const ErrorEnvelopeSchema = z
     success: z.literal(false),
     message: z.string(),
     code: ErrorCodeSchema,
-    details: z.unknown().optional(),
+    messageKey: MessageKeySchema.optional().meta({
+      description: 'Resident-facing messages: the web app words the message from this key (F5).',
+    }),
+    messageParams: messageParams.optional(),
+    details: z.unknown().optional().meta({
+      description:
+        'Validation failures: one { path, message, messageKey?, messageParams? } per issue.',
+    }),
     requestId: z
       .string()
       .optional()

@@ -3,9 +3,10 @@
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
-import { api, errorMessage } from '@/lib/api';
+import { api } from '@/lib/api';
 import { useFormat } from '@/lib/i18n/use-format';
 import { queryKeys } from '@/lib/query-keys';
+import { useErrorMessage } from '@/lib/i18n/use-error-message';
 
 /**
  * Says so when this problem was reported and fixed here before (F4). Shows
@@ -13,6 +14,7 @@ import { queryKeys } from '@/lib/query-keys';
  * section, but a failure is still shown.
  */
 export function RecurrenceNote({ reportId }: { reportId: string }) {
+  const errorText = useErrorMessage();
   const t = useTranslations('recurrence');
   const f = useFormat();
   const query = useQuery({
@@ -24,7 +26,7 @@ export function RecurrenceNote({ reportId }: { reportId: string }) {
   if (query.isError) {
     return (
       <p role="alert" className="text-sm text-red-700">
-        {errorMessage(query.error, t('loadError'))}
+        {errorText(query.error, t('loadError'))}
       </p>
     );
   }

@@ -3,6 +3,7 @@
  * multipart form fields, so numeric values are coerced from strings.
  */
 import { z } from 'zod';
+import { zodMessage } from '../../lib/messages.js';
 
 const severity = z.enum(['low', 'medium', 'high', 'urgent']);
 const status = z.enum([
@@ -22,9 +23,16 @@ const latitude = z.coerce.number().min(-90).max(90);
 const longitude = z.coerce.number().min(-180).max(180);
 
 export const createReportSchema = z.object({
-  title: z.string().trim().min(3, 'Title must be at least 3 characters.').max(180),
-  description: z.string().trim().min(10, 'Description must be at least 10 characters.'),
-  categoryId: z.uuid('A valid category is required.'),
+  title: z
+    .string()
+    .trim()
+    .min(3, zodMessage('field.titleTooShort', { min: 3 }))
+    .max(180),
+  description: z
+    .string()
+    .trim()
+    .min(10, zodMessage('field.descriptionTooShort', { min: 10 })),
+  categoryId: z.uuid(zodMessage('field.category')),
   severity,
   latitude,
   longitude,
@@ -46,7 +54,7 @@ export const updateReportSchema = z
     landmark: z.string().trim().max(255).nullable(),
   })
   .partial()
-  .refine((v) => Object.keys(v).length > 0, { message: 'No fields to update.' });
+  .refine((v) => Object.keys(v).length > 0, { message: zodMessage('field.noChanges') });
 export type UpdateReportInput = z.infer<typeof updateReportSchema>;
 
 export const listReportsSchema = z.object({
@@ -89,7 +97,7 @@ export const mapSchema = z.object({
 export type MapInput = z.infer<typeof mapSchema>;
 
 export const checkDuplicatesSchema = z.object({
-  categoryId: z.uuid('A valid category is required.'),
+  categoryId: z.uuid(zodMessage('field.category')),
   latitude,
   longitude,
   radius: z.coerce.number().positive().max(2000).optional(),

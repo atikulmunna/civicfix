@@ -48,6 +48,7 @@ export async function getHotspots(now: Date = new Date()) {
           ST_ClusterDBSCAN(ST_Transform(r.location::geometry, 3857), eps := ${eps},
             minpoints := ${HOTSPOT_MIN_REPORTS}) OVER () AS "clusterId",
           r.id, r.title, r.status, r.category_id AS "categoryId", c.name AS "categoryName",
+          c.name_bn AS "categoryNameBn",
           r.latitude::float8 AS latitude, r.longitude::float8 AS longitude,
           r.created_at AS "createdAt", r.resolved_at AS "resolvedAt"
         FROM reports r

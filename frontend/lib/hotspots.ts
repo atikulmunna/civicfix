@@ -1,4 +1,5 @@
 import { useTranslations } from 'next-intl';
+import { useLocalName } from './i18n/use-local-name';
 import type { Hotspot } from './types';
 
 /** Reach rounded up to 10 m: "within 90 m" reads better than "within 87 m". */
@@ -9,13 +10,14 @@ function reach(h: Hotspot): number {
 /** How a hotspot is described, in the chosen language (F4, F5). */
 export function useHotspotText() {
   const t = useTranslations('hotspots');
+  const localName = useLocalName();
   return {
     /** What gets reported there: "Roads", or "Roads and 2 other kinds". */
     kinds(h: Hotspot): string {
       const [top, ...rest] = h.categories;
       if (!top) return t('kindsUnknown');
-      if (rest.length === 0) return top.name;
-      return t('kindsMore', { top: top.name, others: rest.length });
+      if (rest.length === 0) return localName(top);
+      return t('kindsMore', { top: localName(top), others: rest.length });
     },
     /** "5 reports within 120 m, 3 still open." */
     counts(h: Hotspot): string {

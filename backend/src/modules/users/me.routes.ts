@@ -2,8 +2,7 @@
  * Self-service profile routes (SRS v1.1 §9.3), mounted at /api/v1/users.
  */
 import { Router } from 'express';
-import { sendSuccess } from '../../lib/http.js';
-import { ApiError } from '../../lib/errors.js';
+import { parseInput, sendSuccess } from '../../lib/http.js';
 import { authUser, requireAuth } from '../../middleware/require-auth.js';
 import { listMyReportsSchema, updateMeSchema } from './me.schemas.js';
 import * as me from './me.service.js';
@@ -15,15 +14,8 @@ usersRouter.get('/me', requireAuth, async (req, res) => {
 });
 
 usersRouter.patch('/me', requireAuth, async (req, res) => {
-  const result = updateMeSchema.safeParse(req.body);
-  if (!result.success) {
-    const details = result.error.issues.map((i) => ({
-      path: i.path.join('.'),
-      message: i.message,
-    }));
-    throw new ApiError('VALIDATION_ERROR', 'Invalid request data.', details);
-  }
-  sendSuccess(res, { user: await me.updateMyProfile(authUser(req).id, result.data) });
+  const input = parseInput(updateMeSchema, req.body);
+  sendSuccess(res, { user: await me.updateMyProfile(authUser(req).id, input) });
 });
 
 usersRouter.get('/me/reports', requireAuth, async (req, res) => {

@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { renderWithIntl } from '@/test-utils';
+import { renderWithQuery } from '@/test-utils';
+import { queryKeys } from '@/lib/query-keys';
 
 const { refresh, patch, useAuth, setLocale } = vi.hoisted(() => ({
   refresh: vi.fn(),
@@ -30,7 +31,7 @@ describe('LanguageSwitch', () => {
   });
 
   it('offers Bangla in its own name, and switches the device to it', async () => {
-    renderWithIntl(<LanguageSwitch />);
+    renderWithQuery(<LanguageSwitch />);
     // Label in Name (WCAG 2.5.3): the accessible name starts with the visible word.
     const button = screen.getByRole('button', { name: /^বাংলা/ });
     expect(button).toHaveTextContent('বাংলা');
@@ -43,7 +44,7 @@ describe('LanguageSwitch', () => {
   });
 
   it('offers English from Bangla', async () => {
-    renderWithIntl(<LanguageSwitch />, { locale: 'bn' });
+    renderWithQuery(<LanguageSwitch />, undefined, { locale: 'bn' });
     const button = screen.getByRole('button', { name: /^English/ });
     expect(button).toHaveTextContent('English');
     await userEvent.setup().click(button);
@@ -52,15 +53,25 @@ describe('LanguageSwitch', () => {
 
   it('saves the choice to the account when signed in', async () => {
     useAuth.mockReturnValue({ user: SIGNED_IN });
-    renderWithIntl(<LanguageSwitch />);
+    renderWithQuery(<LanguageSwitch />);
     await userEvent.setup().click(screen.getByRole('button'));
     await waitFor(() => expect(patch).toHaveBeenCalledWith('/users/me', { language: 'bn' }));
+  });
+
+  it('keeps the signed-in user it has cached in step with the account', async () => {
+    useAuth.mockReturnValue({ user: SIGNED_IN });
+    patch.mockResolvedValue({ user: { ...SIGNED_IN, language: 'bn' } });
+    const { client } = renderWithQuery(<LanguageSwitch />);
+    await userEvent.setup().click(screen.getByRole('button'));
+    await waitFor(() =>
+      expect(client.getQueryData(queryKeys.me)).toMatchObject({ language: 'bn' }),
+    );
   });
 
   it('still switches, quietly, when saving to the account fails', async () => {
     useAuth.mockReturnValue({ user: SIGNED_IN });
     patch.mockRejectedValue(new Error('offline'));
-    renderWithIntl(<LanguageSwitch />);
+    renderWithQuery(<LanguageSwitch />);
     await userEvent.setup().click(screen.getByRole('button'));
     await waitFor(() => expect(patch).toHaveBeenCalled());
     expect(setLocale).toHaveBeenCalledWith('bn');
@@ -70,7 +81,7 @@ describe('LanguageSwitch', () => {
 
   it('still refreshes when remembering the language fails', async () => {
     setLocale.mockRejectedValue(new Error('offline'));
-    renderWithIntl(<LanguageSwitch />);
+    renderWithQuery(<LanguageSwitch />);
     await userEvent.setup().click(screen.getByRole('button'));
     await waitFor(() => expect(refresh).toHaveBeenCalled());
     expect(screen.queryByRole('alert')).toBeNull();

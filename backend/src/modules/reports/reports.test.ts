@@ -137,6 +137,8 @@ describe('POST /reports (create)', () => {
     expect(history).toHaveLength(1);
     expect(history[0]!.oldStatus).toBeNull();
     expect(history[0]!.newStatus).toBe('SUBMITTED');
+    // F5: the web app words the automatic note from its key.
+    expect(history[0]).toMatchObject({ note: 'Report submitted.', noteKey: 'report.submitted' });
   });
 
   it('rejects creation with no image (REP-003)', async () => {
@@ -162,6 +164,7 @@ describe('POST /reports (create)', () => {
     const out = await res;
     expect(out.status).toBe(400);
     expect(out.body.code).toBe('VALIDATION_ERROR');
+    expect(out.body.messageKey).toBe('upload.type');
   });
 
   it('rejects an image over the size limit with a clear message', async () => {
@@ -256,6 +259,7 @@ describe('GET /reports/:id (detail) + internal note hiding (BR-012)', () => {
   it('returns 404 for an unknown report', async () => {
     const res = await request(app).get('/api/v1/reports/00000000-0000-0000-0000-000000000000');
     expect(res.status).toBe(404);
+    expect(res.body.messageKey).toBe('report.notFound');
   });
 
   it('returns 400 for a malformed report id instead of a server error', async () => {
@@ -429,6 +433,7 @@ describe('PATCH/DELETE /reports/:id (edit window, REP-012/BR-013)', () => {
       .set('Authorization', `Bearer ${otherToken}`)
       .send({ title: 'Hijacked title' });
     expect(res.status).toBe(403);
+    expect(res.body.messageKey).toBe('report.notOwner');
   });
 
   it('forbids the owner from editing once past SUBMITTED', async () => {
@@ -484,5 +489,38 @@ describe('PATCH/DELETE /reports/:id (edit window, REP-012/BR-013)', () => {
       .delete(`/api/v1/reports/${id}`)
       .set('Authorization', `Bearer ${adminToken}`);
     expect(res.status).toBe(200);
+  });
+});
+
+describe('message keys on report validation (F5)', () => {
+  it('keys a title that is too short, with its minimum', async () => {
+    const res = await createReport({ token: ownerToken, title: 'ab' });
+    expect(res.status).toBe(400);
+    expect(res.body.messageKey).toBe('common.invalidRequest');
+    expect(res.body.details).toContainEqual({
+      path: 'title',
+      message: 'Title must be at least 3 characters.',
+      messageKey: 'field.titleTooShort',
+      messageParams: { min: 3 },
+    });
+  });
+});
+
+describe('Bangla category names (F5)', () => {
+  it("sends the category's Bangla name with a report", async () => {
+    const cat = await prisma.category.create({
+      data: { name: `Signs BN ${stamp}`, nameBn: 'সাইনবোর্ড' },
+    });
+    const res = await createReport({ token: ownerToken, category: cat.id });
+    expect(res.status).toBe(201);
+    storedUrls.push(res.body.data.report.images[0].imageUrl);
+    const id = res.body.data.report.id as string;
+    const got = await request(app).get(`/api/v1/reports/${id}`);
+    expect(got.body.data.report.category).toMatchObject({
+      name: `Signs BN ${stamp}`,
+      nameBn: 'সাইনবোর্ড',
+    });
+    await prisma.report.delete({ where: { id } });
+    await prisma.category.delete({ where: { id: cat.id } });
   });
 });

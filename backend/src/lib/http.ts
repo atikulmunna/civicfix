@@ -7,6 +7,7 @@
 import type { Request, Response } from 'express';
 import type { z } from 'zod';
 import { ApiError } from './errors.js';
+import { keyOf, message } from './messages.js';
 
 export function sendSuccess(res: Response, data: unknown, status = 200): void {
   res.status(status).json({ success: true, data });
@@ -16,15 +17,31 @@ export function sendSuccess(res: Response, data: unknown, status = 200): void {
  * Validate request input against a Zod schema, raising VALIDATION_ERROR with
  * per-field details on failure. Returns the schema's parsed output type.
  */
-export function parseInput<S extends z.ZodType>(schema: S, data: unknown): z.output<S> {
-  const result = schema.safeParse(data);
-  if (!result.success) {
-    const details = result.error.issues.map((i) => ({
+/**
+ * Per-field details of a failed validation. An issue whose message is one of
+ * lib/messages.ts carries its key (F5), so the web app can word it.
+ */
+export function issueDetails(error: z.ZodError) {
+  return error.issues.map((i) => {
+    const known = keyOf(i.message);
+    return {
       // Zod 4 paths are PropertyKey[]; String() keeps symbol keys from throwing.
       path: i.path.map(String).join('.'),
       message: i.message,
-    }));
-    throw new ApiError('VALIDATION_ERROR', 'Invalid request data.', details);
+      ...(known ? { messageKey: known.key } : {}),
+      ...(known?.params ? { messageParams: known.params } : {}),
+    };
+  });
+}
+
+export function parseInput<S extends z.ZodType>(schema: S, data: unknown): z.output<S> {
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    throw new ApiError(
+      'VALIDATION_ERROR',
+      message('common.invalidRequest'),
+      issueDetails(result.error),
+    );
   }
   return result.data;
 }

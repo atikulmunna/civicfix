@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, errorMessage } from '@/lib/api';
+import { api } from '@/lib/api';
 import { useFormat } from '@/lib/i18n/use-format';
 import { RequireAuth } from '@/components/require-auth';
 import { SeverityBadge, StatusBadge } from '@/components/badges';
 import { useToast } from '@/components/toast';
 import { queryKeys } from '@/lib/query-keys';
 import { Button, LoadError, PageHeader, Spinner } from '@/components/ui';
+import { useErrorMessage } from '@/lib/i18n/use-error-message';
 
 interface Action {
   id: string;
@@ -17,6 +18,7 @@ interface Action {
 }
 
 function Queue() {
+  const errorText = useErrorMessage();
   const f = useFormat();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -32,7 +34,7 @@ function Queue() {
       await queryClient.invalidateQueries({ queryKey: queryKeys.departmentQueue });
       toast(a.done, 'success');
     },
-    onError: (err) => toast(errorMessage(err, 'Action failed.'), 'error'),
+    onError: (err) => toast(errorText(err, 'Action failed.'), 'error'),
   });
   const busyId = action.isPending ? action.variables.id : null;
   const act = (id: string, run: () => Promise<unknown>, done: string) =>
@@ -40,7 +42,7 @@ function Queue() {
 
   if (queue.isPending) return <Spinner />;
   if (queue.isError) {
-    return <LoadError>{errorMessage(queue.error, 'Failed to load your queue.')}</LoadError>;
+    return <LoadError>{errorText(queue.error, 'Failed to load your queue.')}</LoadError>;
   }
 
   return (

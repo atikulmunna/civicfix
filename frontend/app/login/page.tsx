@@ -6,10 +6,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/components/auth-context';
 import { useToast } from '@/components/toast';
-import { ApiError } from '@/lib/api';
 import { Button, Card, FieldError, Input, Label } from '@/components/ui';
+import { useErrorMessage } from '@/lib/i18n/use-error-message';
 
 function LoginForm() {
+  const errorText = useErrorMessage();
   const t = useTranslations('auth');
   const { login } = useAuth();
   const router = useRouter();
@@ -36,7 +37,7 @@ function LoginForm() {
         router.push(params.get('next') || '/');
       }
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : t('unexpected'));
+      setError(errorText(err, t('unexpected')));
     } finally {
       setBusy(false);
     }

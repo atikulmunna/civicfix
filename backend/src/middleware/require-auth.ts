@@ -8,6 +8,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import type { UserRole } from '../generated/prisma/client.js';
 import { ApiError } from '../lib/errors.js';
+import { message } from '../lib/messages.js';
 import { readCookie } from '../lib/http.js';
 import { verifyAccessToken } from '../modules/auth/tokens.js';
 
@@ -37,7 +38,7 @@ export const ACCESS_COOKIE = 'access_token';
  */
 export function authUser(req: Request): AuthUser {
   if (!req.user) {
-    throw new ApiError('AUTH_REQUIRED', 'Authentication required.');
+    throw new ApiError('AUTH_REQUIRED', message('common.authRequired'));
   }
   return req.user;
 }
@@ -53,14 +54,14 @@ function extractToken(req: Request): string | undefined {
 export function requireAuth(req: Request, _res: Response, next: NextFunction): void {
   const token = extractToken(req);
   if (!token) {
-    throw new ApiError('AUTH_REQUIRED', 'Authentication required.');
+    throw new ApiError('AUTH_REQUIRED', message('common.authRequired'));
   }
   try {
     const payload = verifyAccessToken(token);
     req.user = { id: payload.sub, role: payload.role };
     next();
   } catch {
-    throw new ApiError('AUTH_REQUIRED', 'Invalid or expired access token.');
+    throw new ApiError('AUTH_REQUIRED', message('common.tokenInvalid'));
   }
 }
 
@@ -86,10 +87,10 @@ export function optionalAuth(req: Request, _res: Response, next: NextFunction): 
 export function requireRole(...roles: UserRole[]) {
   return (req: Request, _res: Response, next: NextFunction): void => {
     if (!req.user) {
-      throw new ApiError('AUTH_REQUIRED', 'Authentication required.');
+      throw new ApiError('AUTH_REQUIRED', message('common.authRequired'));
     }
     if (!roles.includes(req.user.role)) {
-      throw new ApiError('FORBIDDEN', 'You do not have permission to perform this action.');
+      throw new ApiError('FORBIDDEN', message('common.forbidden'));
     }
     next();
   };

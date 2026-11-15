@@ -145,6 +145,8 @@ export interface paths {
                         email: string;
                         password: string;
                         phone?: string;
+                        /** @enum {string} */
+                        language?: "en" | "bn";
                     };
                 };
             };
@@ -2535,6 +2537,7 @@ export interface paths {
                 content: {
                     "application/json": {
                         name: string;
+                        nameBn?: string;
                         description?: string;
                         icon?: string;
                     };
@@ -2643,6 +2646,7 @@ export interface paths {
                 content: {
                     "application/json": {
                         name?: string;
+                        nameBn?: string | null;
                         description?: string | null;
                         icon?: string | null;
                         isActive?: boolean;
@@ -2702,6 +2706,7 @@ export interface paths {
                 content: {
                     "application/json": {
                         name: string;
+                        nameBn?: string;
                         description?: string;
                         contactEmail?: string;
                         phone?: string;
@@ -2811,6 +2816,7 @@ export interface paths {
                 content: {
                     "application/json": {
                         name?: string;
+                        nameBn?: string | null;
                         description?: string | null;
                         contactEmail?: string | null;
                         phone?: string | null;
@@ -3415,12 +3421,20 @@ export interface components {
             success: false;
             message: string;
             code: components["schemas"]["ErrorCode"];
+            /** @description Resident-facing messages: the web app words the message from this key (F5). */
+            messageKey?: components["schemas"]["MessageKey"];
+            messageParams?: {
+                [key: string]: string | number;
+            };
+            /** @description Validation failures: one { path, message, messageKey?, messageParams? } per issue. */
             details?: unknown;
             /** @description On 500s: quote it when reporting the problem. */
             requestId?: string;
         };
         /** @enum {string} */
         ErrorCode: "AUTH_REQUIRED" | "FORBIDDEN" | "VALIDATION_ERROR" | "NOT_FOUND" | "DUPLICATE_RESOURCE" | "INVALID_STATUS_TRANSITION" | "RATE_LIMITED" | "UPLOAD_FAILED" | "SERVICE_UNAVAILABLE" | "INTERNAL_ERROR";
+        /** @enum {string} */
+        MessageKey: "common.notFound" | "common.authRequired" | "common.tokenInvalid" | "common.forbidden" | "common.duplicate" | "common.missingReference" | "common.invalidId" | "common.invalidRequest" | "common.rateLimited" | "common.internal" | "common.unavailable" | "upload.type" | "upload.unreadable" | "upload.tooManyPixels" | "upload.tooLarge" | "auth.emailTaken" | "auth.badCredentials" | "auth.deactivated" | "auth.signInAgain" | "auth.wrongCurrentPassword" | "auth.samePassword" | "auth.sessionInvalid" | "auth.noRefreshToken" | "auth.userNotFound" | "auth.passwordTooShort" | "auth.passwordCommon" | "report.imageRequired" | "report.categoryMissing" | "report.notFound" | "report.notOwner" | "report.locked" | "comment.empty" | "comment.notFound" | "comment.notOwner" | "fixCheck.photoRequired" | "fixCheck.notResolved" | "fixCheck.notResident" | "fixCheck.already" | "notification.notFound" | "field.nameRequired" | "field.email" | "field.category" | "field.passwordRequired" | "field.currentPasswordRequired" | "field.newPasswordRequired" | "field.titleTooShort" | "field.descriptionTooShort" | "field.noChanges";
         /** @description The signed-in user (auth and profile endpoints). */
         User: {
             /** Format: uuid */
@@ -3453,6 +3467,7 @@ export interface components {
                 /** Format: uuid */
                 id: string;
                 name: string;
+                nameBn: string | null;
                 icon: string | null;
             };
             status: components["schemas"]["ReportStatus"];
@@ -3529,6 +3544,11 @@ export interface components {
             oldStatus: components["schemas"]["ReportStatus"] | null;
             newStatus: components["schemas"]["ReportStatus"];
             note: string | null;
+            /** @description Automatic notes only (F5): the web app words them from this key. */
+            noteKey: components["schemas"]["HistoryNoteKey"] | null;
+            noteParams: {
+                [key: string]: string | number;
+            } | null;
             changedBy: {
                 /** Format: uuid */
                 id: string;
@@ -3538,6 +3558,8 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
         };
+        /** @enum {string} */
+        HistoryNoteKey: "report.submitted" | "report.merged" | "report.reopenedByDisputes";
         Comment: {
             /** Format: uuid */
             id: string;
@@ -3629,6 +3651,61 @@ export interface components {
             isRead: boolean;
             /** Format: date-time */
             createdAt: string;
+            /** @constant */
+            kind: "status_changed";
+            params: {
+                reportTitle: string;
+                status: components["schemas"]["ReportStatus"];
+            };
+        } | {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            userId: string;
+            reportId: string | null;
+            title: string;
+            message: string;
+            type: components["schemas"]["NotificationType"];
+            isRead: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** @constant */
+            kind: "report_merged";
+            params: {
+                reportTitle: string;
+                originalTitle: string;
+            };
+        } | {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            userId: string;
+            reportId: string | null;
+            title: string;
+            message: string;
+            type: components["schemas"]["NotificationType"];
+            isRead: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** @constant */
+            kind: "fix_disputed";
+            params: {
+                reportTitle: string;
+            };
+        } | {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            userId: string;
+            reportId: string | null;
+            title: string;
+            message: string;
+            type: components["schemas"]["NotificationType"];
+            isRead: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            kind: null;
+            params: null;
         };
         /** @enum {string} */
         NotificationType: "status_change" | "comment" | "assignment" | "system";
@@ -3636,6 +3713,7 @@ export interface components {
             /** Format: uuid */
             id: string;
             name: string;
+            nameBn: string | null;
             description: string | null;
             icon: string | null;
             isActive: boolean;
@@ -3646,6 +3724,7 @@ export interface components {
             /** Format: uuid */
             id: string;
             name: string;
+            nameBn: string | null;
             description: string | null;
             contactEmail: string | null;
             phone: string | null;
@@ -3705,6 +3784,7 @@ export interface components {
             /** Format: uuid */
             departmentId: string;
             name: string;
+            nameBn: string | null;
             assigned: number;
             resolved: number;
             resolutionRate: number | null;
@@ -3748,6 +3828,7 @@ export interface components {
                 /** Format: uuid */
                 categoryId: string;
                 name: string;
+                nameBn: string | null;
                 count: number;
             }[];
             /** @description A problem of one kind was reported here again after an earlier one was fixed. */

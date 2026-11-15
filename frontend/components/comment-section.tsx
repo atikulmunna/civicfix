@@ -4,15 +4,17 @@ import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, errorMessage } from '@/lib/api';
+import { api } from '@/lib/api';
 import { queryKeys } from '@/lib/query-keys';
 import type { Comment } from '@/lib/types';
 import { useFormat } from '@/lib/i18n/use-format';
 import { isAdmin, useAuth } from './auth-context';
 import { useToast } from './toast';
 import { Button, LoadError, Textarea } from './ui';
+import { useErrorMessage } from '@/lib/i18n/use-error-message';
 
 export function CommentSection({ reportId }: { reportId: string }) {
+  const errorText = useErrorMessage();
   const t = useTranslations('comments');
   const f = useFormat();
   const { user } = useAuth();
@@ -38,14 +40,14 @@ export function CommentSection({ reportId }: { reportId: string }) {
       updateComments((c) => [...c, comment]);
       setContent('');
     },
-    onError: (err) => toast(errorMessage(err, t('postError')), 'error'),
+    onError: (err) => toast(errorText(err, t('postError')), 'error'),
   });
   const busy = post.isPending;
 
   const removeComment = useMutation({
     mutationFn: (id: string) => api.del(`/comments/${id}`),
     onSuccess: (_result, id) => updateComments((c) => c.filter((x) => x.id !== id)),
-    onError: (err) => toast(errorMessage(err, t('deleteError')), 'error'),
+    onError: (err) => toast(errorText(err, t('deleteError')), 'error'),
   });
 
   function submit(e: FormEvent) {
@@ -64,7 +66,7 @@ export function CommentSection({ reportId }: { reportId: string }) {
       {commentsQuery.isPending ? (
         <p className="text-sm text-slate-500">{t('loading')}</p>
       ) : commentsQuery.isError ? (
-        <LoadError>{errorMessage(commentsQuery.error, t('loadError'))}</LoadError>
+        <LoadError>{errorText(commentsQuery.error, t('loadError'))}</LoadError>
       ) : comments.length === 0 ? (
         <p className="text-sm text-slate-500">{t('none')}</p>
       ) : (

@@ -65,6 +65,7 @@ describe('POST /auth/register', () => {
     const res = await request(app).post('/api/v1/auth/register').send(citizen);
     expect(res.status).toBe(409);
     expect(res.body.code).toBe('DUPLICATE_RESOURCE');
+    expect(res.body.messageKey).toBe('auth.emailTaken');
   });
 
   it('resolves two simultaneous sign-ups with one email as one success and one conflict', async () => {
@@ -135,6 +136,7 @@ describe('POST /auth/login', () => {
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('VALIDATION_ERROR');
     expect(res.body.message).toBe('Invalid email or password.');
+    expect(res.body.messageKey).toBe('auth.badCredentials');
   });
 
   it('rejects an unknown email with the same generic message', async () => {
@@ -366,5 +368,55 @@ describe('POST /auth/change-password (R19)', () => {
 
     expect((await signIn(citizen.password)).status).toBe(400);
     expect((await signIn(NEW_PASSWORD)).status).toBe(200);
+  });
+});
+
+describe('message keys on auth errors (F5)', () => {
+  it('keys a request without a session', async () => {
+    const res = await request(app).get('/api/v1/auth/me');
+    expect(res.status).toBe(401);
+    expect(res.body.message).toBe('Authentication required.');
+    expect(res.body.messageKey).toBe('common.authRequired');
+  });
+
+  it('keys each field issue of a bad sign-up', async () => {
+    const res = await request(app)
+      .post('/api/v1/auth/register')
+      .send({ name: '', email: 'not-an-email', password: '' });
+    expect(res.status).toBe(400);
+    expect(res.body.messageKey).toBe('common.invalidRequest');
+    const keys = (res.body.details as { path: string; messageKey?: string }[]).map((d) => [
+      d.path,
+      d.messageKey,
+    ]);
+    expect(keys).toEqual(
+      expect.arrayContaining([
+        ['name', 'field.nameRequired'],
+        ['email', 'field.email'],
+        ['password', 'field.passwordRequired'],
+      ]),
+    );
+  });
+});
+
+describe('language at sign-up (F5)', () => {
+  it('stores the language a resident signs up in', async () => {
+    const email = `citizen_bn_${stamp}@example.com`;
+    createdEmails.push(email);
+    const res = await request(app)
+      .post('/api/v1/auth/register')
+      .send({ name: 'Rina', email, password: 'CorrectHorse9', language: 'bn' });
+    expect(res.status).toBe(201);
+    expect(res.body.data.user.language).toBe('bn');
+  });
+
+  it('refuses a language the app does not have', async () => {
+    const email = `fr_${stamp}@example.com`;
+    createdEmails.push(email);
+    const res = await request(app)
+      .post('/api/v1/auth/register')
+      .send({ name: 'Rina', email, password: 'CorrectHorse9', language: 'fr' });
+    expect(res.status).toBe(400);
+    expect((res.body.details as { path: string }[]).map((d) => d.path)).toContain('language');
   });
 });

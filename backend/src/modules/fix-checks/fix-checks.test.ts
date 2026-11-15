@@ -112,7 +112,7 @@ async function checks(id: string, who?: Who) {
 beforeAll(async () => {
   categoryId = (await prisma.category.create({ data: { name: `Drains ${stamp}`, icon: 'drain' } }))
     .id;
-  deptA = (await prisma.department.create({ data: { name: `Drainage ${stamp}` } })).id;
+  deptA = (await prisma.department.create({ data: { name: `Fix Drainage ${stamp}` } })).id;
   deptB = (await prisma.department.create({ data: { name: `Parks ${stamp}` } })).id;
 
   for (const email of Object.values(emails)) {
@@ -235,6 +235,7 @@ describe('POST /reports/:id/fix-checks', () => {
     const again = await check('first', id, 'disputed');
     expect(again.status).toBe(409);
     expect(again.body.code).toBe('DUPLICATE_RESOURCE');
+    expect(again.body.messageKey).toBe('fixCheck.already');
 
     const data = await checks(id, 'first');
     expect(data.current).toMatchObject({ confirmed: 1, disputed: 0 });
@@ -264,6 +265,8 @@ describe('POST /reports/:id/fix-checks', () => {
       oldStatus: 'RESOLVED',
       newStatus: 'IN_PROGRESS',
       note: 'Reopened: 2 residents disputed the fix with photos.',
+      noteKey: 'report.reopenedByDisputes',
+      noteParams: { count: 2 },
       changedBy: { id: await userId('second') },
     });
 
@@ -272,6 +275,8 @@ describe('POST /reports/:id/fix-checks', () => {
       where: { reportId: id, userId: await userId('worker') },
     });
     expect(told.map((n) => n.title)).toEqual(['Fix disputed']);
+    const { title } = await prisma.report.findUniqueOrThrow({ where: { id } });
+    expect(told[0]).toMatchObject({ kind: 'fix_disputed', params: { reportTitle: title } });
     const reporterNews = await prisma.notification.findMany({
       where: { reportId: id, userId: await userId('reporter') },
       orderBy: { createdAt: 'asc' },

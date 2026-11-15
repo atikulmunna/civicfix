@@ -24,21 +24,33 @@ const DAY = 24 * 60 * 60 * 1000;
 const HISTORY_STEP_MS = 6 * 60 * 60 * 1000;
 
 const CATEGORIES = [
-  { name: 'Roads & Potholes', icon: 'road' },
-  { name: 'Street Lighting', icon: 'bulb' },
-  { name: 'Garbage & Sanitation', icon: 'trash' },
-  { name: 'Water & Drainage', icon: 'droplet' },
-  { name: 'Public Safety', icon: 'shield' },
-  { name: 'Parks & Greenery', icon: 'tree' },
-  { name: 'Electricity', icon: 'zap' },
+  { name: 'Roads & Potholes', nameBn: 'রাস্তা ও গর্ত', icon: 'road' },
+  { name: 'Street Lighting', nameBn: 'রাস্তার বাতি', icon: 'bulb' },
+  { name: 'Garbage & Sanitation', nameBn: 'ময়লা ও পরিচ্ছন্নতা', icon: 'trash' },
+  { name: 'Water & Drainage', nameBn: 'পানি ও নিষ্কাশন', icon: 'droplet' },
+  { name: 'Public Safety', nameBn: 'জননিরাপত্তা', icon: 'shield' },
+  { name: 'Parks & Greenery', nameBn: 'পার্ক ও সবুজ', icon: 'tree' },
+  { name: 'Electricity', nameBn: 'বিদ্যুৎ', icon: 'zap' },
 ];
 
 const DEPARTMENTS = [
-  { name: 'Public Works Department', contactEmail: 'publicworks@city.gov' },
-  { name: 'Sanitation Department', contactEmail: 'sanitation@city.gov' },
-  { name: 'Water & Sewerage Authority', contactEmail: 'water@city.gov' },
-  { name: 'Electricity Board', contactEmail: 'power@city.gov' },
-  { name: 'Parks & Recreation', contactEmail: 'parks@city.gov' },
+  {
+    name: 'Public Works Department',
+    nameBn: 'গণপূর্ত বিভাগ',
+    contactEmail: 'publicworks@city.gov',
+  },
+  {
+    name: 'Sanitation Department',
+    nameBn: 'পরিচ্ছন্নতা বিভাগ',
+    contactEmail: 'sanitation@city.gov',
+  },
+  {
+    name: 'Water & Sewerage Authority',
+    nameBn: 'পানি ও পয়ঃনিষ্কাশন কর্তৃপক্ষ',
+    contactEmail: 'water@city.gov',
+  },
+  { name: 'Electricity Board', nameBn: 'বিদ্যুৎ বোর্ড', contactEmail: 'power@city.gov' },
+  { name: 'Parks & Recreation', nameBn: 'পার্ক ও বিনোদন বিভাগ', contactEmail: 'parks@city.gov' },
 ];
 
 // Curated, topical stock photos per category (Unsplash) so seeded reports look
@@ -289,7 +301,10 @@ async function main(): Promise<void> {
         oldStatus: idx === 0 ? null : chain[idx - 1],
         newStatus: to,
         changedBy: idx === 0 ? reporter.id : changerFor(to),
-        note: idx === 0 ? 'Report submitted.' : null,
+        // The first row is the server's own note, with its key (F5), as the API writes it.
+        ...(idx === 0
+          ? { note: 'Report submitted.', noteKey: 'report.submitted', noteParams: {} }
+          : { note: null }),
         createdAt: new Date(createdAt.getTime() + idx * HISTORY_STEP_MS),
       })),
     });

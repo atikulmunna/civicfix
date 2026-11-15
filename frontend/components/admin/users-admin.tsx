@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, errorMessage } from '@/lib/api';
+import { api } from '@/lib/api';
 import type { AdminUser, Role } from '@/lib/types';
 import { queryKeys } from '@/lib/query-keys';
 import { useAuth } from '@/components/auth-context';
@@ -10,11 +10,13 @@ import { canManageUser } from '@/lib/permissions';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { useToast } from '@/components/toast';
 import { Button, Input, LoadError, Select, Spinner } from '@/components/ui';
+import { useErrorMessage } from '@/lib/i18n/use-error-message';
 
 const ROLES: Role[] = ['citizen', 'department_worker', 'admin', 'super_admin'];
 export const SEARCH_DEBOUNCE_MS = 300;
 
 export function UsersAdmin() {
+  const errorText = useErrorMessage();
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -41,7 +43,7 @@ export function UsersAdmin() {
     mutationFn: (u: AdminUser) =>
       api.patch(`/admin/users/${u.id}/status`, { isActive: !u.isActive }),
     onSuccess: () => refreshUsers(),
-    onError: (err) => toast(errorMessage(err, 'Failed.'), 'error'),
+    onError: (err) => toast(errorText(err, 'Failed.'), 'error'),
   });
 
   const resetPassword = useMutation({
@@ -50,7 +52,7 @@ export function UsersAdmin() {
       setConfirmReset(null);
       setIssued({ email: u.email, password: data.temporaryPassword });
     },
-    onError: (err) => toast(errorMessage(err, 'Could not reset the password.'), 'error'),
+    onError: (err) => toast(errorText(err, 'Could not reset the password.'), 'error'),
   });
 
   async function copyIssued() {
@@ -70,7 +72,7 @@ export function UsersAdmin() {
       toast('Role updated.', 'success');
       return refreshUsers();
     },
-    onError: (err) => toast(errorMessage(err, 'Failed.'), 'error'),
+    onError: (err) => toast(errorText(err, 'Failed.'), 'error'),
   });
 
   return (
@@ -132,7 +134,7 @@ export function UsersAdmin() {
       {users.isPending ? (
         <Spinner />
       ) : users.isError ? (
-        <LoadError>{errorMessage(users.error, 'Failed to load users.')}</LoadError>
+        <LoadError>{errorText(users.error, 'Failed to load users.')}</LoadError>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

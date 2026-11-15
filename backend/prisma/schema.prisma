@@ -136,6 +136,8 @@ model User {
 model Category {
   id          String   @id @default(uuid()) @db.Uuid
   name        String   @unique @db.VarChar(100)
+  /// Shown to Bangla readers (F5); null shows `name`.
+  nameBn      String?  @map("name_bn") @db.VarChar(100)
   description String?
   icon        String?  @db.VarChar(100)
   isActive    Boolean  @default(true) @map("is_active")
@@ -149,6 +151,8 @@ model Category {
 model Department {
   id           String   @id @default(uuid()) @db.Uuid
   name         String   @unique @db.VarChar(120)
+  /// Shown to Bangla readers (F5); null shows `name`.
+  nameBn       String?  @map("name_bn") @db.VarChar(120)
   description  String?
   contactEmail String?  @map("contact_email") @db.VarChar(255)
   phone        String?  @db.VarChar(30)
@@ -299,13 +303,17 @@ model Vote {
 }
 
 model StatusHistory {
-  id        String        @id @default(uuid()) @db.Uuid
-  reportId  String        @map("report_id") @db.Uuid
-  oldStatus ReportStatus? @map("old_status")
-  newStatus ReportStatus  @map("new_status")
-  changedBy String        @map("changed_by") @db.Uuid
-  note      String?
-  createdAt DateTime      @default(now()) @map("created_at")
+  id         String        @id @default(uuid()) @db.Uuid
+  reportId   String        @map("report_id") @db.Uuid
+  oldStatus  ReportStatus? @map("old_status")
+  newStatus  ReportStatus  @map("new_status")
+  changedBy  String        @map("changed_by") @db.Uuid
+  note       String?
+  /// Automatic notes only (F5): the web app words them in the reader's language.
+  /// Null on notes people typed, which are shown as written.
+  noteKey    String?       @map("note_key") @db.VarChar(40)
+  noteParams Json?         @map("note_params")
+  createdAt  DateTime      @default(now()) @map("created_at")
 
   report  Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
   changer User   @relation("StatusChanger", fields: [changedBy], references: [id])
@@ -356,6 +364,11 @@ model Notification {
   title     String           @db.VarChar(180)
   message   String
   type      NotificationType
+  /// What happened, so the web app can word it in the reader's language (F5).
+  /// Null on rows stored before kinds; those show their stored English.
+  kind      String?          @db.VarChar(40)
+  /// The values the kind's wording needs (see modules/notifications/kinds.ts).
+  params    Json?
   isRead    Boolean          @default(false) @map("is_read")
   createdAt DateTime         @default(now()) @map("created_at")
 

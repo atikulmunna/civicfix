@@ -43,6 +43,7 @@ describe('makeLimiter', () => {
     const blocked = await request(app).get('/ping');
     expect(blocked.status).toBe(429);
     expect(blocked.body.code).toBe('RATE_LIMITED');
+    expect(blocked.body.messageKey).toBe('common.rateLimited');
     expect(blocked.body.success).toBe(false);
   });
 

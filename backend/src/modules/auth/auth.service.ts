@@ -6,6 +6,7 @@
 import type { User, UserRole } from '../../generated/prisma/client.js';
 import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../lib/errors.js';
+import { message } from '../../lib/messages.js';
 import { logger } from '../../lib/logger.js';
 import { isUniqueViolation } from '../../lib/prisma-errors.js';
 import { assertPasswordPolicy, hashPassword, verifyPassword } from './password.js';
@@ -71,6 +72,8 @@ export interface RegisterInput {
   email: string;
   password: string;
   phone?: string;
+  /** The interface language the resident signed up in (F5). */
+  language?: 'en' | 'bn';
 }
 
 export async function register(
@@ -79,8 +82,7 @@ export async function register(
   assertPasswordPolicy(input.password);
 
   const email = input.email.toLowerCase().trim();
-  const duplicate = () =>
-    new ApiError('DUPLICATE_RESOURCE', 'An account with this email already exists.');
+  const duplicate = () => new ApiError('DUPLICATE_RESOURCE', message('auth.emailTaken'));
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     throw duplicate();
@@ -98,6 +100,7 @@ export async function register(
         email,
         passwordHash,
         phone: phone === undefined || phone === '' ? null : phone,
+        ...(input.language ? { language: input.language } : {}),
       },
     })
     .catch((err: unknown) => {
@@ -120,10 +123,10 @@ export async function login(
   const ok = await verifyPassword(user?.passwordHash ?? DUMMY_HASH, password).catch(() => false);
 
   if (!user || !ok) {
-    throw new ApiError('VALIDATION_ERROR', 'Invalid email or password.');
+    throw new ApiError('VALIDATION_ERROR', message('auth.badCredentials'));
   }
   if (!user.isActive) {
-    throw new ApiError('FORBIDDEN', 'This account has been deactivated.');
+    throw new ApiError('FORBIDDEN', message('auth.deactivated'));
   }
 
   const session = await issueSession(user.id, user.role);
@@ -158,7 +161,7 @@ export async function refresh(rawToken: string): Promise<IssuedSession> {
     throw invalidSession();
   }
   if (!record.user.isActive) {
-    throw new ApiError('FORBIDDEN', 'This account has been deactivated.');
+    throw new ApiError('FORBIDDEN', message('auth.deactivated'));
   }
 
   const next = await rotateRefreshToken(record, now);
@@ -197,14 +200,14 @@ export async function changePassword(
 ): Promise<{ user: PublicUser; session: IssuedSession }> {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user?.isActive) {
-    throw new ApiError('AUTH_REQUIRED', 'Please sign in again.');
+    throw new ApiError('AUTH_REQUIRED', message('auth.signInAgain'));
   }
   if (!(await verifyPassword(user.passwordHash, currentPassword).catch(() => false))) {
-    throw new ApiError('VALIDATION_ERROR', 'Your current password is incorrect.');
+    throw new ApiError('VALIDATION_ERROR', message('auth.wrongCurrentPassword'));
   }
   assertPasswordPolicy(newPassword);
   if (await verifyPassword(user.passwordHash, newPassword).catch(() => false)) {
-    throw new ApiError('VALIDATION_ERROR', 'Choose a password different from your current one.');
+    throw new ApiError('VALIDATION_ERROR', message('auth.samePassword'));
   }
 
   const passwordHash = await hashPassword(newPassword);
@@ -236,7 +239,7 @@ export async function getUserById(id: string): Promise<PublicUser | null> {
 export const REUSE_GRACE_MS = 60_000;
 
 function invalidSession(): ApiError {
-  return new ApiError('AUTH_REQUIRED', 'Invalid or expired session. Please log in again.');
+  return new ApiError('AUTH_REQUIRED', message('auth.sessionInvalid'));
 }
 
 /**

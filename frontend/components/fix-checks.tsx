@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, assetUrl, errorMessage } from '@/lib/api';
+import { api, assetUrl } from '@/lib/api';
 import { useFormat } from '@/lib/i18n/use-format';
 import { invalidateReportLists } from '@/lib/query-client';
 import { queryKeys } from '@/lib/query-keys';
@@ -14,6 +14,7 @@ import type { FixCheck, FixChecks as FixChecksData, FixVerdict } from '@/lib/typ
 import { useAuth } from './auth-context';
 import { useToast } from './toast';
 import { Button, FieldError, Label, LoadError, PhotoPicker, Spinner } from './ui';
+import { useErrorMessage } from '@/lib/i18n/use-error-message';
 
 const VERDICT_STYLES: Record<FixVerdict, { pressed: string; text: string }> = {
   confirmed: { pressed: 'border-green-600 bg-green-50 text-green-700', text: 'text-green-700' },
@@ -21,6 +22,7 @@ const VERDICT_STYLES: Record<FixVerdict, { pressed: string; text: string }> = {
 };
 
 function CheckForm({ reportId, disputesToReopen }: { reportId: string; disputesToReopen: number }) {
+  const errorText = useErrorMessage();
   const t = useTranslations('fixChecks');
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -59,7 +61,7 @@ function CheckForm({ reportId, disputesToReopen }: { reportId: string; disputesT
         ]);
       }
     },
-    onError: (err) => setError(errorMessage(err, t('sendError'))),
+    onError: (err) => setError(errorText(err, t('sendError'))),
   });
 
   function choose(next: FixVerdict | null) {
@@ -224,6 +226,7 @@ function CheckList({
  * really is, with a photo; afterwards, the checks that were made.
  */
 export function FixChecks({ reportId, resolved }: { reportId: string; resolved: boolean }) {
+  const errorText = useErrorMessage();
   const t = useTranslations('fixChecks');
   const f = useFormat();
   const query = useQuery({
@@ -234,7 +237,7 @@ export function FixChecks({ reportId, resolved }: { reportId: string; resolved: 
   // Only a resolved report is sure to have something here, so only it waits visibly.
   if (query.isPending) return resolved ? <Spinner label={t('loading')} /> : null;
   if (query.isError) {
-    return <LoadError>{errorMessage(query.error, t('loadError'))}</LoadError>;
+    return <LoadError>{errorText(query.error, t('loadError'))}</LoadError>;
   }
   const data = query.data;
   const current = data.current;

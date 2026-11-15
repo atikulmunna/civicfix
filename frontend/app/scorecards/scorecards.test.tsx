@@ -23,6 +23,7 @@ function card(over: Partial<DepartmentScorecard>): DepartmentScorecard {
   return {
     departmentId: 'd1',
     name: 'Public Works',
+    nameBn: null,
     assigned: 0,
     resolved: 0,
     resolutionRate: null,
@@ -207,5 +208,25 @@ describe('department scorecards page in Bangla', () => {
     expect(within(empty).getAllByText(bn('noData'))).toHaveLength(5);
     expect(screen.getByRole('region', { name: bn('region') })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: bn('method.heading') })).toBeInTheDocument();
+  });
+});
+
+describe('department names in Bangla (F5)', () => {
+  it('names departments in Bangla, in the table and the overdue list', async () => {
+    renderWith(
+      [
+        card({
+          departmentId: 'a',
+          name: 'Public Works Department',
+          nameBn: 'গণপূর্ত বিভাগ',
+          overdueCount: 1,
+          overdue: [overdue('r1', 'Blocked drain', 30)],
+        }),
+      ],
+      'bn',
+    );
+    expect(await screen.findByRole('rowheader', { name: 'গণপূর্ত বিভাগ' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'গণপূর্ত বিভাগ' })).toBeInTheDocument();
+    expect(screen.queryByText('Public Works Department')).toBeNull();
   });
 });

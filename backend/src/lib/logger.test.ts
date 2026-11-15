@@ -86,6 +86,7 @@ describe('errorHandler (unexpected errors)', () => {
       success: false,
       message: 'Internal server error.',
       code: 'INTERNAL_ERROR',
+      messageKey: 'common.internal',
       requestId: 'req-12345678',
     });
   });

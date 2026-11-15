@@ -14,6 +14,14 @@ const TESTS = ['**/*.test.tsx'];
 /** Symbols and punctuation that read the same in every language. */
 const LANGUAGE_NEUTRAL = ['·', '→', '←', '▲', '✓', '📍', ',', '.', ':', '(', ')', 'Civic', 'Fix'];
 
+/** Attributes whose text people read or hear. */
+const READ_ATTRIBUTES = '/^(placeholder|aria-label|title|eyebrow|subtitle|label|alt)$/';
+/** A string with letters in it, plain or a template (class names and keys are guarded by place). */
+const WORDS =
+  ':matches(Literal[value=/[A-Za-z]/], TemplateLiteral:has(TemplateElement[value.raw=/[A-Za-z]/]))';
+/** A braces expression among an element's children (not an attribute's value). */
+const CHILD = ':matches(JSXElement, JSXFragment) > JSXExpressionContainer';
+
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
@@ -29,11 +37,24 @@ const eslintConfig = defineConfig([
       ],
       'no-restricted-syntax': [
         'error',
-        {
-          selector:
-            "JSXAttribute[name.name=/^(placeholder|aria-label|title|eyebrow|subtitle|label)$/] > Literal, JSXAttribute[name.name='alt'] > Literal[value!=''], CallExpression[callee.name='toast'] > Literal:first-child",
+        ...[
+          // Attributes people read or hear, written directly or in braces.
+          `JSXAttribute[name.name=${READ_ATTRIBUTES}] > ${WORDS}`,
+          `JSXAttribute[name.name=${READ_ATTRIBUTES}] > JSXExpressionContainer > ${WORDS}`,
+          "JSXAttribute[name.name='alt'] > Literal[value!='']",
+          // Text built in braces among an element's children: a ternary's branches
+          // (one level of nesting too) or the right side of `&&`.
+          `${CHILD} > ConditionalExpression > ${WORDS}`,
+          `${CHILD} > ConditionalExpression > ConditionalExpression > ${WORDS}`,
+          `${CHILD} > LogicalExpression > ${WORDS}`,
+          // Messages handed to people: toasts, form errors, error fallbacks.
+          `CallExpression[callee.name='toast'] > ${WORDS}:first-child`,
+          `CallExpression[callee.name='setError'] > ${WORDS}`,
+          `CallExpression[callee.name='errorText'] > ${WORDS}:nth-child(2)`,
+        ].map((selector) => ({
+          selector,
           message: 'Text people read or hear comes from messages/*.json (F5).',
-        },
+        })),
       ],
     },
   },

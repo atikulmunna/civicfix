@@ -2,7 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
+import { useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { queryKeys } from '@/lib/query-keys';
 import { setLocale } from '@/i18n/actions';
 import type { Locale } from '@/i18n/locale';
 import { useAuth } from './auth-context';
@@ -19,13 +21,20 @@ export function LanguageSwitch({ className = '' }: { className?: string }) {
   const t = useTranslations('nav');
   const router = useRouter();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const other: Locale = locale === 'bn' ? 'en' : 'bn';
 
   async function choose() {
     // If this fails (offline), the refresh simply shows the same language.
     await setLocale(other).catch(() => undefined);
     // Best effort: the device already keeps the choice if this fails.
-    if (user) api.patch('/users/me', { language: other }).catch(() => undefined);
+    // The saved account replaces the cached one, so the app sees the new language.
+    if (user) {
+      api
+        .patch('/users/me', { language: other })
+        .then(({ user: saved }) => queryClient.setQueryData(queryKeys.me, saved))
+        .catch(() => undefined);
+    }
     router.refresh();
   }
 

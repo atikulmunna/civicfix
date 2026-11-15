@@ -59,6 +59,51 @@ describe('api client', () => {
     const err = await api.get('/auth/me').catch((e: unknown) => e);
     expect(err).toMatchObject({ code: 'NOT_FOUND', status: 404, message: 'Not found.' });
   });
+
+  it('keeps the message key and its values from the envelope (F5)', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        jsonResponse(
+          {
+            success: false,
+            message: 'Image dimensions are too large (max 40 megapixels).',
+            code: 'VALIDATION_ERROR',
+            messageKey: 'upload.tooManyPixels',
+            messageParams: { megapixels: 40 },
+          },
+          400,
+        ),
+      ),
+    );
+    const err = await api.get('/auth/me').catch((e: unknown) => e);
+    expect(err).toMatchObject({
+      messageKey: 'upload.tooManyPixels',
+      messageParams: { megapixels: 40 },
+    });
+  });
+
+  it('ignores a malformed key or values instead of trusting them', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        jsonResponse(
+          {
+            success: false,
+            message: 'Nope.',
+            code: 'NOT_FOUND',
+            messageKey: 42,
+            messageParams: { bad: { nested: true } },
+          },
+          404,
+        ),
+      ),
+    );
+    const err = await api.get('/auth/me').catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(ApiError);
+    expect(err).not.toHaveProperty('messageKey', 42);
+    expect((err as ApiError).messageParams).toBeUndefined();
+  });
 });
 
 describe('session refresh', () => {

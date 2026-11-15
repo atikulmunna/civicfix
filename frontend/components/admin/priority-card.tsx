@@ -1,11 +1,12 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { api, errorMessage } from '@/lib/api';
+import { api } from '@/lib/api';
 import { useFormat, type Format } from '@/lib/i18n/use-format';
 import { queryKeys } from '@/lib/query-keys';
 import type { PriorityExplanation } from '@/lib/types';
 import { Card, LoadError, Spinner } from '@/components/ui';
+import { useErrorMessage } from '@/lib/i18n/use-error-message';
 
 /** "+12", "-5", "0": points with their sign. */
 export function formatPoints(points: number): string {
@@ -28,6 +29,7 @@ function rows(p: PriorityExplanation, f: Format): [label: string, points: number
  * and the input behind it, as computed by the API.
  */
 export function PriorityCard({ reportId }: { reportId: string }) {
+  const errorText = useErrorMessage();
   const f = useFormat();
   const query = useQuery({
     queryKey: queryKeys.reportPriority(reportId),
@@ -41,7 +43,7 @@ export function PriorityCard({ reportId }: { reportId: string }) {
       {query.isPending ? (
         <Spinner label="Loading priority…" />
       ) : query.isError ? (
-        <LoadError>{errorMessage(query.error, 'Failed to load the priority.')}</LoadError>
+        <LoadError>{errorText(query.error, 'Failed to load the priority.')}</LoadError>
       ) : query.data === null ? (
         <p className="text-sm text-slate-500">
           Closed reports are not ranked, so this one has no priority.

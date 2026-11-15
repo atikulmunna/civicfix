@@ -122,16 +122,22 @@ describe('LoginPage in Bangla', () => {
     expect(await screen.findByText(bn('login.signedIn'))).toBeInTheDocument();
   });
 
-  it('says in Bangla when something unexpected fails, and shows API errors as sent', async () => {
+  it('says in Bangla when something unexpected fails, and words API errors from their key', async () => {
     post.mockRejectedValueOnce(new Error('network down'));
     const user = userEvent.setup();
     renderLogin('bn');
     await signIn(user);
     expect(await screen.findByText(bn('unexpected'))).toBeInTheDocument();
 
-    post.mockRejectedValueOnce(new ApiError('Invalid email or password.', 'VALIDATION_ERROR', 400));
+    post.mockRejectedValueOnce(
+      new ApiError('Invalid email or password.', 'VALIDATION_ERROR', 400, undefined, {
+        messageKey: 'auth.badCredentials',
+      }),
+    );
     await user.click(screen.getByRole('button', { name: bn('login.submit') }));
-    expect(await screen.findByText('Invalid email or password.')).toBeInTheDocument();
+    expect(
+      await screen.findByText(messagesFor('bn').errors.server.auth.badCredentials),
+    ).toBeInTheDocument();
   });
 
   it('asks for the email and password in Bangla before calling the API', async () => {

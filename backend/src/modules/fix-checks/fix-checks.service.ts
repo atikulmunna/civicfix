@@ -10,6 +10,8 @@
 import type { FixVerdict, Prisma, Report } from '../../generated/prisma/client.js';
 import { prisma } from '../../lib/prisma.js';
 import { ApiError } from '../../lib/errors.js';
+import { notificationEnglish } from '../notifications/kinds.js';
+import { message } from '../../lib/messages.js';
 import type { StoredImage } from '../../lib/uploads.js';
 import { applyTransition } from '../admin/workflow.service.js';
 import type { Actor } from '../reports/reports.service.js';
@@ -58,7 +60,7 @@ async function loadReport(db: Db, reportId: string): Promise<CheckedReport> {
       assignedDepartmentId: true,
     },
   });
-  if (!report) throw new ApiError('NOT_FOUND', 'Report not found.');
+  if (!report) throw new ApiError('NOT_FOUND', message('report.notFound'));
   return report;
 }
 
@@ -103,16 +105,13 @@ async function ownVerdict(
 async function assertCheckable(db: Db, report: CheckedReport, actor: Actor): Promise<Date> {
   const fix = currentFix(report);
   if (!fix) {
-    throw new ApiError('VALIDATION_ERROR', 'Only a resolved report has a fix to check.');
+    throw new ApiError('VALIDATION_ERROR', message('fixCheck.notResolved'));
   }
   if (!(await mayCheck(db, report, actor))) {
-    throw new ApiError(
-      'FORBIDDEN',
-      'Fixes are checked by residents, not by admins or the department that made them.',
-    );
+    throw new ApiError('FORBIDDEN', message('fixCheck.notResident'));
   }
   if (await ownVerdict(db, report.id, fix, actor.id)) {
-    throw new ApiError('DUPLICATE_RESOURCE', 'You have already checked this fix.');
+    throw new ApiError('DUPLICATE_RESOURCE', message('fixCheck.already'));
   }
   return fix;
 }
@@ -168,7 +167,8 @@ async function reopen(tx: Db, report: CheckedReport, actorId: string): Promise<v
     'IN_PROGRESS',
     transitionEffects('RESOLVED', 'IN_PROGRESS'),
     actorId,
-    { note: `Reopened: ${String(DISPUTES_TO_REOPEN)} residents disputed the fix with photos.` },
+    {},
+    { autoNote: { key: 'report.reopenedByDisputes', params: { count: DISPUTES_TO_REOPEN } } },
   );
 
   // The report is back in the department's queue; tell its staff why.
@@ -182,13 +182,17 @@ async function reopen(tx: Db, report: CheckedReport, actorId: string): Promise<v
     select: { id: true },
   });
   if (staff.length === 0) return;
+  const notice = { kind: 'fix_disputed', params: { reportTitle: report.title } } as const;
+  const { title, message } = notificationEnglish(notice);
   await tx.notification.createMany({
     data: staff.map((s) => ({
       userId: s.id,
       reportId: report.id,
-      title: 'Fix disputed',
-      message: `Residents disputed the fix for "${report.title}". It is back in progress.`,
+      title,
+      message,
       type: 'status_change' as const,
+      kind: notice.kind,
+      params: notice.params,
     })),
   });
 }

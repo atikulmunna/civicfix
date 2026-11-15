@@ -3,18 +3,20 @@
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useAuth } from '@/components/auth-context';
 import { useToast } from '@/components/toast';
-import { ApiError } from '@/lib/api';
 import { Button, Card, FieldError, Input, Label } from '@/components/ui';
 import { MIN_PASSWORD_LENGTH } from '@/components/change-password-form';
+import { useErrorMessage } from '@/lib/i18n/use-error-message';
 
 /** Catches obvious slips in the browser; the API checks the address properly. */
 const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function RegisterPage() {
+  const errorText = useErrorMessage();
   const t = useTranslations('auth');
+  const locale = useLocale();
   const { register } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
@@ -42,11 +44,13 @@ export default function RegisterPage() {
         email: form.email,
         password: form.password,
         phone: form.phone || undefined,
+        // The account remembers the language the page is in (F5).
+        language: locale,
       });
       toast(t('register.created'), 'success');
       router.push('/');
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : t('unexpected'));
+      setError(errorText(err, t('unexpected')));
     } finally {
       setBusy(false);
     }

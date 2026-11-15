@@ -3,11 +3,12 @@
 import { useState, type FormEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
-import { api, errorMessage } from '@/lib/api';
+import { api } from '@/lib/api';
 import { queryKeys } from '@/lib/query-keys';
 import { useAuth } from '@/components/auth-context';
 import { useToast } from '@/components/toast';
 import { Button, Card, FieldError, Input, Label } from '@/components/ui';
+import { useErrorMessage } from '@/lib/i18n/use-error-message';
 
 /** Matches the API's password policy minimum (backend auth/password.ts). */
 export const MIN_PASSWORD_LENGTH = 8;
@@ -17,6 +18,7 @@ export const MIN_PASSWORD_LENGTH = 8;
  * keeps going on the fresh cookies it returns.
  */
 export function ChangePasswordForm() {
+  const errorText = useErrorMessage();
   const t = useTranslations('auth.password');
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -38,7 +40,7 @@ export function ChangePasswordForm() {
       setConfirm('');
       toast(t('changed'), 'success');
     },
-    onError: (err) => setError(errorMessage(err, t('failed'))),
+    onError: (err) => setError(errorText(err, t('failed'))),
   });
   const busy = change.isPending;
 

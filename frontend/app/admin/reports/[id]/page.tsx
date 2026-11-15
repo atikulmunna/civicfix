@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { use, useState } from 'react';
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, ApiError, assetUrl, errorMessage } from '@/lib/api';
+import { api, ApiError, assetUrl } from '@/lib/api';
 import { asStatus, STATUS_OPTIONS } from '@/lib/format';
 import { useFormat } from '@/lib/i18n/use-format';
 import { queryKeys } from '@/lib/query-keys';
@@ -15,6 +15,7 @@ import { DuplicateMerge } from '@/components/admin/duplicate-merge';
 import { PriorityCard } from '@/components/admin/priority-card';
 import { useToast } from '@/components/toast';
 import { Button, Card, LoadError, Select, Spinner, Textarea } from '@/components/ui';
+import { useErrorMessage } from '@/lib/i18n/use-error-message';
 
 interface ModerationAction {
   action: () => Promise<unknown>;
@@ -22,6 +23,7 @@ interface ModerationAction {
 }
 
 export function Moderation({ id }: { id: string }) {
+  const errorText = useErrorMessage();
   const f = useFormat();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -65,7 +67,7 @@ export function Moderation({ id }: { id: string }) {
       setNote('');
       setInternalNote('');
     },
-    onError: (err) => toast(errorMessage(err, 'Action failed.'), 'error'),
+    onError: (err) => toast(errorText(err, 'Action failed.'), 'error'),
   });
   const busy = moderate.isPending;
   const run = (action: () => Promise<unknown>, ok: string) => moderate.mutate({ action, ok });
@@ -75,7 +77,7 @@ export function Moderation({ id }: { id: string }) {
     const notFound = reportQuery.error instanceof ApiError && reportQuery.error.status === 404;
     return (
       <LoadError>
-        {notFound ? 'Report not found.' : errorMessage(reportQuery.error, 'Failed to load report.')}
+        {notFound ? 'Report not found.' : errorText(reportQuery.error, 'Failed to load report.')}
       </LoadError>
     );
   }

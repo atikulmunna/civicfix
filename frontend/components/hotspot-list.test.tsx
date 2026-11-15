@@ -21,8 +21,8 @@ const spot = (over: Partial<Hotspot>): Hotspot => ({
   reportCount: 5,
   openCount: 2,
   categories: [
-    { categoryId: 'c1', name: 'Drainage', count: 4 },
-    { categoryId: 'c2', name: 'Roads', count: 1 },
+    { categoryId: 'c1', name: 'Drainage', nameBn: null, count: 4 },
+    { categoryId: 'c2', name: 'Roads', nameBn: null, count: 1 },
   ],
   recurring: false,
   latestReportAt: '2026-11-05T10:00:00.000Z',

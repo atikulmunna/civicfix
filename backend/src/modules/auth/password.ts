@@ -6,6 +6,7 @@
  */
 import { hash, verify } from '@node-rs/argon2';
 import { ApiError } from '../../lib/errors.js';
+import { message } from '../../lib/messages.js';
 
 // argon2id parameters: OWASP-recommended baseline (19 MiB, 2 passes).
 const HASH_OPTS = { memoryCost: 19456, timeCost: 2, parallelism: 1 } as const;
@@ -28,13 +29,19 @@ const COMMON_PASSWORDS = new Set([
   '00000000',
 ]);
 
+/** Shortest password the policy accepts. */
+export const MIN_PASSWORD_LENGTH = 8;
+
 /** Throws VALIDATION_ERROR if the password fails policy. */
 export function assertPasswordPolicy(password: string): void {
-  if (password.length < 8) {
-    throw new ApiError('VALIDATION_ERROR', 'Password must be at least 8 characters.');
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    throw new ApiError(
+      'VALIDATION_ERROR',
+      message('auth.passwordTooShort', { min: MIN_PASSWORD_LENGTH }),
+    );
   }
   if (COMMON_PASSWORDS.has(password.toLowerCase())) {
-    throw new ApiError('VALIDATION_ERROR', 'Password is too common; choose a stronger one.');
+    throw new ApiError('VALIDATION_ERROR', message('auth.passwordCommon'));
   }
 }
 

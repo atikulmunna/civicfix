@@ -168,6 +168,13 @@
                   "phone": {
                     "type": "string",
                     "maxLength": 30
+                  },
+                  "language": {
+                    "type": "string",
+                    "enum": [
+                      "en",
+                      "bn"
+                    ]
                   }
                 },
                 "required": [
@@ -3920,6 +3927,10 @@
                     "minLength": 2,
                     "maxLength": 100
                   },
+                  "nameBn": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
                   "description": {
                     "type": "string",
                     "maxLength": 1000
@@ -4021,6 +4032,17 @@
                     "type": "string",
                     "minLength": 2,
                     "maxLength": 100
+                  },
+                  "nameBn": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 100
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "description": {
                     "anyOf": [
@@ -4198,6 +4220,10 @@
                     "minLength": 2,
                     "maxLength": 120
                   },
+                  "nameBn": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
                   "description": {
                     "type": "string",
                     "maxLength": 1000
@@ -4303,6 +4329,17 @@
                     "type": "string",
                     "minLength": 2,
                     "maxLength": 120
+                  },
+                  "nameBn": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 120
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "description": {
                     "anyOf": [
@@ -5201,7 +5238,25 @@
           "code": {
             "$ref": "#/components/schemas/ErrorCode"
           },
-          "details": {},
+          "messageKey": {
+            "description": "Resident-facing messages: the web app words the message from this key (F5).",
+            "$ref": "#/components/schemas/MessageKey"
+          },
+          "messageParams": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": [
+                "string",
+                "number"
+              ]
+            }
+          },
+          "details": {
+            "description": "Validation failures: one { path, message, messageKey?, messageParams? } per issue."
+          },
           "requestId": {
             "description": "On 500s: quote it when reporting the problem.",
             "type": "string"
@@ -5227,6 +5282,59 @@
           "UPLOAD_FAILED",
           "SERVICE_UNAVAILABLE",
           "INTERNAL_ERROR"
+        ]
+      },
+      "MessageKey": {
+        "type": "string",
+        "enum": [
+          "common.notFound",
+          "common.authRequired",
+          "common.tokenInvalid",
+          "common.forbidden",
+          "common.duplicate",
+          "common.missingReference",
+          "common.invalidId",
+          "common.invalidRequest",
+          "common.rateLimited",
+          "common.internal",
+          "common.unavailable",
+          "upload.type",
+          "upload.unreadable",
+          "upload.tooManyPixels",
+          "upload.tooLarge",
+          "auth.emailTaken",
+          "auth.badCredentials",
+          "auth.deactivated",
+          "auth.signInAgain",
+          "auth.wrongCurrentPassword",
+          "auth.samePassword",
+          "auth.sessionInvalid",
+          "auth.noRefreshToken",
+          "auth.userNotFound",
+          "auth.passwordTooShort",
+          "auth.passwordCommon",
+          "report.imageRequired",
+          "report.categoryMissing",
+          "report.notFound",
+          "report.notOwner",
+          "report.locked",
+          "comment.empty",
+          "comment.notFound",
+          "comment.notOwner",
+          "fixCheck.photoRequired",
+          "fixCheck.notResolved",
+          "fixCheck.notResident",
+          "fixCheck.already",
+          "notification.notFound",
+          "field.nameRequired",
+          "field.email",
+          "field.category",
+          "field.passwordRequired",
+          "field.currentPasswordRequired",
+          "field.newPasswordRequired",
+          "field.titleTooShort",
+          "field.descriptionTooShort",
+          "field.noChanges"
         ]
       },
       "User": {
@@ -5356,6 +5464,12 @@
               "name": {
                 "type": "string"
               },
+              "nameBn": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "icon": {
                 "type": [
                   "string",
@@ -5366,6 +5480,7 @@
             "required": [
               "id",
               "name",
+              "nameBn",
               "icon"
             ],
             "additionalProperties": false
@@ -5710,6 +5825,36 @@
               "null"
             ]
           },
+          "noteKey": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HistoryNoteKey"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Automatic notes only (F5): the web app words them from this key."
+          },
+          "noteParams": {
+            "anyOf": [
+              {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": [
+                    "string",
+                    "number"
+                  ]
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "changedBy": {
             "type": "object",
             "properties": {
@@ -5743,10 +5888,20 @@
           "oldStatus",
           "newStatus",
           "note",
+          "noteKey",
+          "noteParams",
           "changedBy",
           "createdAt"
         ],
         "additionalProperties": false
+      },
+      "HistoryNoteKey": {
+        "type": "string",
+        "enum": [
+          "report.submitted",
+          "report.merged",
+          "report.reopenedByDisputes"
+        ]
       },
       "Comment": {
         "type": "object",
@@ -6080,59 +6235,299 @@
         "additionalProperties": false
       },
       "Notification": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-          },
-          "userId": {
-            "type": "string",
-            "format": "uuid",
-            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-          },
-          "reportId": {
-            "anyOf": [
-              {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
                 "type": "string",
                 "format": "uuid",
                 "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
               },
-              {
+              "userId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "reportId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "title": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "type": {
+                "$ref": "#/components/schemas/NotificationType"
+              },
+              "isRead": {
+                "type": "boolean"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "kind": {
+                "type": "string",
+                "const": "status_changed"
+              },
+              "params": {
+                "type": "object",
+                "properties": {
+                  "reportTitle": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "$ref": "#/components/schemas/ReportStatus"
+                  }
+                },
+                "required": [
+                  "reportTitle",
+                  "status"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "userId",
+              "reportId",
+              "title",
+              "message",
+              "type",
+              "isRead",
+              "createdAt",
+              "kind",
+              "params"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "userId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "reportId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "title": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "type": {
+                "$ref": "#/components/schemas/NotificationType"
+              },
+              "isRead": {
+                "type": "boolean"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "kind": {
+                "type": "string",
+                "const": "report_merged"
+              },
+              "params": {
+                "type": "object",
+                "properties": {
+                  "reportTitle": {
+                    "type": "string"
+                  },
+                  "originalTitle": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reportTitle",
+                  "originalTitle"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "userId",
+              "reportId",
+              "title",
+              "message",
+              "type",
+              "isRead",
+              "createdAt",
+              "kind",
+              "params"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "userId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "reportId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "title": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "type": {
+                "$ref": "#/components/schemas/NotificationType"
+              },
+              "isRead": {
+                "type": "boolean"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "kind": {
+                "type": "string",
+                "const": "fix_disputed"
+              },
+              "params": {
+                "type": "object",
+                "properties": {
+                  "reportTitle": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reportTitle"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "userId",
+              "reportId",
+              "title",
+              "message",
+              "type",
+              "isRead",
+              "createdAt",
+              "kind",
+              "params"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "userId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "reportId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "title": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "type": {
+                "$ref": "#/components/schemas/NotificationType"
+              },
+              "isRead": {
+                "type": "boolean"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "kind": {
+                "type": "null"
+              },
+              "params": {
                 "type": "null"
               }
-            ]
-          },
-          "title": {
-            "type": "string"
-          },
-          "message": {
-            "type": "string"
-          },
-          "type": {
-            "$ref": "#/components/schemas/NotificationType"
-          },
-          "isRead": {
-            "type": "boolean"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            },
+            "required": [
+              "id",
+              "userId",
+              "reportId",
+              "title",
+              "message",
+              "type",
+              "isRead",
+              "createdAt",
+              "kind",
+              "params"
+            ],
+            "additionalProperties": false,
+            "description": "Stored before kinds (F5): show title and message as stored."
           }
-        },
-        "required": [
-          "id",
-          "userId",
-          "reportId",
-          "title",
-          "message",
-          "type",
-          "isRead",
-          "createdAt"
-        ],
-        "additionalProperties": false
+        ]
       },
       "NotificationType": {
         "type": "string",
@@ -6153,6 +6548,12 @@
           },
           "name": {
             "type": "string"
+          },
+          "nameBn": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "description": {
             "type": [
@@ -6178,6 +6579,7 @@
         "required": [
           "id",
           "name",
+          "nameBn",
           "description",
           "icon",
           "isActive",
@@ -6195,6 +6597,12 @@
           },
           "name": {
             "type": "string"
+          },
+          "nameBn": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "description": {
             "type": [
@@ -6226,6 +6634,7 @@
         "required": [
           "id",
           "name",
+          "nameBn",
           "description",
           "contactEmail",
           "phone",
@@ -6480,6 +6889,12 @@
           "name": {
             "type": "string"
           },
+          "nameBn": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "assigned": {
             "type": "integer",
             "minimum": 0,
@@ -6563,6 +6978,7 @@
         "required": [
           "departmentId",
           "name",
+          "nameBn",
           "assigned",
           "resolved",
           "resolutionRate",
@@ -6700,6 +7116,12 @@
                 "name": {
                   "type": "string"
                 },
+                "nameBn": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
                 "count": {
                   "type": "integer",
                   "minimum": 0,
@@ -6709,6 +7131,7 @@
               "required": [
                 "categoryId",
                 "name",
+                "nameBn",
                 "count"
               ],
               "additionalProperties": false

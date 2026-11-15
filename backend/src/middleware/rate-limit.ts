@@ -7,6 +7,7 @@
  * suites aren't throttled; the dedicated rate-limit test opts back in.
  */
 import rateLimit, { ipKeyGenerator, type RateLimitRequestHandler } from 'express-rate-limit';
+import { message } from '../lib/messages.js';
 import type { Request } from 'express';
 import { env } from '../config/env.js';
 import { clientIp } from '../lib/client-ip.js';
@@ -37,8 +38,9 @@ export function makeLimiter(opts: LimiterOptions): RateLimitRequestHandler {
     handler: (_req, res) => {
       res.status(429).json({
         success: false,
-        message: 'Too many requests. Please try again later.',
+        message: message('common.rateLimited').text,
         code: 'RATE_LIMITED',
+        messageKey: 'common.rateLimited',
       });
     },
   });

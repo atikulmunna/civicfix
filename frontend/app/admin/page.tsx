@@ -2,12 +2,14 @@
 
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { api, errorMessage } from '@/lib/api';
+import { api } from '@/lib/api';
 import { queryKeys } from '@/lib/query-keys';
 import { RequireAuth } from '@/components/require-auth';
 import { Card, LoadError, PageHeader, Spinner, StatTile } from '@/components/ui';
+import { useErrorMessage } from '@/lib/i18n/use-error-message';
 
 function Dashboard() {
+  const errorText = useErrorMessage();
   // Same key as the analytics page: both read one cached summary.
   const summaryQuery = useQuery({
     queryKey: queryKeys.analytics('summary'),
@@ -52,7 +54,7 @@ function Dashboard() {
       {summaryQuery.isPending ? (
         <Spinner />
       ) : summaryQuery.isError ? (
-        <LoadError>{errorMessage(summaryQuery.error, 'Failed to load the dashboard.')}</LoadError>
+        <LoadError>{errorText(summaryQuery.error, 'Failed to load the dashboard.')}</LoadError>
       ) : (
         <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
           {tiles.map((t) => (

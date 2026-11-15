@@ -28,6 +28,8 @@ const notif = (over = {}) => ({
   type: 'status_change',
   isRead: false,
   createdAt: new Date().toISOString(),
+  kind: null,
+  params: null,
   ...over,
 });
 
@@ -136,5 +138,82 @@ describe('NotificationsPage in Bangla', () => {
     );
     renderBangla();
     expect(await screen.findByRole('alert')).toHaveTextContent(bn('loadError'));
+  });
+});
+
+describe('notification kinds (F5)', () => {
+  const rows = [
+    notif({
+      id: 'k1',
+      title: 'Report status updated',
+      message: 'Your report "Dark street" is now in progress.',
+      kind: 'status_changed',
+      params: { reportTitle: 'Dark street', status: 'IN_PROGRESS' },
+    }),
+    notif({
+      id: 'k2',
+      title: 'Fix disputed',
+      message: 'Residents disputed the fix for "Open drain". It is back in progress.',
+      kind: 'fix_disputed',
+      params: { reportTitle: 'Open drain' },
+    }),
+    notif({ id: 'k3', title: 'Old style', message: 'Stored English from before kinds.' }),
+  ];
+
+  beforeEach(() => {
+    get.mockReset();
+    patch.mockReset().mockResolvedValue({});
+    get.mockImplementation((path: string) =>
+      path === '/auth/me'
+        ? Promise.resolve({ user: ME })
+        : Promise.resolve({
+            items: rows,
+            unreadCount: 3,
+            page: 1,
+            limit: 50,
+            total: 3,
+            totalPages: 1,
+          }),
+    );
+  });
+
+  function renderIn(locale: 'en' | 'bn') {
+    renderWithQuery(
+      <ToastProvider>
+        <AuthProvider>
+          <NotificationsPage />
+        </AuthProvider>
+      </ToastProvider>,
+      undefined,
+      { locale },
+    );
+  }
+
+  it('words them in Bangla, with the Bangla status, and keeps old rows as stored', async () => {
+    const bn = createTranslator({
+      locale: 'bn',
+      messages: messagesFor('bn'),
+      namespace: 'notifications.kinds',
+    });
+    renderIn('bn');
+    const status = messagesFor('bn').status.IN_PROGRESS;
+    expect(
+      await screen.findByText(bn('status_changed.message', { reportTitle: 'Dark street', status })),
+    ).toBeInTheDocument();
+    expect(screen.getByText(bn('status_changed.title'))).toBeInTheDocument();
+    expect(screen.getByText(bn('fix_disputed.title'))).toBeInTheDocument();
+    expect(
+      screen.getByText(bn('fix_disputed.message', { reportTitle: 'Open drain' })),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Stored English from before kinds.')).toBeInTheDocument();
+    expect(screen.queryByText(/is now in progress/)).toBeNull();
+  });
+
+  it('shows what the server wrote, in English', async () => {
+    renderIn('en');
+    expect(
+      await screen.findByText('Your report "Dark street" is now in progress.'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Fix disputed')).toBeInTheDocument();
   });
 });
