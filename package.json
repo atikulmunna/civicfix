@@ -8,7 +8,7 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "@neon/config": "^1.11.3",
+    "@neon/config": "^1.14.0",
     "@neon/env": "^1.6.15"
   },
   "devDependencies": {
@@ -16,6 +16,6 @@
     "@commitlint/config-conventional": "^21.2.4",
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
-    "prettier": "^3.9.10"
+    "prettier": "^3.10.1"
   }
 }
